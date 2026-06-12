@@ -8,7 +8,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@400&display=swap" rel="stylesheet">
   <link rel="icon" type="image/gif" href="https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif">
   <link rel="stylesheet" href="css/orbit.css?v=20260606">
 </head>
@@ -86,6 +86,16 @@
 
   <div id="mainContent" style="position:relative; z-index:2;"></div>
 
+  <!-- Games Page Loading Spinner -->
+  <div id="gamesPageLoadingOverlay" class="games-page-loading-overlay hidden">
+    <div class="games-page-loading-spinner"></div>
+  </div>
+
+  <!-- Custom Scrollbar -->
+  <div id="customScrollbar" class="custom-scrollbar">
+    <div class="custom-scrollbar-thumb"></div>
+  </div>
+
   <div id="introScreen" class="intro-screen" style="display: flex;">
     <div class="intro-content">
       <div class="intro-logo">
@@ -93,6 +103,54 @@
       </div>
       <h1 class="intro-title">orbit</h1>
       <button class="intro-button" id="enterButton">enter</button>
+    </div>
+  </div>
+
+  <!-- Onboarding Flow -->
+  <div id="onboardingFlow" class="onboarding-flow" style="display: none;">
+    <div class="onboarding-container">
+      <!-- Step 1: Orbit Welcome -->
+      <div class="onboarding-step" id="onboardingStep1" style="display: none;">
+        <div class="onboarding-logo">
+          <span class="onboarding-logo-text">Orbit</span>
+        </div>
+        <button class="onboarding-button" id="getStartedBtn">get started</button>
+      </div>
+
+      <!-- Step 2: Username Setup -->
+      <div class="onboarding-step" id="onboardingStep2" style="display: none;">
+        <h2 class="onboarding-title">What is your name?</h2>
+        <p class="onboarding-description">Create a more personalized experience. Your name can be changed at any time in Settings.</p>
+        <input type="text" class="onboarding-input" id="usernameInput" placeholder="Enter your name" autocomplete="off">
+        <button class="onboarding-button" id="usernameContinueBtn" disabled>Continue</button>
+      </div>
+
+      <!-- Step 3: Theme Selection -->
+      <div class="onboarding-step" id="onboardingStep3" style="display: none;">
+        <h2 class="onboarding-title">Choose your theme</h2>
+        <p class="onboarding-description">Customize the appearance of Orbit.</p>
+        <div class="onboarding-themes" id="themeSelection">
+          <!-- Theme cards will be populated by JavaScript -->
+        </div>
+        <button class="onboarding-button" id="themeContinueBtn">Continue</button>
+      </div>
+
+      <!-- Step 4: Audio Preferences -->
+      <div class="onboarding-step" id="onboardingStep4" style="display: none;">
+        <h2 class="onboarding-title">Enable Interface Audio?</h2>
+        <p class="onboarding-description">Enable hover sounds, interface sounds, background music, and enhanced UI feedback.</p>
+        <div class="onboarding-actions">
+          <button class="onboarding-button secondary" id="audioSkipBtn">Skip</button>
+          <button class="onboarding-button" id="audioEnableBtn">Enable</button>
+        </div>
+      </div>
+
+      <!-- Step 5: Welcome -->
+      <div class="onboarding-step" id="onboardingStep5" style="display: none;">
+        <h2 class="onboarding-title">Welcome to Orbit</h2>
+        <p class="onboarding-welcome-message" id="welcomeMessage"></p>
+        <p class="onboarding-description">Setup complete. You're all set!</p>
+      </div>
     </div>
   </div>
 

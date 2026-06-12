@@ -19,23 +19,9 @@
   let proxyEngine = null;
   
   async function initProxyEngine() {
-    if (typeof ProxyEngine !== 'undefined') {
-      proxyEngine = new ProxyEngine({
-        proxies: [
-          `https://api.cors.lol/?url=`,
-          `https://api.codetabs.com/v1/proxy?quest=`,
-          `https://api.codetabs.com/v1/tmp/?quest=`,
-          `https://api.allorigins.win/raw?url=`
-        ],
-        timeout: 10000,
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        encryptionEnabled: true
-      });
-      await proxyEngine.init();
-      console.log('ProxyEngine initialized successfully');
-    } else {
-      console.warn('ProxyEngine not available, using fallback methods');
-    }
+    // Proxy functionality disabled - focusing on core browser UI first
+    console.log('[Orbit] Proxy functionality disabled - focusing on core browser UI');
+    proxyEngine = null;
   }
 
   // ==================== Search Engine Selection ====================
@@ -294,6 +280,18 @@
     }
 
     /**
+     * Clear all history.
+     */
+    clearAll() {
+      this.stacks = {};
+      try {
+        localStorage.removeItem('voltra-browser-history');
+      } catch (e) {
+        // Silently fail
+      }
+    }
+
+    /**
      * Persist history to localStorage.
      */
     _persist(tabId) {
@@ -461,6 +459,20 @@
     }
 
     /**
+     * Clear all tabs.
+     */
+    clearAll() {
+      this.tabs = {};
+      this.activeTabId = null;
+      this.tabCounter = 0;
+      try {
+        localStorage.removeItem('voltra-browser-tabs');
+      } catch (e) {
+        // Silently fail
+      }
+    }
+
+    /**
      * Persist tabs to localStorage.
      */
     _persist() {
@@ -591,31 +603,14 @@ document.querySelectorAll('.sc').forEach(function(btn){
   }
 
   /**
-   * Normalize a target URL for iframe loading.
+   * Normalize a target URL for iframe loading (without proxy).
    * @param {string} targetUrl
    * @returns {string}
    */
-  function getProxyUrl(targetUrl) {
+  function normalizeUrl(targetUrl) {
     if (!targetUrl || targetUrl === 'about:blank') return targetUrl;
     if (/^about:/i.test(targetUrl)) return targetUrl;
     if (targetUrl === BRAVE_HOME_INTERNAL) return targetUrl;
-    
-    // Only proxy sites that are known to block iframe embedding
-    // Many sites work fine without proxy, so we limit the list to reduce loading time
-    const blockedSites = [
-      'youtube.com', 'youtu.be',
-      'github.com',
-      'reddit.com', 'twitter.com', 'x.com',
-      'facebook.com', 'instagram.com',
-      'netflix.com',
-      'google.com'
-    ];
-    
-    const shouldProxy = blockedSites.some(site => targetUrl.includes(site));
-    
-    if (shouldProxy) {
-      return targetUrl; // Return original URL, will be handled by multi-proxy system
-    }
     
     if (!/^https?:\/\//i.test(targetUrl)) {
       targetUrl = 'https://' + targetUrl;
@@ -623,225 +618,13 @@ document.querySelectorAll('.sc').forEach(function(btn){
     return targetUrl;
   }
 
-  // Use ProxyEngine for fetching (Helios-style multi-proxy with encryption)
-  async function fetchWithMultiProxy(url) {
-    if (proxyEngine) {
-      return await proxyEngine.fetchWithMultiProxy(url);
-    }
-    
-    // Fallback if ProxyEngine not available
-    const proxies = [
-      `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      `https://api.codetabs.com/v1/tmp/?quest=${encodeURIComponent(url)}`,
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-    ];
-
-    const timeout = 10000;
-
-    // Remove cors.lol proxy for any URL containing 'google.com'
-    if (url.includes('google.com')) {
-      proxies.splice(0, 1);
-    }
-
-    for (const proxy of proxies) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-        console.log(`Attempting to fetch with proxy: ${proxy}`);
-        
-        const response = await fetch(proxy, {
-          signal: controller.signal,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const htmlText = await response.text();
-        console.log(`Fetch successful using proxy: ${proxy}`);
-        return htmlText;
-
-      } catch (error) {
-        console.error(`Error with proxy ${proxy}: ${error.message}`);
-        continue;
-      }
-    }
-
-    throw new Error('Failed to fetch content from all proxies');
+  function getBraveFallbackUrl(targetUrl) {
+    if (!targetUrl) return BRAVE_HOME_URL;
+    return SEARCH_ENGINE_BASE + encodeURIComponent(targetUrl);
   }
 
-  // Shadow DOM content isolation with resource injection
-  function createShadowDOMContainer(htmlContent, baseUrl) {
-    if (proxyEngine) {
-      return proxyEngine.createShadowDOMContainer(htmlContent, baseUrl);
-    }
-    
-    // Fallback implementation
-    const shadowContainer = document.createElement('div');
-    shadowContainer.style.position = 'relative';
-    shadowContainer.style.width = '100%';
-    shadowContainer.style.height = '100%';
-    shadowContainer.style.overflow = 'auto';
-    shadowContainer.style.border = 'none';
-
-    const shadowRoot = shadowContainer.attachShadow({ mode: 'open' });
-
-    // Add default style to prevent conflicts
-    const defaultStyle = document.createElement('style');
-    defaultStyle.textContent = `
-      :host {
-        all: initial;
-        background-color: #fff !important;
-        font-family: Arial, sans-serif;
-      }
-    `;
-    shadowRoot.appendChild(defaultStyle);
-
-    // Parse and fix relative URLs
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
-    
-    // Rewrite relative URLs to absolute URLs
-    const base = new URL(baseUrl);
-    
-    // Rewrite all resource URLs
-    const elements = shadowRoot.querySelectorAll('a[href], link[href], script[src], img[src], video[src], audio[src], source[src]');
-    elements.forEach(element => {
-      const attributeName = element.hasAttribute('href') ? 'href' : 'src';
-      try {
-        element.setAttribute(attributeName, new URL(element.getAttribute(attributeName), base).href);
-      } catch (e) {
-        console.error('Error rewriting URL:', e);
-      }
-    });
-
-    shadowRoot.innerHTML = sanitizeHtmlText(doc.documentElement.outerHTML);
-
-    // Intercept link clicks to navigate within the proxy
-    shadowRoot.querySelectorAll('a').forEach(anchor => {
-      anchor.addEventListener('click', (event) => {
-        event.preventDefault();
-        const newUrl = anchor.href;
-        if (window.VoltraBrowser) {
-          window.VoltraBrowser.navigate(newUrl);
-        }
-      });
-    });
-
-    return shadowContainer;
-  }
-
-  // URL sanitization from Helios
-  function sanitizeHtmlText(htmlText) {
-    if (proxyEngine) {
-      return proxyEngine.sanitizeHtmlText(htmlText);
-    }
-    
-    // Fallback implementation
-    htmlText = htmlText.replace(/([a-z])\uFFFD([A-Z])/g, '$1 $2');
-    htmlText = htmlText.replace(/\uFFFD/g, 'é');
-    
-    // Translate French redirection notices
-    htmlText = htmlText.replace(/Avertissement de redirection/g, 'Redirect Notice');
-    htmlText = htmlText.replace(/La page que vous consultiez essaie de vous rediriger vers/g, 'The page you were on is trying to send you to');
-    htmlText = htmlText.replace(/Si\s+vous\s+ne\s+souhaitez\s+pas\s+consulter\s+Cette\s+page/i, 'If you do not want to visit that page');
-    htmlText = htmlText.replace(/vous\s* pouvez\s*revenir\s*à\s*la\s*page\s*précédente\./i, 'you can return to the previous page.');
-    
-    return htmlText;
-  }
-
-  // Script execution from Helios
-  function executeScriptsFromContent(content) {
-    if (proxyEngine) {
-      return proxyEngine.executeScriptsFromContent(content);
-    }
-    
-    // Fallback implementation
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    const scripts = tempDiv.getElementsByTagName('script');
-
-    Array.from(scripts).forEach(script => {
-      const newScript = document.createElement('script');
-      if (script.src) {
-        newScript.src = script.src;
-      } else {
-        newScript.textContent = script.textContent;
-      }
-      Array.from(script.attributes).forEach(attr => {
-        if (attr.name !== 'src') {
-          newScript.setAttribute(attr.name, attr.value);
-        }
-      });
-      document.head.appendChild(newScript);
-    });
-
-    return tempDiv.innerHTML;
-  }
-
-  // Font fixing from Helios
-  async function fixFontsInFetchedContent(htmlContent, baseUrl) {
-    if (proxyEngine) {
-      return await proxyEngine.fixFontsInFetchedContent(htmlContent, baseUrl);
-    }
-    
-    // Fallback implementation
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
-    const stylesheets = doc.querySelectorAll('link[rel="stylesheet"]');
-
-    async function fetchAndParseCss(url) {
-      const response = await fetch(url);
-      return await response.text();
-    }
-
-    function extractFontFaceRules(css) {
-      const fontFaceRegex = /@font-face\s*{[^}]*}/g;
-      return css.match(fontFaceRegex) || [];
-    }
-
-    function modifyFontUrls(css, baseUrl) {
-      return css.replace(/url\(['"]?(.+?)['"]?\)/g, (match, url) => {
-        if (!url.startsWith('http')) {
-          return `url("${new URL(url, baseUrl)}")`;
-        }
-        return match;
-      });
-    }
-
-    const results = await Promise.all(Array.from(stylesheets).map(async link => {
-      const href = new URL(link.getAttribute('href'), baseUrl).href;
-      try {
-        const css = await fetchAndParseCss(href);
-        const fontFaceRules = extractFontFaceRules(css);
-        return fontFaceRules.map(rule => modifyFontUrls(rule, href));
-      } catch (e) {
-        return [];
-      }
-    }));
-
-    const allFontFaceRules = results.flat();
-    const styleElement = doc.createElement('style');
-    styleElement.textContent = allFontFaceRules.join('\n');
-    doc.head.appendChild(styleElement);
-
-    return new XMLSerializer().serializeToString(doc);
-  }
-
-  // Tab cloaking functions from Helios
+  // Tab cloaking functions
   function openInAboutBlank() {
-    if (proxyEngine) {
-      return proxyEngine.openInAboutBlank();
-    }
-    
-    // Fallback implementation
     const newWindow = window.open('about:blank', '_blank');
     const clonedDocument = document.documentElement.cloneNode(true);
     newWindow.document.write(clonedDocument.outerHTML);
@@ -849,11 +632,6 @@ document.querySelectorAll('.sc').forEach(function(btn){
   }
 
   async function openInBlob() {
-    if (proxyEngine) {
-      return await proxyEngine.openInBlob();
-    }
-    
-    // Fallback implementation
     const htmlDocument = document.documentElement.cloneNode(true);
     const scripts = htmlDocument.querySelectorAll('script[src], script:not([src])');
     
@@ -899,13 +677,8 @@ document.querySelectorAll('.sc').forEach(function(btn){
     window.open(url, '_blank');
   }
 
-  // User ID generation from Helios
+  // User ID generation
   function generateUserID() {
-    if (proxyEngine) {
-      return proxyEngine.generateUserID();
-    }
-    
-    // Fallback implementation
     const lowercase = 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz';
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers = '01234567890123456789';
@@ -924,13 +697,8 @@ document.querySelectorAll('.sc').forEach(function(btn){
     return userId;
   }
 
-  // Fullscreen toggle from Helios
+  // Fullscreen toggle
   function toggleFullscreen() {
-    if (proxyEngine) {
-      return proxyEngine.toggleFullscreen();
-    }
-    
-    // Fallback implementation
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
     } else {
@@ -940,35 +708,20 @@ document.querySelectorAll('.sc').forEach(function(btn){
     }
   }
 
-  // Data URL generation from Helios
+  // Data URL generation
   function generateDataURL() {
-    if (proxyEngine) {
-      return proxyEngine.generateDataURL();
-    }
-    
-    // Fallback implementation
     const htmlContent = document.documentElement.outerHTML;
     return 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
   }
 
-  // Clear all data from Helios
+  // Clear all data
   function clearAllData() {
-    if (proxyEngine) {
-      return proxyEngine.clearAllData();
-    }
-    
-    // Fallback implementation
     localStorage.clear();
     sessionStorage.clear();
     document.cookie.split(';').forEach((cookie) => {
       const cookieName = cookie.split('=')[0].trim();
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
     });
-  }
-
-  function getBraveFallbackUrl(targetUrl) {
-    if (!targetUrl) return BRAVE_HOME_URL;
-    return SEARCH_ENGINE_BASE + encodeURIComponent(targetUrl);
   }
 
   class BrowserUI {
@@ -1123,29 +876,23 @@ document.querySelectorAll('.sc').forEach(function(btn){
         `;
       }
 
-      // Helios-style: Use div container for ALL sites (proxy will populate it)
-      // This ensures consistent Shadow DOM isolation for all content
+      // Use direct iframe loading for all other sites (no proxy)
+      const normalizedUrl = normalizeUrl(url);
       return `
         <div class="browser-viewport-tab ${isActive ? 'active' : ''}" data-vp-tab-id="${tab.id}">
           <div class="browser-frame-wrapper">
-            <div id="browserFrame-${tab.id}" class="browser-frame" style="width:100%;height:100%;border:none;background:rgba(0,0,0,0.95);">
-              <div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.5);">
-                <div style="text-align:center;">
-                  <div style="width:40px;height:40px;border:3px solid rgba(var(--accent-a),0.4);border-top-color:white;border-radius:50%;animation:browserSpin 0.6s linear infinite;margin:0 auto 16px;"></div>
-                  <p>Loading via proxy...</p>
-                </div>
-              </div>
-            </div>
+            <iframe
+              id="browserFrame-${tab.id}"
+              class="browser-frame"
+              src="${this._escapeHtml(normalizedUrl)}"
+              allow="fullscreen; microphone; camera; autoplay"
+              allowfullscreen
+              onload="VoltraBrowser.handleFrameLoad('${tab.id}')"
+              onerror="VoltraBrowser.handleFrameError('${tab.id}')"
+            ></iframe>
           </div>
         </div>
       `;
-    }
-
-    // Note: _isBlockedSite is no longer used since we proxy ALL sites
-    // Kept for potential future use if we want to selectively proxy
-    _isBlockedSite(url) {
-      // Helios-style: All sites are proxied for consistency and security
-      return true;
     }
 
     /**
@@ -1235,7 +982,6 @@ document.querySelectorAll('.sc').forEach(function(btn){
       }
 
       const isSearch = parsed.type === 'search';
-      const iframeSrc = targetUrl;
 
       // Push to history (store the requested URL or search url)
       this.historyManager.push(tab.id, targetUrl, parsed.query || targetUrl);
@@ -1243,84 +989,13 @@ document.querySelectorAll('.sc').forEach(function(btn){
       this.tabManager.updateTitle(tab.id, isSearch ? SEARCH_PROVIDER_NAME : parsed.query || this._getDisplayTitle(targetUrl));
       this.tabManager.setLoading(tab.id, true);
 
-      // Helios-style: Use proxy for ALL sites, not just blocked ones
-      // This ensures consistent browsing experience and bypasses CORS restrictions
-      this._loadProxyContent(tab.id, targetUrl);
+      // Load URL directly in iframe (no proxy)
+      this._loadUrlInActiveTab(targetUrl);
 
       this.updateAddressBar(targetUrl);
       this.updateNavButtons();
       this._refreshTabBar();
       this._syncSuggestions();
-    }
-
-    async _loadProxyContent(tabId, url) {
-      const container = document.getElementById('browserFrame-' + tabId);
-      if (!container) return;
-
-      try {
-        this.showLoading();
-        
-        // Use ProxyEngine if available, otherwise use fallback
-        let htmlContent;
-        if (proxyEngine) {
-          await proxyEngine.loadUrl(url, container, {
-            onLoadingStart: () => this.showLoading(),
-            onLoadingComplete: () => this.hideLoading(),
-            onError: (error) => {
-              console.error('Proxy engine error:', error);
-              this._showProxyError(container, tabId, error);
-            },
-            onTitleChange: (title) => {
-              this.tabManager.updateTitle(tabId, title);
-              this._refreshTabBar();
-            }
-          });
-          this.tabManager.setLoading(tabId, false);
-          return;
-        }
-        
-        // Fallback to manual proxy loading
-        htmlContent = await fetchWithMultiProxy(url);
-        
-        // Sanitize and process content
-        const sanitizedHtml = sanitizeHtmlText(htmlContent);
-        const fontFixedHtml = await fixFontsInFetchedContent(sanitizedHtml, url);
-        const scriptExecutedHtml = executeScriptsFromContent(fontFixedHtml);
-        
-        const shadowContainer = createShadowDOMContainer(scriptExecutedHtml, url);
-        
-        container.innerHTML = '';
-        container.appendChild(shadowContainer);
-        
-        this.tabManager.setLoading(tabId, false);
-        this.hideLoading();
-        
-        // Update tab title from the loaded content
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(scriptExecutedHtml, 'text/html');
-        const title = doc.title;
-        if (title) {
-          this.tabManager.updateTitle(tabId, title);
-          this._refreshTabBar();
-        }
-      } catch (error) {
-        console.error('Failed to load proxy content:', error);
-        this._showProxyError(container, tabId, error);
-      }
-    }
-
-    _showProxyError(container, tabId, error) {
-      container.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.7);text-align:center;padding:20px;">
-          <div>
-            <h3 style="margin:0 0 10px 0;">Failed to load via proxy</h3>
-            <p style="margin:0 0 20px 0;">All proxy services are currently unavailable.</p>
-            <button onclick="VoltraBrowser.openTabExternally('${tabId}')" style="padding:10px 20px;background:rgba(var(--accent-a),0.3);color:white;border:none;border-radius:8px;cursor:pointer;">Open externally</button>
-          </div>
-        </div>
-      `;
-      this.tabManager.setLoading(tabId, false);
-      this.hideLoading();
     }
 
     _loadBlankTab(tabId) {
@@ -1419,6 +1094,10 @@ document.querySelectorAll('.sc').forEach(function(btn){
         this._hideSuggestions();
         e.target.blur();
       }
+      if (e.key === 'Tab') {
+        // Allow tab to move focus normally
+        return;
+      }
     }
 
     handleAddressInput(value) {
@@ -1500,8 +1179,10 @@ document.querySelectorAll('.sc').forEach(function(btn){
     clearHistory() {
       this.historyManager.clearAll();
       this.tabManager.clearAll();
-      localStorage.removeItem('orbit_tabs');
-      localStorage.removeItem('orbit_history');
+      // Create a fresh tab after clearing
+      this.tabManager.createTab(BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
+      this.historyManager.push(this.tabManager.activeTabId, BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
+      this._rebuildAll();
       alert('History cleared successfully');
       this.toggleMenu();
     }
@@ -1569,8 +1250,10 @@ document.querySelectorAll('.sc').forEach(function(btn){
       if (entry) {
         this._loadUrlInActiveTab(entry.url);
         this.tabManager.updateUrl(tab.id, entry.url);
+        this.tabManager.updateTitle(tab.id, entry.title || this._getDisplayTitle(entry.url));
         this.updateAddressBar(entry.url);
         this.updateNavButtons();
+        this._refreshTabBar();
       }
     }
 
@@ -1581,8 +1264,10 @@ document.querySelectorAll('.sc').forEach(function(btn){
       if (entry) {
         this._loadUrlInActiveTab(entry.url);
         this.tabManager.updateUrl(tab.id, entry.url);
+        this.tabManager.updateTitle(tab.id, entry.title || this._getDisplayTitle(entry.url));
         this.updateAddressBar(entry.url);
         this.updateNavButtons();
+        this._refreshTabBar();
       }
     }
 
@@ -1594,7 +1279,11 @@ document.querySelectorAll('.sc').forEach(function(btn){
         this.showLoading();
         this.tabManager.setLoading(tab.id, true);
         // Reload by re-setting src
-        iframe.src = iframe.src;
+        const currentSrc = iframe.src;
+        iframe.src = '';
+        setTimeout(() => {
+          iframe.src = currentSrc;
+        }, 10);
         this.updateNavButtons();
       }
     }
@@ -1613,7 +1302,7 @@ document.querySelectorAll('.sc').forEach(function(btn){
       if (!tab) return;
       const url = this.historyManager.getCurrentUrl(tabId) || tab.url;
       if (url && url !== 'about:blank') {
-        const externalUrl = url.startsWith('https://search.brave.com/search?q=') ? url : getProxyUrl(url);
+        const externalUrl = normalizeUrl(url);
         window.open(externalUrl, '_blank', 'noopener,noreferrer');
       }
     }
@@ -1672,34 +1361,8 @@ document.querySelectorAll('.sc').forEach(function(btn){
     }
 
     handleFrameError(tabId) {
-      const iframe = document.getElementById('browserFrame-' + tabId);
-      const blockedOverlay = document.getElementById('browserFrameBlocked-' + tabId);
-      if (iframe) {
-        this.tabManager.setLoading(tabId, false);
-        this.hideLoading();
-      }
-      if (blockedOverlay) {
-        blockedOverlay.style.display = 'flex';
-      }
-      this._refreshTabBar();
-    }
-
-    tryBraveFallback(tabId) {
-      const tab = this.tabManager.tabs[tabId];
-      if (!tab) return;
-      const currentUrl = this.historyManager.getCurrentUrl(tabId) || tab.url || '';
-      const fallbackUrl = getBraveFallbackUrl(currentUrl);
-      this.historyManager.push(tabId, fallbackUrl, SEARCH_PROVIDER_NAME);
-      this.tabManager.updateUrl(tabId, fallbackUrl);
-      this.tabManager.updateTitle(tabId, SEARCH_PROVIDER_NAME);
-      this.tabManager.setLoading(tabId, true);
-      const iframe = document.getElementById('browserFrame-' + tabId);
-      if (iframe) {
-        this.showLoading();
-        iframe.src = fallbackUrl;
-      }
-      this.updateAddressBar(fallbackUrl);
-      this.updateNavButtons();
+      this.tabManager.setLoading(tabId, false);
+      this.hideLoading();
       this._refreshTabBar();
     }
 
@@ -1755,7 +1418,7 @@ document.querySelectorAll('.sc').forEach(function(btn){
 
       this.showLoading();
       this.tabManager.setLoading(tab.id, true);
-      iframe.src = getProxyUrl(url);
+      iframe.src = normalizeUrl(url);
       this.updateNavButtons();
     }
 
