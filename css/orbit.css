@@ -923,6 +923,25 @@ body.hide-orbs .orb1 {
   background: rgba(20, 20, 30, 0.98);
 }
 
+.browser-bookmarks-bar.auto-hide {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease;
+}
+
+.browser-bookmarks-bar.auto-hide:hover,
+.browser-bookmarks-bar.auto-hide:focus-within {
+  max-height: 60px;
+  opacity: 1;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  pointer-events: auto;
+}
+
 .browser-bookmark-item {
   display: flex;
   align-items: center;
@@ -2163,6 +2182,17 @@ body.game-page-active .main-content {
   z-index: 100;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(12px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(0.96);
+  transition: opacity 0.12s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0s 0.2s;
+}
+
+.browser-search-engine-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.12s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0s;
 }
 
 .browser-search-engine-option {
@@ -2172,13 +2202,19 @@ body.game-page-active .main-content {
   padding: 10px 12px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, transform 0.15s ease;
   color: rgba(255, 255, 255, 0.85);
 }
 
 .browser-search-engine-option:hover {
   background: rgba(var(--accent-a), 0.2);
   color: rgba(255, 255, 255, 1);
+  transform: scale(1.03);
+  box-shadow: 0 0 12px rgba(var(--accent-a), 0.15);
+}
+
+.browser-search-engine-option:active {
+  transform: scale(0.98);
 }
 
 .browser-search-engine-option img {

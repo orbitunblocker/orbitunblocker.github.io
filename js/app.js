@@ -2391,7 +2391,12 @@
           }
 
           setTimeout(() => {
-            iframe.src = src;
+            // Route through UV proxy for all game loads
+            var gameSrc = src;
+            if (typeof window.encodeUVUrl === 'function') {
+              gameSrc = window.encodeUVUrl(src);
+            }
+            iframe.src = gameSrc;
             iframe.removeAttribute('data-src');
 
             // Hide loading overlay when iframe loads
