@@ -1,0 +1,268 @@
+[1781820258252] === EVIDENCE COLLECTION: Google Search Navigation Trace ===
+[1781820261288] Server started
+[1781820262727] === STEP 1: Load Orbit homepage ===
+[1781820262774] RESP 200             Document   http://localhost:8080/
+[1781820262845] RESP 200             Stylesheet http://localhost:8080/css/orbit.css?v=20260606
+[1781820262868] RESP 200             Script     http://localhost:8080/js/browser-engine.js?v=20260604
+[1781820262881] RESP 200             Script     http://localhost:8080/js/app.js?v=20260604
+[1781820262895] RESP 200             Script     http://localhost:8080/uv/uv.bundle.js?v=3.2.8
+[1781820262915] RESP 200             Stylesheet https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@400&family=Chakra+Petch:
+[1781820263026] RESP 200             Image      https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif
+[1781820263148] CONSOLE [BOOT] DOMContentLoaded fired at 1781820263145
+[1781820263340] CONSOLE [BOOT] Registering getPort listener at 1781820263319
+[1781820263342] CONSOLE [BOOT] getPort listener registered, now registering SW at 1781820263320
+[1781820263362] RESP 200             Font       https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2
+[1781820263367] RESP 200             Font       https://fonts.gstatic.com/s/commissioner/v24/tDaH2o2WnlgI0FNDgduEk4jAhwgumbU1SVfU5BD8OuRL8OstC6KOhgvBYWSFJ-Mgdrgiju6fF8m
+[1781820263425] RESP 206             Media      https://files.catbox.moe/vgjm1c.mp3
+[1781820263439] RESP 200             Font       https://fonts.gstatic.com/s/raleway/v37/1Ptxg8zYS_SKggPN4iEgvnHyvveLxVvaorCIPrE.woff2
+[1781820263564] RESP 206             Media      https://files.catbox.moe/h71sur.mp3
+[1781820264084] CONSOLE [BOOT] getPort received from SW, creating SharedWorker at 1781820264041
+[1781820264088] CONSOLE [BOOT] SharedWorker constructed, transferring port at 1781820264042
+[1781820264099] CONSOLE [BOOT] SharedWorker port transferred to SW at 1781820264045
+[1781820264103] CONSOLE [BOOT] Service worker registered at 1781820264052 scope: http://localhost:8080/
+[1781820264104] CONSOLE [BOOT] SW update found, state: installing
+[1781820264156] CONSOLE [BOOT] SW state changed to: installed at 1781820264148
+[1781820264158] CONSOLE [BOOT] SW state changed to: activating at 1781820264148
+[1781820264159] CONSOLE [BOOT] SW state changed to: activated at 1781820264148
+[1781820264162] CONSOLE [BOOT] SW activated at 1781820264149
+[1781820264163] CONSOLE [PORT_SYNC] received state
+[1781820264164] CONSOLE [PORT_SYNC] portReady: false
+[1781820264165] CONSOLE [PORT_SYNC] bareMuxReady: false
+[1781820264168] CONSOLE [PORT_SYNC] received state
+[1781820264171] CONSOLE [PORT_SYNC] portReady: false
+[1781820264174] CONSOLE [PORT_SYNC] bareMuxReady: false
+[1781820264329] RESP 200             Font       https://fonts.gstatic.com/s/chakrapetch/v13/cIf6MapbsEk7TDLdtEz1BwkWn6pg.woff2
+[1781820264460] CONSOLE [PORT_SYNC] received state
+[1781820264462] CONSOLE [PORT_SYNC] portReady: true
+[1781820264463] CONSOLE [PORT_SYNC] bareMuxReady: true
+[1781820268354] Boot diagnostics: {
+  "bootStatus": {
+    "swReady": true,
+    "portReady": true,
+    "bareMuxReady": true,
+    "failedStage": "sync",
+    "_log": [
+      {
+        "key": "DCLfired",
+        "val": true,
+        "at": 1781820263146
+      },
+      {
+        "key": "getPortListenerRegistered",
+        "val": true,
+        "at": 1781820263320
+      },
+      {
+        "key": "portRequestReceived",
+        "val": true,
+        "at": 1781820264041
+      },
+      {
+        "key": "workerConstructed",
+        "val": true,
+        "at": 1781820264042
+      },
+      {
+        "key": "portTransferred",
+        "val": true,
+        "at": 1781820264045
+      },
+      {
+        "key": "swReady",
+        "val": true,
+        "at": 1781820264052
+      },
+      {
+        "key": "swActivated",
+        "val": true,
+        "at": 1781820264149
+      },
+      {
+        "key": "swPortStateSync",
+        "val": true,
+        "at": 1781820264152
+      },
+      {
+        "key": "portReady",
+        "val": false,
+        "at": 1781820264152
+      },
+      {
+        "key": "bareMuxReady",
+        "val": false,
+        "at": 1781820264152
+      },
+      {
+        "key": "swPortStatus",
+        "val": "pending",
+        "at": 1781820264152
+      },
+      {
+        "key": "swPortStateSync",
+        "val": true,
+        "at": 1781820264153
+      },
+      {
+        "key": "portReady",
+        "val": false,
+        "at": 1781820264153
+      },
+      {
+        "key": "bareMuxReady",
+        "val": false,
+        "at": 1781820264153
+      },
+      {
+        "key": "swPortStatus",
+        "val": "pending",
+        "at": 1781820264153
+      },
+      {
+        "key": "swPortStateSync",
+        "val": true,
+        "at": 1781820264453
+      },
+      {
+        "key": "portReady",
+        "val": true,
+        "at": 1781820264453
+      },
+      {
+        "key": "bareMuxReady",
+        "val": true,
+        "at": 1781820264453
+      },
+      {
+        "key": "swPortStatus",
+        "val": "ready",
+        "at": 1781820264453
+      },
+      {
+        "key": "failedStage",
+        "val": "sync",
+        "at": 1781820267153
+      }
+    ],
+    "DCLfired": true,
+    "getPortListenerRegistered": true,
+    "portRequestReceived": true,
+    "workerConstructed": true,
+    "portTransferred": true,
+    "swActivated": true,
+    "swPortStateSync": true,
+    "swPortStatus": "ready"
+  },
+  "swController": {
+    "state": "activated",
+    "scriptURL": "http://localhost:8080/sw.js"
+  },
+  "hasVoltraBrowser": true,
+  "hasLoadSection": true,
+  "hasLoadBrowserPage": true,
+  "windowKeys": "opener, open, showDirectoryPicker, showOpenFilePicker, showSaveFilePicker, VoltraBrowser, loadStoredSettings, openUrlInAboutBlank, openUrlInBlobTab, loadSection, openGame, openGameTab, openProxyTab, openProxyBlankTab, openSearchResult, loadBrowserPage, showCustomUrlRow, showOnboardingStep"
+}
+[1781820268357] === STEP 2: Open browser section ===
+[1781820268367] Browser open method: loadSection
+[1781820268470] RESP 200             Image      https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256
+[1781820268574] RESP 200             Image      https://duckduckgo.com/favicon.ico
+[1781820268581] RESP 200             Image      https://www.bing.com/favicon.ico
+[1781820268593] CONSOLE_ERR Failed to load resource: the server responded with a status of 404 ()
+[1781820268596] RESP 404             Image      https://search.brave.com/favicon.ico
+[1781820268672] RESP 200             Image      https://4get.ca/favicon.ico
+[1781820272385] Page state after browser open: {"mountExists":true,"containerExists":true,"iframeCount":1,"iframes":[{"id":"browserFrame-tab-1-1781820263027","src":""}],"bodyClass":"smooth-scroll","heroDisplay":"not-checked"}
+[1781820272386] === STEP 3: Navigate to Google ===
+[1781820272395] CONSOLE [UV-ROUTE] input: https://www.google.com | normalized: https://www.google.com | shouldUseUV: true | encoded: /service/hvtrs8%2F-wuw%2Cgmoelg.aoo | has /service/: true
+[1781820272404] FAIL ?          ?  err=net::ERR_ABORTED
+[1781820272409] Navigation method: navigate-called
+[1781820273245] RESP 200 [SW]        Document   http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo
+[1781820273425] RESP 200             Script     http://localhost:8080/uv/uv.config.js
+[1781820273432] RESP 200             Script     http://localhost:8080/uv/uv.handler.js
+[1781820273439] RESP 200             Script     http://localhost:8080/uv/uv.client.js
+[1781820273489] RESP 200             Script     http://localhost:8080/uv/uv.bundle.js
+[1781820273625] PAGE_ERROR Unable to get bare-mux workerPath from localStorage.
+[1781820273646] PAGE_ERROR __uv is not defined
+[1781820273647] RESP 200 [SW]        Stylesheet http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fqs-k%3Fxhs%2Chf.%3A0i4LQ%60oW9G.N.U.M%2Fcm%3FACAG
+[1781820273671] PAGE_ERROR __uv is not defined
+[1781820273684] PAGE_ERROR __uv is not defined
+[1781820273699] PAGE_ERROR __uv is not defined
+[1781820273737] PAGE_ERROR __uv is not defined
+[1781820273752] PAGE_ERROR __uv is not defined
+[1781820273757] RESP 200 [SW]        Image      http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fnoeoq%2Ffomdneq%2F0006-wmrnd%2Fcwp%2F2224-vhg-crv-mf%2Ftje%2F
+[1781820275833] RESP 200 [SW]        Script     http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fhs-k%3Fxhs%2Chf.gn%2CB%3AD%3AnflOwAM%2C221%3B.M%2
+[1781820276302] PAGE_ERROR _._DumpException is not a function
+[1781820276305] RESP 200 [SW]        Stylesheet http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fqs-k%3Foe.cs%7B.pmFKqWQOVEG.N.U.M%2Fo%3Dnl%5Dtfm.
+[1781820276308] RESP 200 [SW]        Script     http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fhs-k%3Foe.cs%7B.gn%5DUQ.vCawzYDo0OS.0039%2CO-rv%3
+[1781820276483] PAGE_ERROR _._DumpException is not a function
+[1781820279908] FAIL Media      https://files.catbox.moe/vgjm1c.mp3  err=net::ERR_ABORTED
+[1781820280423] === STEP 4: Check post-navigation state ===
+[1781820280430] Post-navigation state: [
+  {
+    "id": "browserFrame-tab-1-1781820263027",
+    "src": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo",
+    "srcdoc_len": 0,
+    "title": "Google",
+    "bodyLen": 147,
+    "readyState": "complete",
+    "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo",
+    "isErrorPage": false
+  }
+]
+[1781820280431] === STEP 5: Attempt Google search ===
+[1781820280432] Google iframe found — attempting search
+[1781820282486] Search state: {"submitted":true,"method":"form"}
+[1781820282668] RESP 200 [SW]        Document   http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fqecrah?q=web+proxy+test&sca_esv=36896063baa059e5&source=hp&ei
+[1781820282739] RESP 200             Script     http://localhost:8080/uv/uv.client.js
+[1781820282746] RESP 200             Script     http://localhost:8080/uv/uv.config.js
+[1781820282766] RESP 200             Script     http://localhost:8080/uv/uv.handler.js
+[1781820282773] RESP 200             Script     http://localhost:8080/uv/uv.bundle.js
+[1781820282791] PAGE_ERROR Unable to get bare-mux workerPath from localStorage.
+[1781820282797] PAGE_ERROR __uv is not defined
+[1781820282804] PAGE_ERROR __uv is not defined
+[1781820284871] CONSOLE_ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+[1781820284875] RESP 404             Ping       http://localhost:8080/gen_204?cad=sg_trbl&ei=ems0ate_EL-eqtsP3Z33-AU
+[1781820292509] Search result state: {"title":"Google Search","bodyLen":86,"url":"http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fqecrah?q=web+proxy+test&sca_esv=36896063baa059e5&source=hp&ei=cGs0aoCTIO6jqtsPz8-zoAM&iflsig=AFdpzrgAAAAAajR5gMOxmR3-8TEykZfwqp-ChxPBwLE0","readyState":"complete","isErrorPage":false,"isWhitePage":false,"bodyPreview":"If you're having trouble accessing Google Search, please click here, or send feedback."}
+[1781820292511] === STEP 6: Attempt UV Reload ===
+[1781820292525] Reload result: no-reload-btn
+[1781820292526] 
+========== EVIDENCE REPORT ===========
+[1781820292529] Total requests: 35, responses: 34, failed: 2
+[1781820292530] SW handled: 7, Bare: 0, Service: 7, Cached: 0
+[1781820292530] 
+=== FAILURES (chronological) ===
+[1781820292531] #1 [?] net::ERR_ABORTED blocked=none — ?
+[1781820292534] #2 [Media] net::ERR_ABORTED blocked=none — https://files.catbox.moe/vgjm1c.mp3
+[1781820292536] 
+FIRST FAILURE: #1 [?] ?
+[1781820292537]   error: net::ERR_ABORTED
+[1781820292538]   blocked: none
+[1781820292539]   This is a ? request
+[1781820292540] 
+=== ALL SW-HANDLED ===
+[1781820292541]   200 Document   http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo
+[1781820292543]   200 Stylesheet http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fqs-k%3Fxhs%2Chf.%3A0i4LQ%60oW9G.N.U.M%2Fcm%3FACAGBCACECACAC
+[1781820292544]   200 Image      http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fnoeoq%2Ffomdneq%2F0006-wmrnd%2Fcwp%2F2224-vhg-crv-mf%2Ftje%2Fdkvkne-jec
+[1781820292545]   200 Script     http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fhs-k%3Fxhs%2Chf.gn%2CB%3AD%3AnflOwAM%2C221%3B.M%2Fcm%3FACAC
+[1781820292546]   200 Stylesheet http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fqs-k%3Foe.cs%7B.pmFKqWQOVEG.N.U.M%2Fo%3Dnl%5Dtfm.afcem1%2Cn
+[1781820292547]   200 Script     http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fhs-k%3Foe.cs%7B.gn%5DUQ.vCawzYDo0OS.0039%2CO-rv%3Dh%2Fo%3D%
+[1781820292548]   200 Document   http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fqecrah?q=web+proxy+test&sca_esv=36896063baa059e5&source=hp&ei=cGs0aoCTI
+[1781820292549] 
+=== ALL BARE REQUESTS ===
+[1781820292551] 
+=== ALL SERVICE (/) REQUESTS ===
+[1781820292552]   200 Document   fromSW=true cache=false http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo
+[1781820292553]   200 Stylesheet fromSW=true cache=false http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fqs-k%3Fxhs%2Chf.%3A0i4LQ%60oW9G.N.U.M%2Fcm%3FACAGBCACECACAC
+[1781820292557]   200 Image      fromSW=true cache=false http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fnoeoq%2Ffomdneq%2F0006-wmrnd%2Fcwp%2F2224-vhg-crv-mf%2Ftje%2Fdkvkne-jec
+[1781820292559]   200 Script     fromSW=true cache=false http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fhs-k%3Fxhs%2Chf.gn%2CB%3AD%3AnflOwAM%2C221%3B.M%2Fcm%3FACAC
+[1781820292564]   200 Stylesheet fromSW=true cache=false http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fqs-k%3Foe.cs%7B.pmFKqWQOVEG.N.U.M%2Fo%3Dnl%5Dtfm.afcem1%2Cn
+[1781820292566]   200 Script     fromSW=true cache=false http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fhs-k%3Foe.cs%7B.gn%5DUQ.vCawzYDo0OS.0039%2CO-rv%3Dh%2Fo%3D%
+[1781820292568]   200 Document   fromSW=true cache=false http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fqecrah?q=web+proxy+test&sca_esv=36896063baa059e5&source=hp&ei=cGs0aoCTI
+[1781820292577] 
+=== STATUS-0/RANGEERROR CHECK ===
+[1781820292580] PASS: No invalid status codes found
+[1781820292582] 
+=== CONSOLE ERRORS ===
+[1781820292586]   [error] Failed to load resource: the server responded with a status of 404 ()
+[1781820292587]   [error] Failed to load resource: the server responded with a status of 404 (Not Found)
+[1781820292588] 
+========== END OF REPORT ===========
+[1781820309840] Done

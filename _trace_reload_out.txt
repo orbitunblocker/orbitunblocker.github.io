@@ -1,0 +1,39 @@
+[1781820455417] === EVIDENCE 5: Initial navigation timing vs portReady ===
+[1781820457307] Port ready after 1s: true
+[1781820457308] SW events so far: 21 events
+[1781820467399] 
+EVIDENCE 5 result: {
+  "title": "Google",
+  "bodyLen": 147,
+  "isErrorPage": false,
+  "errorMsg": "",
+  "readyState": "complete",
+  "bodyPreview": "About\nStore\nGmailImages\nSign in\n \nAdvertising\nBusiness\nHow Search works\nBuild, create, and do more with AI tools from Google\nPrivacy\nTerms\nSettings"
+}
+[1781820467402] 
+Port ready timing analysis:
+[1781820467403]   portReady event: +1254ms from first event
+[1781820467407] 
+No error page (navigation succeeded on first try)
+[1781820467471] 
+
+=== EVIDENCE 6: Orbit reload tab blocking ===
+[1781820484135] Tabs before reload: [{"id":"browserFrame-tab-1-1781820456008","src":"http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo"}]
+[1781820484138] Reloading Orbit...
+[1781820490473] After reload — port state: failed, portReady: false
+[1781820490474] 
+Post-reload SW events (first 20):
+[1781820490476]   +0ms [BOOT] DOMContentLoaded fired at 1781820484420
+[1781820490478]   +16ms [BOOT] Registering getPort listener at 1781820484434
+[1781820490480]   +16ms [BOOT] getPort listener registered, now registering SW at 1781820484434
+[1781820490481]   +18ms [BOOT] Service worker registered at 1781820484438 scope: http://localhost:8080/
+[1781820490485]   +1023ms [PORT_SYNC] received state
+[1781820490486]   +1023ms [PORT_SYNC] portReady: false
+[1781820490487]   +1023ms [PORT_SYNC] bareMuxReady: false
+[1781820490488] First PORT_SYNC at +1023ms: [PORT_SYNC] received state
+[1781820490490] 
+Opening browser after reload...
+[1781820494534] Iframes after reload + browser: [{"id":"browserFrame-tab-1-1781820456008","src":"https://www.google.com/"}]
+[1781820494544] Tabs after reload: [{"id":"browserFrame-tab-1-1781820456008","src":"https://www.google.com/"}]
+[1781820494589] 
+========== RELOAD EVIDENCE COMPLETE ==========

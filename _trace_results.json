@@ -1,0 +1,159 @@
+{
+  "requests": 35,
+  "responses": 34,
+  "failures": [
+    {
+      "url": "?",
+      "type": "?",
+      "errorText": "net::ERR_ABORTED",
+      "blockedReason": "none",
+      "canceled": true
+    },
+    {
+      "url": "https://files.catbox.moe/vgjm1c.mp3",
+      "type": "Media",
+      "errorText": "net::ERR_ABORTED",
+      "blockedReason": "none",
+      "canceled": true
+    }
+  ],
+  "swHandled": [
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo",
+      "status": 200,
+      "type": "Document",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/html"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fqs-k%3Fxhs%2Chf.%3A0i4LQ%60oW9G.N.U.M%2Fcm%3FACAGBCACECACACACACICACACACACACACACACACACACASACACADBAACAGACAKACACACQCAIAEESCCACACACACwecCAFACACACACACACICACACACgCACQCACACACACAeACACACACACCCACACACQCBCACkCACBCASACACASACACACACACAeICACACACACACACAeACACACACgCESBeA%40ACACAOICACACACACACACACACACACAKBCAkACACIEACACAKACACACAKACAGIKAmACBPACACACACCuACACACACACAKACACACACACGCQAAGECACAKACACAKACICAeAAAeCOoCECSDQKACCkAuACACI%40ACACECACACACACACACA%5BASACACACACQCw%40AKBCACACACACACACACACMCACACACACACACACACACACACACACACACAm%2Ff%3D3%2Fgd%3F1-rq%3DCCV92oJ17w%60z4afVP_jHgQZgAjUUUz66Mg-m%3Fcfoq%2Car.hqm.jqa.m%604XU%60%2CaEv92b.SLUl3.qfdeKg%2CqTqDOc.dvl2hf%2CgHFfn%2C%5BV7bge.d.cqi%3Dc%60%3D32352917%3A",
+      "status": 200,
+      "type": "Stylesheet",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/css"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fnoeoq%2Ffomdneq%2F0006-wmrnd%2Fcwp%2F2224-vhg-crv-mf%2Ftje%2Fdkvkne-jecdgr%2Fjwng-32%2F6551671%3A35131296.1-nau.eid",
+      "status": 200,
+      "type": "Image",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "image/gif"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fhs-k%3Fxhs%2Chf.gn%2CB%3AD%3AnflOwAM%2C221%3B.M%2Fcm%3FACACACACACACACACACACACACACACACACACACACACACACACACACACACACACAAECACACACI%40ACACACACACACACACYSACACACACACACACACACASCCgCACQCACACACACAeAKACASACACACACAFACQCBCACkCAKB%40ACACACACACACACACACACIeACACAKACD%2FACASACACACACAAA%40ACACACACACCCBSACUCACAKACCCACACACACACACACACACACgCACACACACACACAGACACACBSACACAGACACACACACACACACACACACQCACACACACACACAKACACUCACICgCACACACACACACACACCeAuACACA%40ACACACACACACACACACA6ACAGBCACACACA%40AKBCAKACACA%400CgSc%5BUnMCACACACACACACACACACACACCCACpeFzImCKACACACACACACACACACACACACACACBC6AkCACACAKDD%2Ff%3D3%2Fgd%3F1-de%3D6%2Fps%3FAAT%3B0mFukryo-X_awzSsfiA3i%5Dg%5Dh%3A6voC%2Fge%3FANeHi%60%3A%408eLud9AdecP8TirCjd%3B%40MzAEc8E7bDsg%3B%40gQ6ob8fkdh5f%3B%40juMae8cZX0W%60%3BAIXTEb8Ksh%7Bk%60%3BAxZAUb8Y%7BRNva%3BFQGugd8Fgvjcd%3BFUNq%40%3APKdG7c9Dik4gg%3AHZoW%3Be9DrcP3f%3AxL52zf9Dw7LI8C4zNgd%3BGA%40SX%3AOXXt%3Bd9EQrRQa%3AoNVJtc9ETNjjd%3Arw50Ec9EhXJp%60%3ArSJqj%3BGmX2%40f8zp1hr%60%3BGnncLd8WgHe49F74KAg%3AXgqFj%3BD9oqve8UmRabg%3BDSzmWe8fkZP8%60%3BDkwkdc8i%3AH0c9Fov%3BNa%3AM1Vzuc9G2KjT%60%3ANIcoX%3BEEiGfd8e3RxQf%3BElgZN%3AH1C7Md9HODFWg%3AE8SUfb9HvPzrf%3AEx%3AjCb9I%40AFCa%3APYsuPb9ImGnCd%3A%605nhtb9JZJQm8ik1PGd%3BHXQ8db8Qh0qua%3BHqQq5d8y%3BeRhg%3BHs%60Njc8Xf8kUf%3BI5lYVd8ZFZarg%3BIA1P0%3AA3HnAe9KFb4n%60%3AdE%3Bn0%3BIOzcI%3AMZsGve9KSzUif%3AXMIkL%3BIpPAwe8Tka77%60%3BNBeRNc8SfcuH%60%2CZVONtd9L%40n%3ACd%3A%60J%3BL2c9LGiiZg%3A%60ydTMb.lqjTma%3BNXC8%60%3As7MdId9LqNch%60%3AwcELLb9MLkCdg%3AIMAd3d9NH1pfg%3AsTlo%40f9NRKcK8SfcuH%60%3BLSGoZ%3AnaxG5b9NhIued%3A%5BVei5d9Nr8Skf%3AFpz6sc9N%7Bt4ia%3Ahn0sEd9OKfUU%60%3AsfMYad9OeaeBg%3AaNVe2%3BMisE0c8TDpGK9OmK7v8Sr6%3BO9OmhKYg%3AopGASb9Phpnuf%3ARoGs%3Bb9PrTNXf%3ArJ%5Bjz%3BS1Mw5b8x7CQu9QG22Bg%3AeIntM%3BSFMGnf8PS2Cog%3BSGP0ed8Mnhoy9Q%5BLD2%60%3ArASYWd9Qu8De%60%3AhpcvWe9R6IKI%60%3ASWdeIf9R%3BUnx8CP7Wfg%3BPCD5Qd8X3k%40mf%3BQLvqM%3AIh3x%5Be9SODN4a%3AdTdGM%3BQNWn1%3AXwFk%3Bd.xF8Ip9SLk6Jg%3AuWOhe%3BQcK3%5Bc8e5Hxg%60%2Cg7Jzeb9SjpD6g%3AL0rvEc9Slajrg%3AoGAtmb9SuCsAf%3AdX%60CXc9SxQS3g%3AfNjodb9TKUTQf%3AnWVJud9TpoX1f%3AtVTzhb9U%3B6rRf%3ADsP06%3BWBIJX%3ANGFJEb9UFr%5B1a%3AL0D2%3Bd.W70LVf%2Cgpq44d.wai%7BUg%3BWVojGd8EgsPs%60%3BWVxb%3Bc8ItPX6f%3BWYPIGb8HxTCQa%3BWyE7Ib8wSd2G9V0HVTg%3APonT%5B%3BTGPfz%3ATFsbp%3BTMwEo%3ArL5s%40c9VL6hIa%3AfdSywf9VMceDg%3A%5BqwhVb9VjA5bf%3AtAoQDf9VqAsS%60%3ARGd2Pe9W%3BQQQg%3A%7BnAWuc9WFG%7BFg%3AhcTOzd9WZtLe%60%3ASU%3BBOd9Wdmfug%3Ae3OJnb9Wn57i%60%3Atg%60iIb9Y1c7sf%3ADG%60fNe9YKZoRf%3AC1%7Bn7d9YT5%60eg%3AKvRZ4d9YlHWBd%3AqNqSmb9ZQH4ta%3ASAtyNe9ZUEWA8adR6Cd%3BXlMOOb8P2I2Ea%3Bc54pLe8JGfAw%60%3BcAHE%3Bc8WJW4Ed%3BcCH9vf8qIfvva%3BcVXq1e8EOeTI%60%3BcZ41md8apTuJ9aai5y8Z7Tp6a%3B%60DZwPe8UqyMta%3B%60UKkub8WOwGHg%3B%60cRXQc8gQZNJ%60%3BaEv92b8wq9Vla%3BaFVWce8gV8snf%3BfImS%40b8ZeGe9%60%3BfLnj0%3ASqv3Ef9dZdXV8a5QVqf%3BfouIEb8e%60Z1m%60%2CgbX3ob9dvl2hf%3AnLSWDe9e%40AgS%60%3AAk43vb9e%40Z7Nf%3Acufvfe9eJDdl8odjTk%60%3BgJIcjc8AVg3bg%3BgO1lqe8UgfMm%60%3BguMX%5B%3AMZhbS%3Be8lkz%3AW4OzIc9gcu%6048TL6%60Mg%3BetTSk%3AgkWO%5Bd9h1M%5Bof%3Aus%3BTnc9hI65q%60%3ASWGO7b9hTia1%60%3AIqjyib9hgH%4018sDcxq9hhRm6g%3AD60sE%3BjlsGZ%3ADWx1kc9hqLqYa%3ATl31%3A%3BjwmVJd8zu4W8a%3BkFSyIf8QKhDr9jHj0G8kD2m2%60%3Bi1M0pf8plOWLf%3Bi2Sxab8X%5B53pg%3BibCm%3Bd8MiH%7BGf%3BnOM0Td8OVA1Ag%3Bnbdk%7Bf8MsGfUf%3BniCz5d8kD2m2%60%3BoWxs%3Bc8fx5wkd%3BlBXnXe8CtEpj%60%3BlJu4Ed8dRFXH9npDaw8SwEmDg%3BmGvAwc8sMXDj9oQULyf%3AdTdGM%2CdTdGM%3BmUnnrc8RcgFla%3Bmi%40hpe8OwMiRf%3BmkWaWd8wKtcd%60%3BrKHiZd8VAelha%3BrNql0d8j%3BYwya%3BrXfR%5Bb8JIoIVg%3Brj%3A2ne8wu06Dd%3BsGT2wc8HJi24a%3BsQGoMc8KWM5Z.d5YQff%3BsZz2Dc8j2xpE9qcS1gf%3A%7BiNg4e9qcf%40Pf%3Aqg%5B6Xb9qcvpXg%3AK0A9w%3BsdfgIe8d5YQff%2Cz4DYZe9rfezKd%3ADEiKF%3BpmUah%3ARMQ6Qd9rmpiZ8hhosog%3BqTqDOc8JisdDd%3BqZodtc8rfGGfa%3BvH6IKe8Yor%7B69tgSPS%60%3A%40MNak%3BvoqKtd8ZAqR39tpZN0%60%3AsY%3APDe9uwQiY8u0V1uf%3BtE%5BCLb8FcqqVf%3BtRnMtf8Iu9Zo9vdVuPf%3Ancpkue9w1bXC%60%3AXPEaKb9w6rQdd%3AZKkZ%3B%3Bu9u84d8XuhWE%60%2Cft6g0b.gID%3B0a%2CnWTZTe9wSl%5Bvg%3AcLWfR%3BuR7FPb8O3Ghzg%2CVtaOve9wT5Rja%3AN8IGze9x%3BN%3Big%3AIH6Qmf9x%40bqra%3ALEU1Sc9xraPo%60%3ACVsZ%3Bb9yqNkMa%3AApKBhd9yzTahd%3AIUO7X%3Bx95YEf8owg%3Btg%3BxaKgRb8Sn0rxf%2Fo%3Dadms.cp%2Cjso%2Chsc%2Cob6ZWb.cGt%3B0%60%2CQNWn1%2CsdfgIe.sVsFMa%2Cftn0jd.eJDdl.YT5%60eg%2Cf%2Cask%3Fab%3F10170%3B358",
+      "status": 200,
+      "type": "Script",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/javascript"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fqs-k%3Foe.cs%7B.pmFKqWQOVEG.N.U.M%2Fo%3Dnl%5Dtfm.afcem1%2Cnl%5Dfu%2Ccbnd-ezco%3D-d%3F1-ef%3D3%2Fat%3Fzemq%2Fps%3FAC2%5BrVvTbW6iF%5BSjm%6035FZV%60eQui0SBlfS",
+      "status": 200,
+      "type": "Stylesheet",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/css"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fhs-k%3Foe.cs%7B.gn%5DUQ.vCawzYDo0OS.0039%2CO-rv%3Dh%2Fo%3D%5Daa%2C%5Daud.afa.lndr%2Csafs.a%60lf%2Fgxo%3D-d%3F1-ef%3D3%2Fps%3FAC2%5BrVsSS170_KBvlJyrM%40VlgKiUg7aRdu",
+      "status": 200,
+      "type": "Script",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/javascript"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fqecrah?q=web+proxy+test&sca_esv=36896063baa059e5&source=hp&ei=cGs0aoCTIO6jqtsPz8-zoAM&iflsig=AFdpzrgAAAAAajR5gMOxmR3-8TEykZfwqp-ChxPBwLE0",
+      "status": 200,
+      "type": "Document",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/html"
+    }
+  ],
+  "bareRequests": [],
+  "svcRequests": [
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo",
+      "status": 200,
+      "type": "Document",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/html"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fqs-k%3Fxhs%2Chf.%3A0i4LQ%60oW9G.N.U.M%2Fcm%3FACAGBCACECACACACACICACACACACACACACACACACACASACACADBAACAGACAKACACACQCAIAEESCCACACACACwecCAFACACACACACACICACACACgCACQCACACACACAeACACACACACCCACACACQCBCACkCACBCASACACASACACACACACAeICACACACACACACAeACACACACgCESBeA%40ACACAOICACACACACACACACACACACAKBCAkACACIEACACAKACACACAKACAGIKAmACBPACACACACCuACACACACACAKACACACACACGCQAAGECACAKACACAKACICAeAAAeCOoCECSDQKACCkAuACACI%40ACACECACACACACACACA%5BASACACACACQCw%40AKBCACACACACACACACACMCACACACACACACACACACACACACACACACAm%2Ff%3D3%2Fgd%3F1-rq%3DCCV92oJ17w%60z4afVP_jHgQZgAjUUUz66Mg-m%3Fcfoq%2Car.hqm.jqa.m%604XU%60%2CaEv92b.SLUl3.qfdeKg%2CqTqDOc.dvl2hf%2CgHFfn%2C%5BV7bge.d.cqi%3Dc%60%3D32352917%3A",
+      "status": 200,
+      "type": "Stylesheet",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/css"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fnoeoq%2Ffomdneq%2F0006-wmrnd%2Fcwp%2F2224-vhg-crv-mf%2Ftje%2Fdkvkne-jecdgr%2Fjwng-32%2F6551671%3A35131296.1-nau.eid",
+      "status": 200,
+      "type": "Image",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "image/gif"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fzjq%2F%5D%2Fhs-k%3Fxhs%2Chf.gn%2CB%3AD%3AnflOwAM%2C221%3B.M%2Fcm%3FACACACACACACACACACACACACACACACACACACACACACACACACACACACACACAAECACACACI%40ACACACACACACACACYSACACACACACACACACACASCCgCACQCACACACACAeAKACASACACACACAFACQCBCACkCAKB%40ACACACACACACACACACACIeACACAKACD%2FACASACACACACAAA%40ACACACACACCCBSACUCACAKACCCACACACACACACACACACACgCACACACACACACAGACACACBSACACAGACACACACACACACACACACACQCACACACACACACAKACACUCACICgCACACACACACACACACCeAuACACA%40ACACACACACACACACACA6ACAGBCACACACA%40AKBCAKACACA%400CgSc%5BUnMCACACACACACACACACACACACCCACpeFzImCKACACACACACACACACACACACACACACBC6AkCACACAKDD%2Ff%3D3%2Fgd%3F1-de%3D6%2Fps%3FAAT%3B0mFukryo-X_awzSsfiA3i%5Dg%5Dh%3A6voC%2Fge%3FANeHi%60%3A%408eLud9AdecP8TirCjd%3B%40MzAEc8E7bDsg%3B%40gQ6ob8fkdh5f%3B%40juMae8cZX0W%60%3BAIXTEb8Ksh%7Bk%60%3BAxZAUb8Y%7BRNva%3BFQGugd8Fgvjcd%3BFUNq%40%3APKdG7c9Dik4gg%3AHZoW%3Be9DrcP3f%3AxL52zf9Dw7LI8C4zNgd%3BGA%40SX%3AOXXt%3Bd9EQrRQa%3AoNVJtc9ETNjjd%3Arw50Ec9EhXJp%60%3ArSJqj%3BGmX2%40f8zp1hr%60%3BGnncLd8WgHe49F74KAg%3AXgqFj%3BD9oqve8UmRabg%3BDSzmWe8fkZP8%60%3BDkwkdc8i%3AH0c9Fov%3BNa%3AM1Vzuc9G2KjT%60%3ANIcoX%3BEEiGfd8e3RxQf%3BElgZN%3AH1C7Md9HODFWg%3AE8SUfb9HvPzrf%3AEx%3AjCb9I%40AFCa%3APYsuPb9ImGnCd%3A%605nhtb9JZJQm8ik1PGd%3BHXQ8db8Qh0qua%3BHqQq5d8y%3BeRhg%3BHs%60Njc8Xf8kUf%3BI5lYVd8ZFZarg%3BIA1P0%3AA3HnAe9KFb4n%60%3AdE%3Bn0%3BIOzcI%3AMZsGve9KSzUif%3AXMIkL%3BIpPAwe8Tka77%60%3BNBeRNc8SfcuH%60%2CZVONtd9L%40n%3ACd%3A%60J%3BL2c9LGiiZg%3A%60ydTMb.lqjTma%3BNXC8%60%3As7MdId9LqNch%60%3AwcELLb9MLkCdg%3AIMAd3d9NH1pfg%3AsTlo%40f9NRKcK8SfcuH%60%3BLSGoZ%3AnaxG5b9NhIued%3A%5BVei5d9Nr8Skf%3AFpz6sc9N%7Bt4ia%3Ahn0sEd9OKfUU%60%3AsfMYad9OeaeBg%3AaNVe2%3BMisE0c8TDpGK9OmK7v8Sr6%3BO9OmhKYg%3AopGASb9Phpnuf%3ARoGs%3Bb9PrTNXf%3ArJ%5Bjz%3BS1Mw5b8x7CQu9QG22Bg%3AeIntM%3BSFMGnf8PS2Cog%3BSGP0ed8Mnhoy9Q%5BLD2%60%3ArASYWd9Qu8De%60%3AhpcvWe9R6IKI%60%3ASWdeIf9R%3BUnx8CP7Wfg%3BPCD5Qd8X3k%40mf%3BQLvqM%3AIh3x%5Be9SODN4a%3AdTdGM%3BQNWn1%3AXwFk%3Bd.xF8Ip9SLk6Jg%3AuWOhe%3BQcK3%5Bc8e5Hxg%60%2Cg7Jzeb9SjpD6g%3AL0rvEc9Slajrg%3AoGAtmb9SuCsAf%3AdX%60CXc9SxQS3g%3AfNjodb9TKUTQf%3AnWVJud9TpoX1f%3AtVTzhb9U%3B6rRf%3ADsP06%3BWBIJX%3ANGFJEb9UFr%5B1a%3AL0D2%3Bd.W70LVf%2Cgpq44d.wai%7BUg%3BWVojGd8EgsPs%60%3BWVxb%3Bc8ItPX6f%3BWYPIGb8HxTCQa%3BWyE7Ib8wSd2G9V0HVTg%3APonT%5B%3BTGPfz%3ATFsbp%3BTMwEo%3ArL5s%40c9VL6hIa%3AfdSywf9VMceDg%3A%5BqwhVb9VjA5bf%3AtAoQDf9VqAsS%60%3ARGd2Pe9W%3BQQQg%3A%7BnAWuc9WFG%7BFg%3AhcTOzd9WZtLe%60%3ASU%3BBOd9Wdmfug%3Ae3OJnb9Wn57i%60%3Atg%60iIb9Y1c7sf%3ADG%60fNe9YKZoRf%3AC1%7Bn7d9YT5%60eg%3AKvRZ4d9YlHWBd%3AqNqSmb9ZQH4ta%3ASAtyNe9ZUEWA8adR6Cd%3BXlMOOb8P2I2Ea%3Bc54pLe8JGfAw%60%3BcAHE%3Bc8WJW4Ed%3BcCH9vf8qIfvva%3BcVXq1e8EOeTI%60%3BcZ41md8apTuJ9aai5y8Z7Tp6a%3B%60DZwPe8UqyMta%3B%60UKkub8WOwGHg%3B%60cRXQc8gQZNJ%60%3BaEv92b8wq9Vla%3BaFVWce8gV8snf%3BfImS%40b8ZeGe9%60%3BfLnj0%3ASqv3Ef9dZdXV8a5QVqf%3BfouIEb8e%60Z1m%60%2CgbX3ob9dvl2hf%3AnLSWDe9e%40AgS%60%3AAk43vb9e%40Z7Nf%3Acufvfe9eJDdl8odjTk%60%3BgJIcjc8AVg3bg%3BgO1lqe8UgfMm%60%3BguMX%5B%3AMZhbS%3Be8lkz%3AW4OzIc9gcu%6048TL6%60Mg%3BetTSk%3AgkWO%5Bd9h1M%5Bof%3Aus%3BTnc9hI65q%60%3ASWGO7b9hTia1%60%3AIqjyib9hgH%4018sDcxq9hhRm6g%3AD60sE%3BjlsGZ%3ADWx1kc9hqLqYa%3ATl31%3A%3BjwmVJd8zu4W8a%3BkFSyIf8QKhDr9jHj0G8kD2m2%60%3Bi1M0pf8plOWLf%3Bi2Sxab8X%5B53pg%3BibCm%3Bd8MiH%7BGf%3BnOM0Td8OVA1Ag%3Bnbdk%7Bf8MsGfUf%3BniCz5d8kD2m2%60%3BoWxs%3Bc8fx5wkd%3BlBXnXe8CtEpj%60%3BlJu4Ed8dRFXH9npDaw8SwEmDg%3BmGvAwc8sMXDj9oQULyf%3AdTdGM%2CdTdGM%3BmUnnrc8RcgFla%3Bmi%40hpe8OwMiRf%3BmkWaWd8wKtcd%60%3BrKHiZd8VAelha%3BrNql0d8j%3BYwya%3BrXfR%5Bb8JIoIVg%3Brj%3A2ne8wu06Dd%3BsGT2wc8HJi24a%3BsQGoMc8KWM5Z.d5YQff%3BsZz2Dc8j2xpE9qcS1gf%3A%7BiNg4e9qcf%40Pf%3Aqg%5B6Xb9qcvpXg%3AK0A9w%3BsdfgIe8d5YQff%2Cz4DYZe9rfezKd%3ADEiKF%3BpmUah%3ARMQ6Qd9rmpiZ8hhosog%3BqTqDOc8JisdDd%3BqZodtc8rfGGfa%3BvH6IKe8Yor%7B69tgSPS%60%3A%40MNak%3BvoqKtd8ZAqR39tpZN0%60%3AsY%3APDe9uwQiY8u0V1uf%3BtE%5BCLb8FcqqVf%3BtRnMtf8Iu9Zo9vdVuPf%3Ancpkue9w1bXC%60%3AXPEaKb9w6rQdd%3AZKkZ%3B%3Bu9u84d8XuhWE%60%2Cft6g0b.gID%3B0a%2CnWTZTe9wSl%5Bvg%3AcLWfR%3BuR7FPb8O3Ghzg%2CVtaOve9wT5Rja%3AN8IGze9x%3BN%3Big%3AIH6Qmf9x%40bqra%3ALEU1Sc9xraPo%60%3ACVsZ%3Bb9yqNkMa%3AApKBhd9yzTahd%3AIUO7X%3Bx95YEf8owg%3Btg%3BxaKgRb8Sn0rxf%2Fo%3Dadms.cp%2Cjso%2Chsc%2Cob6ZWb.cGt%3B0%60%2CQNWn1%2CsdfgIe.sVsFMa%2Cftn0jd.eJDdl.YT5%60eg%2Cf%2Cask%3Fab%3F10170%3B358",
+      "status": 200,
+      "type": "Script",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/javascript"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fqs-k%3Foe.cs%7B.pmFKqWQOVEG.N.U.M%2Fo%3Dnl%5Dtfm.afcem1%2Cnl%5Dfu%2Ccbnd-ezco%3D-d%3F1-ef%3D3%2Fat%3Fzemq%2Fps%3FAC2%5BrVvTbW6iF%5BSjm%6035FZV%60eQui0SBlfS",
+      "status": 200,
+      "type": "Stylesheet",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/css"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgqtctkc%2Ccmm-oe%2F%5D%2Fhs-k%3Foe.cs%7B.gn%5DUQ.vCawzYDo0OS.0039%2CO-rv%3Dh%2Fo%3D%5Daa%2C%5Daud.afa.lndr%2Csafs.a%60lf%2Fgxo%3D-d%3F1-ef%3D3%2Fps%3FAC2%5BrVsSS170_KBvlJyrM%40VlgKiUg7aRdu",
+      "status": 200,
+      "type": "Script",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/javascript"
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo%2Fqecrah?q=web+proxy+test&sca_esv=36896063baa059e5&source=hp&ei=cGs0aoCTIO6jqtsPz8-zoAM&iflsig=AFdpzrgAAAAAajR5gMOxmR3-8TEykZfwqp-ChxPBwLE0",
+      "status": 200,
+      "type": "Document",
+      "fromSW": true,
+      "fromCache": false,
+      "mimeType": "text/html"
+    }
+  ],
+  "consoleErrors": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "postNavState": [
+    {
+      "id": "browserFrame-tab-1-1781820263027",
+      "src": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo",
+      "srcdoc_len": 0,
+      "title": "Google",
+      "bodyLen": 147,
+      "readyState": "complete",
+      "url": "http://localhost:8080/service/hvtrs8%2F-wuw%2Cgmoelg.aoo",
+      "isErrorPage": false
+    }
+  ]
+}

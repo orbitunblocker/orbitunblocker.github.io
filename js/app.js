@@ -1,7 +1,91 @@
-const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
+(function(){if(window.location.protocol==='file:'){document.body.innerHTML='<h1 style="font-size:28px;font-weight:300;letter-spacing:1px;color:#fff">Run via localhost:8080</h1><p style="font-size:14px;color:#888;max-width:400px;text-align:center;line-height:1.5">Orbit requires a local server. Open http://localhost:8080 in your browser.</p>';throw new Error('file:// execution blocked')}})();
+
+    const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
     music.loop = true;
     music.volume = 0.1;
     window.music = music;
+
+    // Diagnostic boot status — tracks UV initialization chain
+    window.__UV_BOOT_STATUS__ = {
+      swReady: false,
+      portReady: false,
+      bareMuxReady: false,
+      failedStage: 'none',
+      _log: [],
+      _update(key, val) {
+        this[key] = val;
+        this._log.push({ key, val, at: Date.now() });
+      }
+    };
+
+    // Provide UV's BareClient with the SharedWorker path before any proxied navigation
+    try {
+      localStorage.setItem('bare-mux-path', '/uv/bare-mux-worker.js');
+      window.__UV_BOOT_STATUS__._update('bareMuxPathSet', true);
+      console.log('[BOOT] bare-mux-path set at', Date.now());
+    } catch (e) {
+      console.warn('[BOOT] Failed to set bare-mux-path:', e);
+    }
+
+    // ---- PORT STATE SYNC ----
+    // SW is the single source of truth for port state. On every page load,
+    // ask the SW for its actual port status rather than inferring locally.
+    // The SW responds with a PORT_STATE_SYNC message.
+    async function syncPortStateFromSW() {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        if (!registration.active) {
+          window.__UV_BOOT_STATUS__._update('failedStage', 'sync-no-active');
+          return;
+        }
+        const channel = new MessageChannel();
+        const response = await Promise.race([
+          new Promise(resolve => {
+            channel.port1.onmessage = e => {
+              channel.port1.close();
+              resolve(e.data);
+            };
+            registration.active.postMessage({ type: 'SYNC_PORT_STATE', checkHealth: true }, [channel.port2]);
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('sync timeout')), 3000))
+        ]);
+        if (response) {
+          window.__UV_BOOT_STATUS__._update('swSynced', true);
+          // SW's port state is the authority — overwrite local assumptions
+          if (response.portReady !== undefined) {
+            window.__UV_BOOT_STATUS__._update('portReady', response.portReady);
+            window.__UV_BOOT_STATUS__.portReady = response.portReady;
+          }
+          if (response.bareMuxReady !== undefined) {
+            window.__UV_BOOT_STATUS__._update('bareMuxReady', response.bareMuxReady);
+            window.__UV_BOOT_STATUS__.bareMuxReady = response.bareMuxReady;
+          }
+          if (response.status) {
+            window.__UV_BOOT_STATUS__._update('swPortStatus', response.status);
+          }
+          if (response.reinitCount !== undefined) {
+            window.__UV_BOOT_STATUS__._update('swReinitCount', response.reinitCount);
+          }
+        }
+      } catch (e) {
+        window.__UV_BOOT_STATUS__._update('failedStage', 'sync');
+      }
+    }
+    window.syncPortStateFromSW = syncPortStateFromSW;
+
+    const UV_PREFIX = '/service/';
+    window.UV_PREFIX = UV_PREFIX;
+    function encodeUVUrl(url) {
+      if (!url || url === 'about:blank') return url;
+      try {
+        return UV_PREFIX + Ultraviolet.codec.xor.encode(url);
+      } catch (e) {
+        console.warn('[UV] Encoding failed, falling back to direct URL', e);
+        return url;
+      }
+    }
+    window.encodeUVUrl = encodeUVUrl;
 
     const hoverAudio = new Audio("https://files.catbox.moe/h71sur.mp3");
     hoverAudio.preload = "auto";
@@ -21,6 +105,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
     const enterButton = document.getElementById('enterButton');
 
     function startExperience() {
+      document.body.classList.add('on-homepage');
       music.play().catch(() => {});
       const primer = hoverAudio.cloneNode();
       primer.volume = 0;
@@ -36,6 +121,11 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       setTimeout(() => {
         intro.remove();
         typeCyclingText();
+        // Reveal hero logo and clock with fade-and-rise
+        const heroSection = document.getElementById('heroSection');
+        if (heroSection) heroSection.classList.add('reveal');
+        const infoIcon = document.querySelector('.hero-info-icon');
+        if (infoIcon) infoIcon.style.opacity = '1';
       }, 500);
     }
 
@@ -104,7 +194,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
         if (!this.emitted) return;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,0.7)`;
+        ctx.fillStyle = `rgba(255,255,255,1)`;
         ctx.fill();
       }
     }
@@ -358,7 +448,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
           badge: "CLASSIC",
           emoji: "🍄",
           image: "https://static0.polygonimages.com/wordpress/wp-content/uploads/chorus/uploads/chorus_asset/file/22416111/smb_art.jpg?w=1600&h=900&fit=crop",
-          url: "https://blog.free-dyndns.org/scram/res/hvtrs8%2F-jaw%3A7%2Cgktju%60.ko-c0-qm%601-"
+          url: "https://script.google.com/macros/s/AKfycbwOs-SsYeiN758I5eVCPGl7YW-IpawaSbapsKt3NUZwWLSpC8fZfDH7wqeQE1hGBiSZ/exec"
         },
         {
           id: "super-mario-64",
@@ -574,7 +664,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
           badge: "HORROR",
           emoji: "🍔",
           image: "https://blog.free-dyndns.org/assets/imgs/g/Burger___Frights.webp",
-          url: "https://data.gamechy.com/9f23979e-d4d9-4be9-9dd7-7a399f5331c7/index.html?noads=true"
+          url: "https://unblocked-games-g.gitlab.io/burgerandfrights/"
         },
         {
           id: "darkness-in-spaceship",
@@ -620,6 +710,51 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
           emoji: "🚴",
           image: "https://blog.free-dyndns.org/assets/imgs/g/Happy_Wheels.webp",
           url: "https://script.google.com/macros/s/AKfycbyfMPVIGx6dJPrYKeE9e4Erj949-dH28pWVRjdV1vgnoylpBV8af03JNLoz2MwAIBLECg/exec"
+        },
+        {
+          id: "slow-roads",
+          title: "Slow Roads",
+          desc: "Drive endless roads through serene landscapes. A relaxing driving experience with no timers, no score, just open roads and a calm journey.",
+          badge: "DRIVING",
+          emoji: "🚗",
+          image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT76btQTGOYcbq_of2VE8gwxwY8xt3xaGy9Mw&s",
+          url: "https://script.google.com/macros/s/AKfycbzqDA2SnuVZ3DRelxxbUxSV9Z1RJz_gQfDRx06WUpgppWgrdDEErtZ1Lev9O6j2w9ioBQ/exec"
+        },
+        {
+          id: "papers-please",
+          title: "Papers, Please",
+          desc: "Man the immigration checkpoint in a dystopian border. Inspect documents, spot forgeries, and make tough decisions to support your family.",
+          badge: "SIMULATION",
+          emoji: "🛂",
+          image: "https://miro.medium.com/1*Wto643yG6HgprZfAafHPdQ.jpeg",
+          url: "https://www.archive.play-games.com/games/ruffle/?swf=archive/5/PapersPlease2.swf&params=&name=Papers%20Please"
+        },
+        {
+          id: "half-life",
+          title: "Half-Life",
+          desc: "Fight through the Black Mesa Research Facility after a catastrophic resonance cascade. Solve puzzles and survive alien encounters in this legendary FPS.",
+          badge: "SHOOTER",
+          emoji: "🔬",
+          image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/70/capsule_616x353.jpg?t=1745368462",
+          url: "https://pixelsuft.github.io/hl/"
+        },
+        {
+          id: "sort-the-court",
+          title: "Sort the Court!",
+          desc: "Advise a quirky king by swiping yes or no on an endless stream of visitor requests. Every choice shapes your kingdom's fate.",
+          badge: "SIMULATION",
+          emoji: "👑",
+          image: "https://www.gamebrew.org/thumb.php?f=SorttheCourtVita.png&width=640",
+          url: "https://script.google.com/macros/s/AKfycbzzDc0nSAmDzkY5U2rHlH8_ljr-7z0Klo8pcuw7SpkOoiDVEagec-BS4jQxyT0j22TWeg/exec"
+        },
+        {
+          id: "doom-2",
+          title: "Doom 2",
+          desc: "Blast through demon-infested levels with an arsenal of powerful weapons. Face deadlier foes in bigger maps in this classic FPS sequel.",
+          badge: "SHOOTER",
+          emoji: "💀",
+          image: "https://assets.nintendo.com/image/upload/c_fill,w_1200/q_auto:best/f_auto/dpr_2.0/store/software/switch/70010000018925/1892afd16e56eaedb6a3d73ef6d936c4f24e3f40bd17a541d360c1a47e564f83",
+          url: "https://script.google.com/macros/s/AKfycbx61mSm2aEx_wwEQB66hIGUZm8hV2dBZvo2QXcabpXvc0r25c22pW-pdE8tmxBjOWcWCw/exec"
         }
       ],
       tools: []
@@ -635,9 +770,9 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
 
     const infoSearchData = [
       { title: "About Orbit", desc: "A modern browser hub for games, tools, proxies, and web apps.", badge: "INFO", emoji: "💫" },
-      { title: "Early Access", desc: "Orbit is still expanding, with more sections and launchable content planned.", badge: "SOON", emoji: "🚀" },
-      { title: "Visual System", desc: "Glass panels, ambient particles, custom themes, and neon illumination.", badge: "STYLE", emoji: "✨" },
-      { title: "Settings", desc: "Tune audio, visuals, motion, contrast, particles, and layout behavior.", badge: "CUSTOM", emoji: "⚙️" }
+      { title: "Games Library", desc: "46+ playable games with dedicated players and fullscreen support.", badge: "PLAY", emoji: "🎮" },
+      { title: "Proxy Tools", desc: "Built-in proxy integration for unrestricted browsing with privacy controls.", badge: "PROXY", emoji: "🌐" },
+      { title: "Custom Themes", desc: "Personalize colors, blur, particles, motion, and layout density.", badge: "STYLE", emoji: "🎨" }
     ];
 
     const searchPages = {
@@ -658,7 +793,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       sfxVolume: 10,
       particleDensity: 'normal',
       glow: 100,
-      accent: 'pure',
+      accent: 'snow',
       compactCards: false,
       highContrast: false,
       sectionSearch: true,
@@ -678,7 +813,9 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       username: '',
       autoLock: false,
       autoLockTime: '15',
-      bypassKeybind: ''
+      bypassKeybind: '',
+      bgMusic: 'orbit',
+      bgMusicCustomUrl: ''
     };
 
     const settings = { ...defaultSettings };
@@ -1409,8 +1546,33 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
 
     loadStoredSettings();
 
+    const musicSources = {
+      orbit: 'https://files.catbox.moe/vgjm1c.mp3',
+      minecraft: 'https://files.catbox.moe/jeql5p.mp3',
+      zelda: 'https://files.catbox.moe/udpn7n.mp3',
+      rapbeats: 'https://files.catbox.moe/3x5bfe.mp3',
+    };
+
+    function initBgMusic() {
+      if (settings.bgMusic === 'custom') {
+        const url = settings.bgMusicCustomUrl;
+        if (url && isValidAudioUrl(url)) {
+          music.src = url;
+          music.load();
+        }
+      } else if (settings.bgMusic !== 'orbit') {
+        const src = musicSources[settings.bgMusic];
+        if (src) {
+          music.src = src;
+          music.load();
+        }
+      }
+    }
+
+    initBgMusic();
+
     const accentThemes = {
-      pure: { a: '255,255,255', b: '255,255,255', c: '255,255,255' },
+      snow: { a: '255,255,255', b: '255,255,255', c: '255,255,255' },
       sunset: { a: '255,120,80', b: '255,160,100', c: '255,200,140' },
       grape: { a: '180,100,255', b: '140,70,220', c: '200,130,255' },
       dracula: { a: '255,85,85', b: '220,60,60', c: '255,120,120' },
@@ -1638,92 +1800,61 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
         <div class="info-page">
           <div class="info-wrap">
             <section class="info-hero">
-              <div class="info-kicker">Orbit Hub</div>
-              <h2>Fast access, clean visuals, and everything in one place.</h2>
-              <p>
-                Orbit is designed as a modern browser launchpad for games, proxy tools, utilities, and lightweight web apps.
-                The interface keeps things atmospheric without getting in the way, so switching from play to tools feels quick and natural.
-              </p>
+              <h1>Orbit</h1>
+              <div class="tagline">Your browser hub for games, tools, and more.</div>
+              <p>A modern launchpad designed for speed, simplicity, and style. Orbit brings together games, proxy tools, utilities, and web apps in a clean, atmospheric interface.</p>
               <div class="info-stats">
                 <div class="info-stat">
-                  <strong>4</strong>
-                  <span>Main hub categories</span>
-                </div>
-                <div class="info-stat">
                   <strong>46+</strong>
-                  <span>Playable games</span>
+                  <span>Games</span>
                 </div>
                 <div class="info-stat">
-                  <strong>v2.1</strong>
-                  <span>Early access release</span>
+                  <strong>v1.3</strong>
+                  <span>Latest</span>
+                </div>
+                <div class="info-stat">
+                  <strong>Early</strong>
+                  <span>Access</span>
                 </div>
               </div>
             </section>
 
-            <div class="info-layout">
-              <section class="info-panel">
-                <h3>What Orbit includes</h3>
-                <p>
-                  The site is organized around the things people actually open often: games, proxies, tools, and general updates.
-                  Each area can grow without changing the overall feel of the hub.
-                </p>
-                <div class="info-feature-grid">
-                  <div class="info-feature">
-                    <span>🍪</span>
-                    <h4>Cookie Clicker</h4>
-                    <p>The current featured game launches inside a themed Orbit player page.</p>
-                  </div>
-                  <div class="info-feature">
-                    <span>🌐</span>
-                    <h4>Gust Proxy</h4>
-                    <p>Download and run GUST on any device, then open it here with fullscreen and private-tab controls.</p>
-                  </div>
-                  <div class="info-feature">
-                    <span>🧰</span>
-                    <h4>Useful Tools</h4>
-                    <p>Lightweight utilities for notes, links, tabs, files, and small browser workflows.</p>
-                  </div>
-                  <div class="info-feature">
-                    <span>✨</span>
-                    <h4>Custom Feel</h4>
-                    <p>Theme colors, glow intensity, particles, motion, layout density, and audio controls.</p>
-                  </div>
-                </div>
-              </section>
+            <div class="info-features">
+              <div class="info-feature">
+                <span class="icon">🎮</span>
+                <h3>Games Library</h3>
+                <p>46+ playable games with dedicated players, fullscreen support, and smooth performance.</p>
+              </div>
+              <div class="info-feature">
+                <span class="icon">🌐</span>
+                <h3>Proxy Tools</h3>
+                <p>Built-in proxy integration for unrestricted browsing with privacy controls.</p>
+              </div>
+              <div class="info-feature">
+                <span class="icon">🧰</span>
+                <h3>Utilities</h3>
+                <p>Lightweight tools for notes, tabs, links, and everyday browser workflows.</p>
+              </div>
+              <div class="info-feature">
+                <span class="icon">🎨</span>
+                <h3>Custom Themes</h3>
+                <p>Personalize colors, blur, particles, motion, and layout density.</p>
+              </div>
+              <div class="info-feature">
+                <span class="icon">⚙️</span>
+                <h3>Settings</h3>
+                <p>Fine-tune audio, visuals, contrast, and behavior to match your preferences.</p>
+              </div>
+              <div class="info-feature">
+                <span class="icon">🔄</span>
+                <h3>Regular Updates</h3>
+                <p>New features, games, and improvements shipped frequently.</p>
+              </div>
+            </div>
 
-              <aside class="info-panel">
-                <h3>Project Notes</h3>
-                <div class="info-list">
-                  <div class="info-list-item">
-                    <div class="info-dot"></div>
-                    <div>
-                      <strong>Early Access</strong>
-                      <p>Orbit is still expanding, with more sections and launchable content planned.</p>
-                    </div>
-                  </div>
-                  <div class="info-list-item">
-                    <div class="info-dot"></div>
-                    <div>
-                      <strong>Visual System</strong>
-                      <p>The current style uses glass panels, ambient particles, and adjustable neon illumination.</p>
-                    </div>
-                  </div>
-                  <div class="info-list-item">
-                    <div class="info-dot"></div>
-                    <div>
-                      <strong>Game Player</strong>
-                      <p>Games open in a dedicated themed page with fullscreen and new-tab controls.</p>
-                    </div>
-                  </div>
-                  <div class="info-list-item">
-                    <div class="info-dot"></div>
-                    <div>
-                      <strong>Settings</strong>
-                      <p>Use the cog to tune audio, visuals, motion, contrast, and page layout behavior.</p>
-                    </div>
-                  </div>
-                </div>
-              </aside>
+            <div class="info-bottom">
+              <div class="version">Orbit v1.3 — Early Access</div>
+              <p>Built for speed, privacy, and play.</p>
             </div>
           </div>
         </div>
@@ -1822,9 +1953,47 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
 
       // settingsNavIconHTML declared once below; keep this block focused on panel content.
 
+      const bgMusicOptions = [
+        { value: 'orbit', label: 'Orbit (Default)' },
+        { value: 'minecraft', label: 'Minecraft' },
+        { value: 'zelda', label: 'Zelda' },
+        { value: 'rapbeats', label: 'Rap Beats' },
+        { value: 'custom', label: 'Custom' },
+      ];
+
       const audioPanel = panel('audio', 'Audio', 'Control background music and interface sound effects.', `
         ${toggleRow('music', 'Background Music', 'Play atmospheric music while you browse.', settings.music)}
         ${rangeRow('musicVolume', 'Music Volume', 'Set the background music level.', 0, 50, 1)}
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <h4>Select Background Music</h4>
+            <p>Choose the music source for the homepage.</p>
+          </div>
+          <div class="settings-control">
+            <div class="settings-custom-select">
+              <button class="settings-custom-select-trigger" onclick="toggleBgMusicDropdown()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleBgMusicDropdown()}" aria-haspopup="listbox" aria-expanded="false" role="combobox">
+                <span class="settings-custom-select-label">${bgMusicLabels[settings.bgMusic] || 'Orbit (Default)'}</span>
+                <svg class="settings-custom-select-chevron" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+              </button>
+              <div class="settings-custom-select-options" role="listbox">
+                ${bgMusicOptions.map(opt => `
+                  <button class="settings-custom-select-option${settings.bgMusic === opt.value ? ' selected' : ''}" data-value="${opt.value}" role="option" aria-selected="${settings.bgMusic === opt.value}" onclick="selectBgMusic('${opt.value}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectBgMusic('${opt.value}')}">${opt.label}</button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-custom-url-row" id="customMusicUrlRow" style="display: ${settings.bgMusic === 'custom' ? 'block' : 'none'}; max-height: ${settings.bgMusic === 'custom' ? '150px' : '0'}; opacity: ${settings.bgMusic === 'custom' ? '1' : '0'};">
+          <div class="settings-row" style="border-bottom: none; padding: 0;">
+            <div class="settings-row-left">
+              <h4>Custom Music URL</h4>
+              <p>Enter a direct URL to an audio file.</p>
+            </div>
+            <div class="settings-control">
+              <input class="settings-text" type="text" id="setting-bgMusicCustomUrl" value="${escapeHTML(settings.bgMusicCustomUrl || '')}" placeholder="https://example.com/music.mp3" oninput="onBgMusicCustomUrl(this.value)">
+            </div>
+          </div>
+        </div>
         ${toggleRow('sfx', 'Sound Effects', 'Play hover and interaction sounds.', settings.sfx)}
         ${rangeRow('sfxVolume', 'Sound Effect Volume', 'Adjust hover and interaction sound volume.', 0, 50, 1)}
         <div class="settings-note">
@@ -1838,7 +2007,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
 
       const appearancePanel = panel('appearance', 'Visuals', 'Tune colors, glow, particles, and background atmosphere.', `
         ${selectRow('accent', 'Accent Theme', 'Change the tint of interface highlights and accents.', [
-          { value: 'pure', label: 'Snow' },
+          { value: 'snow', label: 'Snow' },
           { value: 'sunset', label: 'Sunset' },
           { value: 'grape', label: 'Grape' },
           { value: 'dracula', label: 'Dracula' },
@@ -2205,12 +2374,10 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       requestAnimationFrame(syncLayout);
       updateCustomScrollbar();
 
-      // Trigger page animation
-      requestAnimationFrame(() => {
-        mainContent.style.animation = 'none';
-        mainContent.offsetHeight; // Trigger reflow
-        mainContent.style.animation = 'pageFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
-      });
+      // No fade-in for game page — fullscreen black overlay covers immediately
+      mainContent.style.animation = 'none';
+      mainContent.style.opacity = '1';
+      mainContent.style.transform = 'none';
 
       // Load iframe src from data-src for obfuscation
       const iframe = document.getElementById('gameFrame');
@@ -2571,6 +2738,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
     function loadBrowserPage() {
       captureBrowseState('browser');
       currentSection = 'browser';
+      document.body.classList.remove('on-homepage');
       heroSection.style.display = 'none';
       mainContent.innerHTML = '<div id="browserMount"></div>';
       setActiveNav('browser');
@@ -2595,6 +2763,38 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
 
     function goHome() {
       heroSection.style.display = '';
+      // Animate hero logo entrance
+      const heroLogo = document.querySelector('.hero-logo');
+      const heroClock = document.getElementById('heroClock');
+      if (heroLogo) {
+        heroLogo.style.opacity = '0';
+        requestAnimationFrame(() => {
+          heroLogo.style.transition = 'opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
+          heroLogo.style.opacity = '1';
+        });
+      }
+      if (heroClock) {
+        heroClock.style.opacity = '0';
+        requestAnimationFrame(() => {
+          heroClock.style.transition = 'opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
+          heroClock.style.opacity = '1';
+        });
+      }
+      const heroNotifs = document.getElementById('heroNotifications');
+      if (heroNotifs) {
+        heroNotifs.style.transition = 'none';
+        heroNotifs.style.opacity = '0';
+        heroNotifs.innerHTML = renderNotifications();
+        notifExpanded = false;
+        heroNotifs.classList.remove('expanded');
+        requestAnimationFrame(() => {
+          const maxH = getCollapsedMaxHeight(heroNotifs) || heroNotifs.scrollHeight || 54;
+          heroNotifs.style.maxHeight = maxH + 'px';
+          heroNotifs.offsetHeight;
+          heroNotifs.style.transition = 'opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+          heroNotifs.style.opacity = '1';
+        });
+      }
       mainContent.innerHTML = '';
       currentSection = null;
       setActiveNav(null);
@@ -2624,8 +2824,8 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       const root = document.documentElement;
       let theme = accentThemes[settings.accent];
       if (!theme) {
-        theme = accentThemes.pure;
-        settings.accent = 'pure';
+        theme = accentThemes.snow;
+        settings.accent = 'snow';
       }
       const glowLevel = settings.glow / 100;
       const targetParticles = settings.particles ? particleDensityMap[settings.particleDensity] : 0;
@@ -2716,6 +2916,119 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       if (currentSection === 'settings') render('settings');
     }
 
+    function isValidAudioUrl(str) {
+      try {
+        const url = new URL(str);
+        return /\.(mp3|wav|ogg|aac|m4a|flac|webm)(\?.*)?$/i.test(url.pathname);
+      } catch { return false; }
+    }
+
+    const bgMusicLabels = {
+      orbit: 'Orbit (Default)',
+      minecraft: 'Minecraft',
+      zelda: 'Zelda',
+      rapbeats: 'Rap Beats',
+      custom: 'Custom',
+    };
+
+    function switchTrack(src) {
+      const wasPlaying = !music.paused && !music.muted && settings.music;
+      music.pause();
+      music.src = src;
+      music.load();
+      if (wasPlaying) {
+        music.play().catch(() => {});
+      }
+    }
+
+    function selectBgMusic(value) {
+      settings.bgMusic = value;
+      saveStoredSettings();
+      updateBgMusicUI(value);
+      closeBgMusicDropdown();
+
+      if (value === 'custom') {
+        const url = settings.bgMusicCustomUrl;
+        if (url && isValidAudioUrl(url)) {
+          switchTrack(url);
+        }
+        showCustomUrlRow(value === 'custom');
+      } else {
+        const src = musicSources[value];
+        if (src) {
+          switchTrack(src);
+        }
+        showCustomUrlRow(false);
+      }
+    }
+
+    function toggleBgMusicDropdown() {
+      const el = document.querySelector('.settings-custom-select');
+      if (!el) return;
+      const open = el.classList.toggle('open');
+      const trigger = el.querySelector('.settings-custom-select-trigger');
+      if (trigger) trigger.setAttribute('aria-expanded', open);
+      if (open) {
+        setTimeout(() => document.addEventListener('click', closeBgMusicDropdown), 10);
+      } else {
+        document.removeEventListener('click', closeBgMusicDropdown);
+      }
+    }
+
+    function closeBgMusicDropdown(e) {
+      const el = document.querySelector('.settings-custom-select');
+      if (!el) return;
+      if (e && e.target && el.contains(e.target)) return;
+      el.classList.remove('open');
+      const trigger = el.querySelector('.settings-custom-select-trigger');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('click', closeBgMusicDropdown);
+    }
+
+    function updateBgMusicUI(value) {
+      const el = document.querySelector('.settings-custom-select');
+      if (!el) return;
+      const label = el.querySelector('.settings-custom-select-label');
+      if (label) label.textContent = bgMusicLabels[value] || 'Orbit (Default)';
+      el.querySelectorAll('.settings-custom-select-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.value === value);
+      });
+    }
+
+    function onBgMusicCustomUrl(val) {
+      settings.bgMusicCustomUrl = val;
+      saveStoredSettings();
+      if (settings.bgMusic === 'custom' && val && isValidAudioUrl(val)) {
+        switchTrack(val);
+      }
+    }
+
+    function showCustomUrlRow(show) {
+      const row = document.getElementById('customMusicUrlRow');
+      if (!row) return;
+      if (show) {
+        row.style.display = 'block';
+        requestAnimationFrame(() => {
+          row.style.maxHeight = row.scrollHeight + 'px';
+          row.style.opacity = '1';
+          row.style.marginBottom = '0';
+        });
+      } else {
+        row.style.maxHeight = '0';
+        row.style.opacity = '0';
+        row.style.marginBottom = '0';
+        setTimeout(() => { row.style.display = 'none'; }, 350);
+      }
+    }
+
+    function resetBgMusic() {
+      const orbitSrc = musicSources.orbit;
+      if (orbitSrc && music.src !== orbitSrc) {
+        music.src = orbitSrc;
+        music.load();
+      }
+    }
+
     function resetSettings() {
       Object.assign(settings, defaultSettings);
       settingsPanel = 'audio';
@@ -2724,6 +3037,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       } catch (err) {
         console.warn('Could not clear saved settings.', err);
       }
+      resetBgMusic();
       applySettings();
       render('settings');
     }
@@ -2742,7 +3056,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
     }
 
     function attachHoverSFX() {
-      document.querySelectorAll('.game-card, .info-panel, .info-feature, .settings-reset, .settings-nav-item, .home-search-item, .suggestion-card, .icon-btn, .proxy-open-btn').forEach(el => {
+      document.querySelectorAll('.game-card, .info-feature, .settings-reset, .settings-nav-item, .home-search-item, .suggestion-card, .icon-btn, .proxy-open-btn').forEach(el => {
         if (!el.dataset.sfx) {
           el.dataset.sfx = "1";
           el.addEventListener('mouseenter', () => playHover(0.92));
@@ -2886,7 +3200,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
     // ============================================================
     let onboardingStep = 0;
     let onboardingUsername = '';
-    let onboardingTheme = settings.accent || 'pure';
+    let onboardingTheme = settings.accent || 'snow';
     let onboardingAudioEnabled = false;
     let audioEnabledDuringOnboarding = false;
     let originalHoverSFX = false;
@@ -2944,7 +3258,30 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
         onboardingStep = step;
 
         if (step === 1) {
-          animateLogoLetters();
+          setTimeout(() => animateLogoLetters(), 400);
+          // Hide button initially; fade in after Orbit finishes forming
+          const getStartedBtn = document.getElementById('getStartedBtn');
+          if (getStartedBtn) {
+            getStartedBtn.style.transition = 'none';
+            getStartedBtn.style.opacity = '0';
+            void getStartedBtn.offsetHeight;
+            setTimeout(() => {
+              getStartedBtn.style.transition = '';
+              requestAnimationFrame(() => {
+                getStartedBtn.style.opacity = '1';
+              });
+            }, 2100);
+            // One-shot particle burst on enter; re-triggers on re-enter after leave
+            let armed = true;
+            getStartedBtn.addEventListener('mouseenter', function once() {
+              if (!armed) return;
+              emitButtonParticles(getStartedBtn);
+              armed = false;
+            });
+            getStartedBtn.addEventListener('mouseleave', function rearm() {
+              armed = true;
+            });
+          }
         } else if (step === 3) {
           populateThemeCards();
         } else if (step === 5) {
@@ -2955,9 +3292,122 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
           // Auto-transition to complete onboarding after showing welcome
           setTimeout(() => {
             completeOnboarding();
-          }, 2500);
+          }, 4000);
         }
       }
+    }
+
+    function emitButtonParticles(btn) {
+      const rect = btn.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      const pCount = 10 + Math.floor(Math.random() * 7);
+      const perEdge = [0, 0, 0, 0];
+      for (let e = 0; e < 4; e++) perEdge[e] = Math.floor(pCount / 4);
+      for (let r = 0; r < pCount - perEdge[0] * 4; r++) perEdge[r]++;
+
+      const edgeOrder = [0, 1, 2, 3];
+      for (let i = 3; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = edgeOrder[i]; edgeOrder[i] = edgeOrder[j]; edgeOrder[j] = tmp;
+      }
+
+      const particles = [];
+
+      for (let e = 0; e < 4; e++) {
+        const edge = edgeOrder[e];
+        for (let n = 0; n < perEdge[e]; n++) {
+          let px, py;
+          switch (edge) {
+            case 0: px = Math.random() * w; py = 0; break;
+            case 1: px = w; py = Math.random() * h; break;
+            case 2: px = Math.random() * w; py = h; break;
+            case 3: px = 0; py = Math.random() * h; break;
+          }
+
+          let dx = px - cx;
+          let dy = py - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 1) continue;
+          dx /= dist;
+          dy /= dist;
+
+          const angle = Math.atan2(dy, dx);
+          const spread = (Math.random() - 0.5) * Math.PI * 0.3;
+          const finalAngle = angle + spread;
+          const vx = Math.cos(finalAngle);
+          const vy = Math.sin(finalAngle);
+
+          const travelDist = 14 + Math.random() * 24;
+          const duration = 550 + Math.random() * 300;
+          const size = 5 + Math.random() * 6;
+          const isRing = Math.random() > 0.85;
+
+          let displaySize, bgStyle;
+          if (isRing) {
+            displaySize = size + 1 + Math.random() * 2;
+            bgStyle = 'border:1px solid rgba(255,255,255,0.6);background:transparent;box-sizing:border-box;';
+          } else {
+            displaySize = size;
+            bgStyle = 'background:rgba(255,255,255,' + (0.9 + Math.random() * 0.08) + ');';
+          }
+
+          const half = displaySize / 2;
+          const el = document.createElement('div');
+          el.style.cssText =
+            'position:fixed;left:' + (rect.left + px - half) + 'px;top:' + (rect.top + py - half) + 'px;' +
+            'width:' + displaySize + 'px;height:' + displaySize + 'px;border-radius:50%;' +
+            bgStyle +
+            'pointer-events:none;z-index:100001;opacity:0;';
+          document.body.appendChild(el);
+
+          particles.push({
+            el, vx, vy, travelDist, duration,
+            startX: rect.left + px,
+            startY: rect.top + py
+          });
+        }
+      }
+
+      if (particles.length === 0) return;
+
+      const startTime = performance.now();
+
+      function frame(time) {
+        const elapsed = time - startTime;
+        let remaining = 0;
+
+        for (const p of particles) {
+          if (!p.el.parentNode) continue;
+          const t = Math.min(elapsed / p.duration, 1);
+          if (t >= 1) { p.el.remove(); continue; }
+          remaining++;
+
+          const ease = 1 - Math.pow(1 - t, 4);
+          const x = p.startX + p.vx * p.travelDist * ease;
+          const y = p.startY + p.vy * p.travelDist * ease;
+          const scale = 1 - ease * 0.7;
+
+          let opacity;
+          if (t < 0.08) {
+            opacity = t / 0.08;
+          } else if (t > 0.55) {
+            opacity = 1 - (t - 0.55) / 0.45;
+          } else {
+            opacity = 1;
+          }
+
+          p.el.style.transform = 'translate(' + (x - p.startX) + 'px,' + (y - p.startY) + 'px) scale(' + scale + ')';
+          p.el.style.opacity = opacity;
+        }
+
+        if (remaining > 0) requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
     }
 
     function animateLogoLetters() {
@@ -2966,12 +3416,36 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
 
       const text = 'Orbit';
       logoText.innerHTML = '';
-      
+      logoText.style.visibility = 'visible';
+
+      let flickData = [
+        { name: 'flickQuick', dur: 0.45 },
+        { name: 'flickStutter', dur: 0.65 },
+        { name: 'flickGlitch', dur: 0.9 },
+        { name: 'flickUnstable', dur: 0.75 },
+        { name: 'flickLong', dur: 1.1 }
+      ];
+      for (let i = flickData.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [flickData[i], flickData[j]] = [flickData[j], flickData[i]];
+      }
+
+      const delays = [0, 0.2, 0.4, 0.6, 0.8];
+      for (let i = delays.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [delays[i], delays[j]] = [delays[j], delays[i]];
+      }
+
       text.split('').forEach((letter, index) => {
         const span = document.createElement('span');
         span.className = 'letter';
         span.textContent = letter;
-        span.style.animationDelay = `${index * 0.1}s`;
+        const jitter = (Math.random() - 0.5) * 0.1;
+        span.style.animationName = flickData[index].name;
+        span.style.animationDuration = `${flickData[index].dur}s`;
+        span.style.animationTimingFunction = 'linear';
+        span.style.animationFillMode = 'forwards';
+        span.style.animationDelay = `${(delays[index] + jitter).toFixed(3)}s`;
         logoText.appendChild(span);
       });
     }
@@ -2984,7 +3458,7 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       themeSelection.innerHTML = '';
 
       const themeIcons = {
-        pure: '<svg viewBox="0 0 24 24"><path d="M12 2L9 9l-7 3 7 3 3 7 3-7 7-3-7-3-3-7z"/></svg>',
+        snow: '<svg viewBox="0 0 24 24"><path d="M12 2L9 9l-7 3 7 3 3 7 3-7 7-3-7-3-3-7z"/></svg>',
         neon: '<svg viewBox="0 0 24 24"><path d="M13 3L13 9L19 9L19 13L13 13L13 19L9 19L9 13L3 13L3 9L9 9L9 3L13 3z"/></svg>',
         cyber: '<svg viewBox="0 0 24 24"><path d="M4 6L4 18L8 18L8 14L16 14L16 18L20 18L20 6L16 6L16 10L8 10L8 6L4 6z"/></svg>',
         sunset: '<svg viewBox="0 0 24 24"><path d="M12 3C7.58 3 4 6.58 4 11C4 15.42 7.58 19 12 19C16.42 19 20 15.42 20 11C20 6.58 16.42 3 12 3ZM12 17C8.69 17 6 14.31 6 11C6 7.69 8.69 5 12 5C15.31 5 18 7.69 18 11C18 14.31 15.31 17 12 17Z"/><path d="M12 7L12 15M9 10L12 13L15 10"/></svg>',
@@ -2994,15 +3468,16 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
         aurora: '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"/><path d="M12 6L16 12L12 18L8 12L12 6Z"/></svg>'
       };
 
-      const themeGraphics = {
-        pure: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="currentColor"/></svg>',
-        neon: '<svg viewBox="0 0 100 100"><polygon points="50,20 80,50 50,80 20,50" fill="currentColor"/></svg>',
-        cyber: '<svg viewBox="0 0 100 100"><rect x="25" y="25" width="50" height="50" rx="10" fill="currentColor"/></svg>',
-        sunset: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="currentColor"/></svg>',
-        ocean: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="40" ry="30" fill="currentColor"/></svg>',
-        forest: '<svg viewBox="0 0 100 100"><polygon points="50,15 85,85 15,85" fill="currentColor"/></svg>',
-        galaxy: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="currentColor"/></svg>',
-        aurora: '<svg viewBox="0 0 100 100"><polygon points="50,10 90,50 50,90 10,50" fill="currentColor"/></svg>'
+      const themeIconUrls = {
+        snow: 'https://i.ibb.co/jPTZkZpS/image.png',
+        sunset: 'https://i.ibb.co/zVMnb70D/image-2026-06-11-231050971.png',
+        grape: 'https://i.ibb.co/M58hgr0F/image.png',
+        dracula: 'https://i.ibb.co/d0r4nWsH/image.png',
+        ocean: 'https://i.ibb.co/Z6nz0QKB/image-2026-06-11-231237791.png',
+        forest: 'https://i.ibb.co/dwb0Nn2T/image.png',
+        lavender: 'https://i.ibb.co/dwRrjsWK/image-2026-06-11-231356311.png',
+        amber: 'https://i.ibb.co/wZVbmXKf/image.png',
+        rose: 'https://i.ibb.co/jZQbLB7v/image.png'
       };
 
       themes.forEach(themeName => {
@@ -3011,11 +3486,12 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
         card.className = 'onboarding-theme-card';
         card.dataset.theme = themeName;
 
-        const graphic = themeGraphics[themeName] || themeGraphics.pure;
-        const iconColor = theme.a;
+        const iconUrl = themeIconUrls[themeName];
 
         card.innerHTML = `
-          <div class="onboarding-theme-graphic" style="color: ${iconColor};">${graphic}</div>
+          <div class="onboarding-theme-graphic">
+            <img src="${iconUrl}" alt="${themeName.charAt(0).toUpperCase() + themeName.slice(1)}" class="onboarding-theme-icon">
+          </div>
           <div class="onboarding-theme-name">${themeName.charAt(0).toUpperCase() + themeName.slice(1)}</div>
         `;
 
@@ -3069,23 +3545,26 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       
       // Apply audio settings based on user choice
       if (onboardingAudioEnabled) {
-        settings.hoverSFX = true;
-        settings.interfaceSFX = true;
+        settings.music = true;
+        settings.sfx = true;
       } else {
-        // Keep audio disabled if user skipped
-        settings.hoverSFX = false;
-        settings.interfaceSFX = false;
+        settings.music = false;
+        settings.sfx = false;
       }
       
       // Save settings
-      localStorage.setItem('orbitSettings', JSON.stringify(settings));
+      saveStoredSettings();
       
       // Apply theme
       applySettings();
 
-      // Initialize background music if audio was enabled
-      if (onboardingAudioEnabled && typeof initBackgroundMusic === 'function') {
-        initBackgroundMusic();
+      // Start background music immediately if audio was enabled
+      if (onboardingAudioEnabled) {
+        music.muted = false;
+        music.play().catch(() => {});
+        const primer = hoverAudio.cloneNode();
+        primer.volume = 0;
+        primer.play().catch(() => {});
       }
 
       // Smooth transition to home
@@ -3100,8 +3579,257 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
       }
     }
 
+    function initHeroClock() {
+      const clockEl = document.getElementById('heroClock');
+      if (!clockEl) return;
+
+      const locale = navigator.language || 'en-US';
+      const hourCycle = Intl.DateTimeFormat(locale).resolvedOptions().hourCycle || 'h12';
+      const is24h = hourCycle === 'h23' || hourCycle === 'h24';
+
+      function formatTime(date) {
+        const h = date.getHours();
+        const m = date.getMinutes().toString().padStart(2, '0');
+        const s = date.getSeconds().toString().padStart(2, '0');
+        if (is24h) {
+          return `${h.toString().padStart(2, '0')}:${m}:${s}`;
+        }
+        const p = h >= 12 ? 'PM' : 'AM';
+        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        return `${h12}:${m}:${s} ${p}`;
+      }
+
+      function tick() {
+        clockEl.textContent = formatTime(new Date());
+        timeoutId = setTimeout(tick, 1000 - (Date.now() % 1000));
+      }
+
+      let timeoutId = setTimeout(tick, 1000 - (Date.now() % 1000));
+    }
+
+    // ── Notification Center ──────────────────────────────
+    const notificationIcons = {
+      update:   '🔄',
+      tip:      '💡',
+      game:     '🎮',
+      announce: '📢',
+    };
+
+    const notificationCategories = {
+      update:   'Update',
+      tip:      'Tip',
+      game:     'Recommendation',
+      announce: 'Announcement',
+    };
+
+    let notifications = [];
+    let notifExpanded = false;
+
+    const defaultNotifications = [
+      { id: 'n1', type: 'update',   title: 'Version 1.3 released',         description: 'Faster proxy, new games, and a refined homepage experience.', time: '2h ago' },
+      { id: 'n2', type: 'update',   title: 'Hotfix 1.3.1 deployed',        description: 'Fixed a crash on the settings page.',                      time: '6h ago' },
+      { id: 'n3', type: 'update',   title: 'Version 1.2 is live',          description: 'New tab management features and performance improvements.', time: '1d ago' },
+      { id: 'n4', type: 'tip',      title: 'Middle-click to close',        description: 'Middle-click any tab to close it instantly.',               time: '1d ago' },
+      { id: 'n5', type: 'tip',      title: 'Keyboard shortcuts',           description: 'Press Ctrl+K to search, Ctrl+L for the address bar.',       time: '3d ago' },
+      { id: 'n6', type: 'game',     title: 'Featured: Cookie Clicker',     description: 'The classic idle game is now available in Orbit.',          time: '2d ago' },
+      { id: 'n7', type: 'game',     title: 'New: Snake',                   description: 'Play the classic Snake game right in Orbit.',               time: '4d ago' },
+      { id: 'n8', type: 'announce', title: 'Proxy integration coming soon', description: 'Built-in Ultraviolet proxy support is in development.',     time: '3d ago' },
+    ];
+
+    function createNotificationCard(notif, isFirst) {
+      const badge = notificationCategories[notif.type] || 'Update';
+      const icon = notificationIcons[notif.type] || '📌';
+      const actions = `
+        <div class="nc-card-actions">
+          ${isFirst ? '<button class="nc-expand-btn" aria-label="Toggle notifications">▼</button>' : ''}
+          <button class="nc-dismiss" data-dismiss="${escapeHTML(notif.id)}" aria-label="Dismiss">✕</button>
+        </div>
+      `;
+      return `
+        <div class="nc-card" data-id="${escapeHTML(notif.id)}">
+          ${actions}
+          <div class="nc-card-header">
+            <span class="nc-icon">${icon}</span>
+            <div class="nc-card-info">
+              <span class="nc-title">${escapeHTML(notif.title)}</span>
+              <span class="nc-body">${escapeHTML(notif.description)}</span>
+            </div>
+            <span class="nc-time">${escapeHTML(notif.time)}</span>
+          </div>
+          <div class="nc-card-footer">
+            <span class="nc-badge">${badge}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderNotifications() {
+      if (notifications.length === 0) return '<div class="nc-empty">No notifications</div>';
+      return notifications.map((n, i) => createNotificationCard(n, i === 0)).join('');
+    }
+
+    function getCollapsedMaxHeight(el) {
+      const first = el.querySelector('.nc-card');
+      if (!first) return 0;
+      const style = getComputedStyle(first);
+      const mt = parseFloat(style.marginTop) || 0;
+      const mb = parseFloat(style.marginBottom) || 0;
+      return first.offsetHeight + mt + mb + 2;
+    }
+
+    function initNotifications() {
+      const el = document.getElementById('heroNotifications');
+      if (!el) return;
+      if (notifications.length === 0) notifications = defaultNotifications.map(n => ({ ...n }));
+      el.innerHTML = renderNotifications();
+      notifExpanded = false;
+      el.classList.remove('expanded');
+      requestAnimationFrame(() => {
+        el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
+      });
+    }
+
+    function equipCards(el) {
+      const cards = el.querySelectorAll('.nc-card:not(:first-child)');
+      cards.forEach((c, i) => {
+        c.style.transitionDelay = (i * 60) + 'ms';
+        c.classList.add('visible');
+      });
+    }
+
+    function toggleNotifCenter() {
+      const el = document.getElementById('heroNotifications');
+      if (!el || notifications.length === 0) return;
+      if (notifExpanded) {
+        const cards = el.querySelectorAll('.nc-card:not(:first-child)');
+        cards.forEach(c => { c.classList.remove('visible'); c.style.transitionDelay = ''; });
+        el.style.maxHeight = el.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+          el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
+          el.classList.remove('expanded');
+        });
+        notifExpanded = false;
+      } else {
+        el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
+        requestAnimationFrame(() => {
+          el.style.maxHeight = el.scrollHeight + 'px';
+          el.classList.add('expanded');
+          equipCards(el);
+        });
+        notifExpanded = true;
+      }
+    }
+
+    function dismissNotification(id) {
+      const el = document.getElementById('heroNotifications');
+      if (!el) return;
+      if (notifExpanded) {
+        const oldH = el.scrollHeight;
+        el.style.maxHeight = oldH + 'px';
+        notifications = notifications.filter(n => n.id !== id);
+        el.innerHTML = renderNotifications();
+        equipCards(el);
+        requestAnimationFrame(() => {
+          el.style.maxHeight = el.scrollHeight + 'px';
+        });
+      } else {
+        notifications = notifications.filter(n => n.id !== id);
+        el.innerHTML = renderNotifications();
+        requestAnimationFrame(() => {
+          el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
+        });
+      }
+    }
+
+    function addNotification(notif) {
+      notif.type = notif.type || 'announce';
+      notif.time = notif.time || 'just now';
+      notif.description = notif.description || '';
+      if (!notif.id || !notif.title) return null;
+      if (notifications.some(n => n.id === notif.id)) return null;
+      notifications.unshift(notif);
+      const el = document.getElementById('heroNotifications');
+      if (!el) return null;
+      el.innerHTML = renderNotifications();
+      if (notifExpanded) {
+        equipCards(el);
+        requestAnimationFrame(() => {
+          el.style.maxHeight = el.scrollHeight + 'px';
+        });
+      } else {
+        requestAnimationFrame(() => {
+          el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
+        });
+      }
+      return notif.id;
+    }
+
+    // ── Hold-to-clear all notifications ──────
+    let dismissHoldTimer = null;
+    let dismissHandled = false;
+
+    document.addEventListener('pointerdown', (e) => {
+      const btn = e.target?.closest?.('.nc-dismiss');
+      if (!btn) return;
+      dismissHandled = false;
+      btn.classList.add('holding');
+      dismissHoldTimer = setTimeout(() => {
+        btn.classList.remove('holding');
+        dismissHandled = true;
+        const el = document.getElementById('heroNotifications');
+        if (!el) return;
+        notifications = [];
+        el.innerHTML = renderNotifications();
+        notifExpanded = false;
+        el.classList.remove('expanded');
+        requestAnimationFrame(() => {
+          el.style.maxHeight = el.scrollHeight + 'px';
+        });
+      }, 2000);
+    });
+
+    document.addEventListener('pointerup', (e) => {
+      const btn = e.target?.closest?.('.nc-dismiss');
+      if (!btn) return;
+      if (dismissHoldTimer) {
+        clearTimeout(dismissHoldTimer);
+        dismissHoldTimer = null;
+      }
+      btn.classList.remove('holding');
+    });
+
+    document.addEventListener('pointerleave', (e) => {
+      const btn = e.target?.closest?.('.nc-dismiss');
+      if (!btn) return;
+      if (dismissHoldTimer) {
+        clearTimeout(dismissHoldTimer);
+        dismissHoldTimer = null;
+      }
+      btn.classList.remove('holding');
+      dismissHandled = false;
+    });
+
+    document.addEventListener('click', (e) => {
+      const dismissBtn = e.target?.closest?.('.nc-dismiss');
+      if (dismissBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!dismissHandled) {
+          dismissNotification(dismissBtn.dataset.dismiss);
+        }
+        dismissHandled = false;
+        return;
+      }
+      const expandBtn = e.target?.closest?.('.nc-expand-btn');
+      if (expandBtn) { e.stopPropagation(); e.preventDefault(); toggleNotifCenter(); return; }
+      if (e.target?.closest?.('.hero-notifications')) { e.preventDefault(); toggleNotifCenter(); }
+    });
+
     // Onboarding event listeners
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('[BOOT] DOMContentLoaded fired at', Date.now());
+      window.__UV_BOOT_STATUS__._update('DCLfired', true);
+
       // Get Started button
       const getStartedBtn = document.getElementById('getStartedBtn');
       if (getStartedBtn) {
@@ -3151,9 +3879,148 @@ const music = new Audio("https://files.catbox.moe/vgjm1c.mp3");
         });
       }
 
+      // Start the live clock
+      initHeroClock();
+
+      // Initialize notification hub
+      initNotifications();
+
       // Initialize intro/onboarding logic
       initializeIntro();
+
+      // ---- Ultraviolet boot ----
+      console.log('[BOOT] Registering getPort listener at', Date.now());
+      window.__UV_BOOT_STATUS__._update('getPortListenerRegistered', true);
+      // bare-mux port provider: responds to SW's getPort request with a
+      // SharedWorker transport port.  The SW owns the port state — do NOT
+      // infer local portReady/bareMuxReady from this handler firing.
+      // Port state is synced from the SW via SYNC_PORT_STATE.
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data.type === 'getPort' && event.data.port) {
+          window.__UV_BOOT_STATUS__._update('portRequestReceived', true);
+          console.log('[BOOT] getPort received from SW, creating SharedWorker at', Date.now());
+          console.log('[BOOT] getPort event source:', event.source ? event.source.constructor.name : 'no source', 'event.data.port type:', typeof event.data.port, 'isMessagePort:', event.data.port instanceof MessagePort);
+          let worker;
+          try {
+            worker = new SharedWorker('/uv/bare-mux-worker.js', 'bare-mux-worker');
+            console.log('[BOOT] SharedWorker CONSTRUCTED OK at', Date.now(), 'worker.port type:', typeof worker.port, 'isMessagePort:', worker.port instanceof MessagePort);
+          } catch (e) {
+            console.error('[BOOT] SharedWorker CONSTRUCTION FAILED at', Date.now(), 'error:', e.message, 'stack:', e.stack);
+            return;
+          }
+          window.__UV_BOOT_STATUS__._update('workerConstructed', true);
+          console.log('[BOOT] SharedWorker constructed, transferring port at', Date.now());
+          try {
+            event.data.port.postMessage(worker.port, [worker.port]);
+            console.log('[BOOT] SharedWorker port TRANSFERRED OK at', Date.now());
+          } catch (e) {
+            console.error('[BOOT] SharedWorker port TRANSFER FAILED at', Date.now(), 'error:', e.message, 'stack:', e.stack);
+            return;
+          }
+          window.__UV_BOOT_STATUS__._update('portTransferred', true);
+          console.log('[BOOT] SharedWorker port transferred to SW at', Date.now());
+          // Port state determined by SW authority — will be synced below
+        }
+        // SW broadcasts port state changes via PORT_STATE_SYNC after trackPort resolves
+        if (event.data.type === 'PORT_STATE_SYNC') {
+          const oldPortReady = window.__UV_BOOT_STATUS__.portReady;
+          const oldBareMux = window.__UV_BOOT_STATUS__.bareMuxReady;
+          const oldStatus = window.__UV_BOOT_STATUS__._log.filter(e => e.key === 'swPortStatus').slice(-1)[0];
+          const oldReinit = window.__UV_BOOT_STATUS__._log.filter(e => e.key === 'swReinitCount').slice(-1)[0];
+          console.log('[PORT_SYNC] state transition at', Date.now());
+          console.log('[PORT_SYNC] portReady:', oldPortReady, '→', event.data.portReady);
+          console.log('[PORT_SYNC] status:', oldStatus ? oldStatus.val : 'none', '→', event.data.status);
+          console.log('[PORT_SYNC] reinitCount:', oldReinit ? oldReinit.val : 'none', '→', event.data.reinitCount);
+          console.log('[PORT_SYNC] source: SW broadcast');
+          window.__UV_BOOT_STATUS__._update('swPortStateSync', true);
+          if (event.data.portReady !== undefined) {
+            window.__UV_BOOT_STATUS__.portReady = event.data.portReady;
+            window.__UV_BOOT_STATUS__._update('portReady', event.data.portReady);
+          }
+          if (event.data.portReady === true) {
+            console.log('[PORT_READY] received at ' + Date.now());
+            const ui = window.VoltraBrowser && window.VoltraBrowser._browserUI;
+            if (ui && typeof ui._processPendingRestoreTabs === 'function') {
+              console.log('[PORT_READY] flushing pending restores');
+              ui._processPendingRestoreTabs();
+            }
+          }
+          if (event.data.bareMuxReady !== undefined) {
+            window.__UV_BOOT_STATUS__.bareMuxReady = event.data.bareMuxReady;
+            window.__UV_BOOT_STATUS__._update('bareMuxReady', event.data.bareMuxReady);
+          }
+          if (event.data.status) {
+            window.__UV_BOOT_STATUS__._update('swPortStatus', event.data.status);
+          }
+          // Auto-recovery: port failed after reload — refresh SharedWorker port via UV's yn()
+          if (event.data.portReady === false && event.data.status === 'failed' && !window.__UV_RECOVERY_ATTEMPTED__) {
+            window.__UV_RECOVERY_ATTEMPTED__ = true;
+            console.log('[RECOVERY] Port failed — starting recovery');
+            // Step A: Trigger UV's internal yn() refresh via BroadcastChannel
+            try {
+              const bc = new BroadcastChannel('bare-mux');
+              bc.postMessage({ type: 'refreshPort' });
+              bc.close();
+              console.log('[RECOVERY] refreshPort sent');
+            } catch (e) {
+              console.warn('[RECOVERY] BroadcastChannel failed:', e);
+            }
+            // Step B+C: Wait for UV to create fresh port, then reinit SW portState
+            setTimeout(async () => {
+              try {
+                const reg = await navigator.serviceWorker.ready;
+                if (reg.active) {
+                  reg.active.postMessage({ type: 'REINIT_PORT' });
+                  console.log('[RECOVERY] REINIT_PORT sent to SW');
+                }
+              } catch (e) {
+                console.warn('[RECOVERY] REINIT_PORT failed:', e);
+              }
+            }, 3000);
+          }
+        }
+      });
+      console.log('[BOOT] getPort listener registered, now registering SW at', Date.now());
+
+      // ---- Ordered startup validation ----
+      if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then((reg) => {
+            window.__UV_BOOT_STATUS__._update('swReady', true);
+            console.log('[BOOT] Service worker registered at', Date.now(), 'scope:', reg.scope);
+            reg.addEventListener('updatefound', () => {
+              const installing = reg.installing;
+              if (installing) {
+                console.log('[BOOT] SW update found, state:', installing.state);
+                installing.addEventListener('statechange', () => {
+                  console.log('[BOOT] SW state changed to:', installing.state, 'at', Date.now());
+                  if (installing.state === 'activated') {
+                    window.__UV_BOOT_STATUS__._update('swActivated', true);
+                    console.log('[BOOT] SW activated at', Date.now());
+                    // Sync port state from SW authority after activation
+                    syncPortStateFromSW();
+                  }
+                });
+              }
+            });
+            // Also sync if already active (e.g., after page reload)
+            if (reg.active || reg.installing === null) {
+              syncPortStateFromSW();
+            }
+          })
+          .catch((err) => {
+            window.__UV_BOOT_STATUS__._update('failedStage', 'sw');
+            console.error('[BOOT] Service worker registration FAILED at', Date.now(), err);
+          });
+      } else {
+        window.__UV_BOOT_STATUS__._update('failedStage', 'sw');
+        console.warn('[BOOT] Service workers not supported');
+      }
     });
 
     window.startOnboarding = startOnboarding;
     window.checkOnboarding = checkOnboarding;
+    window.addNotification = addNotification;
+    window.selectBgMusic = selectBgMusic;
+    window.toggleBgMusicDropdown = toggleBgMusicDropdown;
+    window.onBgMusicCustomUrl = onBgMusicCustomUrl;

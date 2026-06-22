@@ -1,0 +1,4 @@
+2026/06/20-11:47:07.982 37b8 Log #3: 1 ops saved to Table #4 OK
+2026/06/20-11:47:09.061 37b8 Archiving C:\Users\abeni\Downloads\orbit\.chrome-measure\Default\Site Characteristics Database/000003.log: IO error: C:\Users\abeni\Downloads\orbit\.chrome-measure\Default\Site Characteristics Database/000003.log: Could not rename file: File currently in use. (ChromeMethodBFE: 14::RenameFile::2)
+2026/06/20-11:47:09.061 37b8 Table #4: 1 entries OK
+2026/06/20-11:47:10.076 37b8 Archiving C:\Users\abeni\Downloads\orbit\.chrome-measure\Default\Site Characteristics Database/MANIFEST-000001: IO error: C:\Users\abeni\Downloads\orbit\.chrome-measure\Default\Site Characteristics Database/MANIFEST-000001: Could not rename file: File currently in use. (ChromeMethodBFE: 14::RenameFile::2)

@@ -5,24 +5,30 @@
  * Modules:
  *   - InputParser    : URL detection / search query routing
  *   - HistoryManager : Per-tab back/forward navigation stack
- *   - TabManager     : Multi-tab sessions with localStorage persistence
- *   - BrowserUI      : Renders the browser chrome (address bar, tabs, nav controls)
+ *   - (tab system removed - single persistent view)
+ *   - BrowserUI      : Renders the browser chrome (address bar, nav controls, bookmarks)
  *   - SearchEngine   : Autocomplete suggestions from history & popular sites
  */
 
 (function() {
   'use strict';
 
-  // ==================== Initialize ProxyEngine ====================
+  // ==================== Ultraviolet Proxy Integration ====================
   
-  // Initialize the ProxyEngine instance (from proxy-engine.js)
-  let proxyEngine = null;
+  // UV is configured in app.js (service worker registration + encode helper).
+  // The browser engine uses window.encodeUVUrl() to encode URLs through UV.
+  // If UV is unavailable, it falls back to direct iframe loading.
   
-  async function initProxyEngine() {
-    // Proxy functionality disabled - focusing on core browser UI first
-    console.log('[Orbit] Proxy functionality disabled - focusing on core browser UI');
-    proxyEngine = null;
+  function shouldUseUV(url) {
+    return url && !url.startsWith('about:') && url !== 'about:blank';
   }
+
+  window.__UV_ROUTE_DEBUG__ = {
+    lastUrl: '',
+    lastEncoded: '',
+    lastShouldUseUV: false,
+    lastFinalSrc: '',
+  };
 
   // ==================== Search Engine Selection ====================
 
@@ -35,7 +41,7 @@
     brave: {
       name: 'Brave',
       url: 'https://search.brave.com/search?q=',
-      icon: 'https://search.brave.com/favicon.ico'
+      icon: 'icons/brave icon.svg'
     },
     bing: {
       name: 'Bing',
@@ -123,57 +129,6 @@
       }
     }
 
-    /**
-     * Get autocomplete suggestions from history and popular sites.
-     * @param {string} partial
-     * @param {Array} historyItems
-     * @returns {Array}
-     */
-    static getSuggestions(partial, historyItems = []) {
-      if (!partial || partial.trim().length < 1) return [];
-      const q = partial.toLowerCase().trim();
-
-      // Popular/default sites for autocomplete
-      const popularSites = [
-        { title: 'Google', url: 'https://www.google.com', icon: 'G' },
-        { title: 'YouTube', url: 'https://www.youtube.com', icon: 'YT' },
-        { title: SEARCH_PROVIDER_NAME, url: 'https://search.brave.com', icon: 'B' },
-        { title: 'Wikipedia', url: 'https://www.wikipedia.org', icon: 'W' },
-        { title: 'Reddit', url: 'https://www.reddit.com', icon: 'R' },
-        { title: 'GitHub', url: 'https://github.com', icon: 'GH' },
-        { title: 'Google Classroom', url: 'https://classroom.google.com', icon: 'GC' },
-        { title: 'Google Docs', url: 'https://docs.google.com', icon: 'GD' },
-        { title: 'Google Drive', url: 'https://drive.google.com', icon: 'DR' },
-        { title: 'Twitch', url: 'https://www.twitch.tv', icon: 'TW' },
-        { title: 'Spotify', url: 'https://open.spotify.com', icon: 'SP' },
-        { title: 'X (Twitter)', url: 'https://x.com', icon: 'X' },
-        { title: 'Instagram', url: 'https://www.instagram.com', icon: 'IG' },
-        { title: 'Discord', url: 'https://discord.com', icon: 'DC' },
-      ];
-
-      // Filter history that starts with or includes the query
-      const historyMatches = historyItems
-        .filter(item => item.url.toLowerCase().includes(q) || item.title.toLowerCase().includes(q))
-        .slice(0, 5);
-
-      // Filter popular sites that start with query
-      const popularMatches = popularSites
-        .filter(site => site.title.toLowerCase().includes(q) || site.url.toLowerCase().includes(q))
-        .slice(0, 5);
-
-      // Combine, deduplicate by URL
-      const seen = new Set();
-      const results = [];
-      
-      [...historyMatches, ...popularMatches].forEach(item => {
-        if (!seen.has(item.url)) {
-          seen.add(item.url);
-          results.push(item);
-        }
-      });
-
-      return results.slice(0, 8);
-    }
   }
 
   // ==================== HistoryManager ====================
@@ -320,195 +275,68 @@
       }
     }
 
-    /**
-     * Get all history across all tabs (for search suggestions).
-     * @returns {Array}
-     */
-    getAllHistory() {
-      const items = [];
-      Object.values(this.stacks).forEach(stack => {
-        stack.entries.forEach(entry => {
-          if (entry.url) {
-            items.push({
-              url: entry.url,
-              title: entry.title || entry.url,
-              timestamp: entry.timestamp
-            });
-          }
-        });
-      });
-      // Sort by timestamp descending, deduplicate
-      items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      const seen = new Set();
-      return items.filter(item => {
-        if (seen.has(item.url)) return false;
-        seen.add(item.url);
-        return true;
-      });
-    }
   }
 
-  // ==================== TabManager ====================
 
-  class TabManager {
+
+  // ==================== BookmarkManager ====================
+
+  class BookmarkManager {
     constructor() {
-      this.tabs = {};       // tabId -> { id, title, url, isLoading }
-      this.activeTabId = null;
-      this.tabCounter = 0;
-      this._loadState();
+      this.STORAGE_KEY = 'voltra-bookmarks';
+      this.bookmarks = this._load();
     }
 
-    /**
-     * Create a new tab.
-     * @param {string} url - Initial URL
-     * @param {string} title - Tab title
-     * @returns {string} tabId
-     */
-    createTab(url = BRAVE_HOME_INTERNAL, title = SEARCH_PROVIDER_NAME) {
-      this.tabCounter++;
-      const tabId = 'tab-' + this.tabCounter + '-' + Date.now();
-      this.tabs[tabId] = { id: tabId, title, url, isLoading: false };
-      this.activeTabId = tabId;
-      this._persist();
-      return tabId;
+    getAll() {
+      return this.bookmarks;
     }
 
-    /**
-     * Switch to a tab.
-     * @param {string} tabId
-     */
-    switchTab(tabId) {
-      if (this.tabs[tabId]) {
-        this.activeTabId = tabId;
-        this._persist();
-      }
+    add(title, url) {
+      const existing = this.bookmarks.find(b => b.url === url);
+      if (existing) return existing;
+      const bookmark = {
+        id: 'bm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        title: title || url,
+        url: url,
+        order: this.bookmarks.length
+      };
+      this.bookmarks.push(bookmark);
+      this._save();
+      return bookmark;
     }
 
-    /**
-     * Close a tab.
-     * @param {string} tabId
-     * @returns {string|null} next active tabId
-     */
-    closeTab(tabId) {
-      if (Object.keys(this.tabs).length <= 1) {
-        // Don't close the last tab
-        return null;
-      }
-
-      const tabIds = Object.keys(this.tabs);
-      const idx = tabIds.indexOf(tabId);
-      delete this.tabs[tabId];
-
-      // Determine next active tab
-      if (this.activeTabId === tabId) {
-        if (idx < tabIds.length - 1) {
-          this.activeTabId = tabIds[idx + 1] || tabIds[idx - 1];
-        } else {
-          this.createTab(BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
-        }
-      }
-
-      this._persist();
-      return this.activeTabId;
+    remove(id) {
+      this.bookmarks = this.bookmarks.filter(b => b.id !== id);
+      this._save();
     }
 
-    /**
-     * Update a tab's title.
-     */
-    updateTitle(tabId, title) {
-      if (this.tabs[tabId]) {
-        this.tabs[tabId].title = title;
-        this._persist();
-      }
+    isBookmarked(url) {
+      return this.bookmarks.some(b => b.url === url);
     }
 
-    /**
-     * Update a tab's URL.
-     */
-    updateUrl(tabId, url) {
-      if (this.tabs[tabId]) {
-        this.tabs[tabId].url = url;
-        this._persist();
-      }
+    reorder(fromIndex, toIndex) {
+      if (fromIndex < 0 || fromIndex >= this.bookmarks.length) return;
+      if (toIndex < 0 || toIndex >= this.bookmarks.length) return;
+      const [moved] = this.bookmarks.splice(fromIndex, 1);
+      this.bookmarks.splice(toIndex, 0, moved);
+      this.bookmarks.forEach((b, i) => b.order = i);
+      this._save();
     }
 
-    /**
-     * Set loading state for a tab.
-     */
-    setLoading(tabId, isLoading) {
-      if (this.tabs[tabId]) {
-        this.tabs[tabId].isLoading = isLoading;
-        this._persist();
-      }
-    }
-
-    /**
-     * Get all tabs as an array sorted by creation.
-     * @returns {Array}
-     */
-    getTabList() {
-      return Object.values(this.tabs);
-    }
-
-    /**
-     * Get active tab data.
-     * @returns {object|null}
-     */
-    getActiveTab() {
-      return this.tabs[this.activeTabId] || null;
-    }
-
-    /**
-     * Clear all tabs.
-     */
-    clearAll() {
-      this.tabs = {};
-      this.activeTabId = null;
-      this.tabCounter = 0;
+    _load() {
       try {
-        localStorage.removeItem('voltra-browser-tabs');
+        const data = localStorage.getItem(this.STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    _save() {
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.bookmarks));
       } catch (e) {
         // Silently fail
-      }
-    }
-
-    /**
-     * Persist tabs to localStorage.
-     */
-    _persist() {
-      try {
-        localStorage.setItem('voltra-browser-tabs', JSON.stringify({
-          tabs: this.tabs,
-          activeTabId: this.activeTabId,
-          tabCounter: this.tabCounter
-        }));
-      } catch (e) {
-        // Silently fail
-      }
-    }
-
-    /**
-     * Load persisted tabs from localStorage.
-     */
-    _loadState() {
-      try {
-        const data = JSON.parse(localStorage.getItem('voltra-browser-tabs') || '{}');
-        if (data.tabs && Object.keys(data.tabs).length > 0) {
-          this.tabs = Object.fromEntries(Object.entries(data.tabs).map(([id, tab]) => {
-            const normalizedUrl = tab && (tab.url === 'about:blank' || !tab.url) ? BRAVE_HOME_INTERNAL : tab.url;
-            return [id, {
-              ...tab,
-              url: normalizedUrl,
-              title: tab.title || SEARCH_PROVIDER_NAME
-            }];
-          }));
-          this.activeTabId = data.activeTabId || Object.keys(this.tabs)[0] || null;
-          this.tabCounter = data.tabCounter || Object.keys(this.tabs).length || 0;
-        } else {
-          this.createTab(BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
-        }
-      } catch (e) {
-        this.createTab(BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
       }
     }
   }
@@ -537,7 +365,7 @@
    */
   function getBraveHomeSrcDoc() {
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background:#0c0d10">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -545,7 +373,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--accent-a:125,211,252;--accent-b:192,132,252;--hover-ease:cubic-bezier(0.22,1,0.36,1);--hover-glow-duration:.65s;--hover-glow:0 0 0 1px rgba(var(--accent-a),.82),0 0 16px rgba(var(--accent-a),.58),0 0 38px rgba(var(--accent-b),.42),0 0 78px rgba(var(--accent-b),.26)}
-body{background:#0c0d10;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden}
+body{color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden}
 .wrap{display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:580px;padding:20px}
 .logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .logo svg{width:42px;height:42px}
@@ -603,7 +431,7 @@ document.querySelectorAll('.sc').forEach(function(btn){
   }
 
   /**
-   * Normalize a target URL for iframe loading (without proxy).
+   * Normalize a target URL for iframe loading (UV proxy handles encoding).
    * @param {string} targetUrl
    * @returns {string}
    */
@@ -727,11 +555,11 @@ document.querySelectorAll('.sc').forEach(function(btn){
   class BrowserUI {
     constructor() {
       this.container = null;
-      this.tabManager = new TabManager();
       this.historyManager = new HistoryManager();
       this.historyManager.loadAll();
-      this.iframeMap = {}; // tabId -> iframe reference
+      this.bookmarkManager = new BookmarkManager();
       this._onUrlChange = null;
+      this._pendingRestoreTabs = [];
     }
 
     /**
@@ -747,34 +575,22 @@ document.querySelectorAll('.sc').forEach(function(btn){
      * @returns {string}
      */
     buildHTML() {
-      const tabs = this.tabManager.getTabList();
-      const activeTab = this.tabManager.getActiveTab();
-      const activeUrl = activeTab ? this.historyManager.getCurrentUrl(activeTab.id) || activeTab.url || '' : '';
-      const canBack = activeTab ? this.historyManager.canGoBack(activeTab.id) : false;
-      const canForward = activeTab ? this.historyManager.canGoForward(activeTab.id) : false;
+      const currentUrl = this.historyManager.getCurrentUrl('main');
+      const canBack = this.historyManager.canGoBack('main');
+      const canForward = this.historyManager.canGoForward('main');
 
       return `
         <div class="browser-container" id="browserContainer">
-          <!-- Tab Bar -->
-          <div class="browser-tab-bar" id="browserTabBar">
-            <div class="browser-tabs" id="browserTabs">
-              ${tabs.map(tab => this._buildTabHTML(tab, tab.id === this.tabManager.activeTabId)).join('')}
-            </div>
-            <button class="browser-new-tab-btn" onclick="VoltraBrowser.addTab()" title="New Tab">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            </button>
-          </div>
-
           <!-- Navigation / Address Bar -->
           <div class="browser-nav-bar" id="browserNavBar">
             <button class="browser-nav-btn" onclick="VoltraBrowser.goBack()" ${canBack ? '' : 'disabled'} title="Back">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </button>
             <button class="browser-nav-btn" onclick="VoltraBrowser.goForward()" ${canForward ? '' : 'disabled'} title="Forward">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
             </button>
-            <button class="browser-nav-btn" onclick="VoltraBrowser.refresh()" title="Refresh">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            <button class="browser-nav-btn" onclick="this.querySelector('svg').classList.add('spinning');VoltraBrowser.refresh()" title="Refresh">
+              <svg id="refreshIcon" viewBox="0 0 24 24" fill="currentColor" onanimationend="this.classList.remove('spinning')"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
             </button>
             <button class="browser-nav-btn" onclick="VoltraBrowser.goHome()" title="Home">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -796,121 +612,76 @@ document.querySelectorAll('.sc').forEach(function(btn){
                   type="text"
                   class="browser-address-input"
                   id="browserAddressInput"
-                  value="${this._escapeHtml(activeUrl)}"
+                  value="${this._escapeHtml(currentUrl || '')}"
                   placeholder="Search or enter URL..."
                   autocomplete="off"
                   spellcheck="false"
-                  onkeydown="VoltraBrowser.handleAddressKeydown(event)"
-                  oninput="VoltraBrowser.handleAddressInput(this.value)"
-                  onfocus="VoltraBrowser.handleAddressFocus()"
-                  onblur="VoltraBrowser.handleAddressBlur()">
-                <div class="browser-address-suggestions" id="browserSuggestions"></div>
+                  onkeydown="VoltraBrowser.handleAddressKeydown(event)">
               </div>
             </div>
             <button class="browser-nav-btn" onclick="VoltraBrowser.toggleBookmark()" id="browserBookmarkBtn" title="Bookmark">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+              <svg class="browser-bookmark-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
             </button>
-            <button class="browser-nav-btn" onclick="VoltraBrowser.toggleMenu()" title="Menu">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-            </button>
+            <div style="position:relative; display:flex; align-items:center;">
+              <button class="browser-nav-btn" onclick="VoltraBrowser.toggleMenu()" title="Menu">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+              </button>
+              <!-- Menu Dropdown -->
+              <div class="browser-menu-dropdown" id="browserMenuDropdown">
+                <div class="browser-menu-section">Browser Controls</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.toggleSound()">
+                  <span class="browser-menu-toggle">
+                    <span class="browser-menu-toggle-label">Toggle Sound</span>
+                    <span class="browser-menu-toggle-switch" id="soundToggleSwitch"></span>
+                  </span>
+                </div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.reloadPage()">Reload Page</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.hardRefresh()">Hard Refresh</div>
+
+                <div class="browser-menu-separator"></div>
+                <div class="browser-menu-section">Privacy</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.resetCookies()">Reset Cookies</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.wipePageData()">Wipe Page Data</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.clearSiteStorage()">Clear Site Storage</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.clearCache()">Clear Cache</div>
+
+                <div class="browser-menu-separator"></div>
+                <div class="browser-menu-section">Site Controls</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.sitePermissions()">Site Permissions</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.pageInformation()">Page Information</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.viewSecurityStatus()">View Security Status</div>
+
+                <div class="browser-menu-separator"></div>
+                <div class="browser-menu-section">Orbit</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.orbitSettings()">Orbit Settings</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.appearance()">Appearance</div>
+                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.browserPreferences()">Browser Preferences</div>
+              </div>
+            </div>
           </div>
 
-          <!-- Menu Dropdown -->
-          <div class="browser-menu-dropdown" id="browserMenuDropdown" style="display:none;">
-            <div class="browser-menu-item" onclick="VoltraBrowser.addTab()">New Tab</div>
-            <div class="browser-menu-item" onclick="VoltraBrowser.openSettings()">Settings</div>
-            <div class="browser-menu-item" onclick="VoltraBrowser.clearHistory()">Clear History</div>
-            <div class="browser-menu-separator"></div>
-            <div class="browser-menu-item" onclick="VoltraBrowser.openInAboutBlank()">Tab Cloak (about:blank)</div>
-            <div class="browser-menu-item" onclick="VoltraBrowser.openInBlob()">Tab Cloak (blob:)</div>
-            <div class="browser-menu-separator"></div>
-            <div class="browser-menu-item" onclick="VoltraBrowser.toggleFullscreen()">Fullscreen</div>
-            <div class="browser-menu-item" onclick="VoltraBrowser.generateDataURL()">Generate Data URL</div>
-            <div class="browser-menu-separator"></div>
-            <div class="browser-menu-item" onclick="VoltraBrowser.showUserID()">Show Session ID</div>
-            <div class="browser-menu-item" onclick="VoltraBrowser.clearAllData()">Clear All Data</div>
-          </div>
+          <!-- Bookmarks Bar -->
+          <div class="browser-bookmarks-bar" id="browserBookmarksBar"></div>
 
           <!-- Loading Bar -->
           <div class="browser-loading-bar" id="browserLoadingBar"></div>
 
-          <!-- Content Area (iframes) -->
+          <!-- Content Area -->
           <div class="browser-viewport" id="browserViewport">
-            ${tabs.map(tab => this._buildViewportHTML(tab, tab.id === this.tabManager.activeTabId)).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    _buildTabHTML(tab, isActive) {
-      return `
-        <div class="browser-tab ${isActive ? 'active' : ''}" data-tab-id="${tab.id}" onclick="VoltraBrowser.switchTab('${tab.id}')">
-          <span class="browser-tab-title">${this._escapeHtml(tab.title || 'New Tab')}</span>
-          ${tab.isLoading ? '<span class="browser-tab-loader"></span>' : ''}
-          <button class="browser-tab-close" onclick="event.stopPropagation(); VoltraBrowser.closeTab('${tab.id}')" title="Close tab">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-          </button>
-        </div>
-      `;
-    }
-
-    _buildViewportHTML(tab, isActive) {
-      const url = this.historyManager.getCurrentUrl(tab.id) || tab.url || 'about:blank';
-      
-      // Use srcdoc for the custom Brave home page (embeddable, no CORS issues)
-      if (isBraveHome(url)) {
-        const srcDoc = getBraveHomeSrcDoc();
-        return `
-          <div class="browser-viewport-tab ${isActive ? 'active' : ''}" data-vp-tab-id="${tab.id}">
             <div class="browser-frame-wrapper">
               <iframe
-                id="browserFrame-${tab.id}"
+                id="browserFrame-main"
                 class="browser-frame"
-                srcdoc="${srcDoc.replace(/&#34;/g, '&#34;').replace(/"/g, '&#34;')}"
+                src="about:blank"
                 allow="fullscreen; microphone; camera; autoplay"
                 allowfullscreen
-                onload="VoltraBrowser.handleFrameLoad('${tab.id}')"
+                onload="VoltraBrowser.handleFrameLoad()"
+                onerror="VoltraBrowser.handleFrameError()"
               ></iframe>
             </div>
           </div>
-        `;
-      }
-
-      // Use direct iframe loading for all other sites (no proxy)
-      const normalizedUrl = normalizeUrl(url);
-      return `
-        <div class="browser-viewport-tab ${isActive ? 'active' : ''}" data-vp-tab-id="${tab.id}">
-          <div class="browser-frame-wrapper">
-            <iframe
-              id="browserFrame-${tab.id}"
-              class="browser-frame"
-              src="${this._escapeHtml(normalizedUrl)}"
-              allow="fullscreen; microphone; camera; autoplay"
-              allowfullscreen
-              onload="VoltraBrowser.handleFrameLoad('${tab.id}')"
-              onerror="VoltraBrowser.handleFrameError('${tab.id}')"
-            ></iframe>
-          </div>
         </div>
       `;
-    }
-
-    /**
-     * Re-render just the tabs bar after tab changes.
-     * @returns {string}
-     */
-    renderTabsOnly() {
-      const tabs = this.tabManager.getTabList();
-      return tabs.map(tab => this._buildTabHTML(tab, tab.id === this.tabManager.activeTabId)).join('');
-    }
-
-    /**
-     * Re-render just the viewport after tab switches.
-     * @returns {string}
-     */
-    renderViewportOnly() {
-      const tabs = this.tabManager.getTabList();
-      return tabs.map(tab => this._buildViewportHTML(tab, tab.id === this.tabManager.activeTabId)).join('');
     }
 
     /**
@@ -926,14 +697,11 @@ document.querySelectorAll('.sc').forEach(function(btn){
      * Update nav button states.
      */
     updateNavButtons() {
-      const activeTab = this.tabManager.getActiveTab();
-      if (!activeTab) return;
-      
       const backBtn = document.querySelector('#browserNavBar .browser-nav-btn:first-child');
       const forwardBtn = document.querySelectorAll('#browserNavBar .browser-nav-btn')[1];
       
-      if (backBtn) backBtn.disabled = !this.historyManager.canGoBack(activeTab.id);
-      if (forwardBtn) forwardBtn.disabled = !this.historyManager.canGoForward(activeTab.id);
+      if (backBtn) backBtn.disabled = !this.historyManager.canGoBack('main');
+      if (forwardBtn) forwardBtn.disabled = !this.historyManager.canGoForward('main');
     }
 
     /**
@@ -963,19 +731,15 @@ document.querySelectorAll('.sc').forEach(function(btn){
     }
 
     /**
-     * Navigate to a URL in the active tab.
+     * Navigate to a URL.
      */
     navigate(url) {
-      const tab = this.tabManager.getActiveTab();
-      if (!tab) return;
-
       const parsed = InputParser.parse(url);
       const targetUrl = parsed.url;
 
       if (targetUrl === 'about:blank') {
-        this._loadBlankTab(tab.id);
-        this.tabManager.updateUrl(tab.id, 'about:blank');
-        this.historyManager.push(tab.id, 'about:blank', 'New Tab');
+        this._loadBlank();
+        this.historyManager.push('main', 'about:blank', 'New Tab');
         this.updateAddressBar('about:blank');
         this.updateNavButtons();
         return;
@@ -983,23 +747,16 @@ document.querySelectorAll('.sc').forEach(function(btn){
 
       const isSearch = parsed.type === 'search';
 
-      // Push to history (store the requested URL or search url)
-      this.historyManager.push(tab.id, targetUrl, parsed.query || targetUrl);
-      this.tabManager.updateUrl(tab.id, targetUrl);
-      this.tabManager.updateTitle(tab.id, isSearch ? SEARCH_PROVIDER_NAME : parsed.query || this._getDisplayTitle(targetUrl));
-      this.tabManager.setLoading(tab.id, true);
-
-      // Load URL directly in iframe (no proxy)
-      this._loadUrlInActiveTab(targetUrl);
+      this.historyManager.push('main', targetUrl, parsed.query || targetUrl);
+      this._loadUrlInFrame(targetUrl);
 
       this.updateAddressBar(targetUrl);
       this.updateNavButtons();
-      this._refreshTabBar();
-      this._syncSuggestions();
+      this._updateBookmarkBtn();
     }
 
-    _loadBlankTab(tabId) {
-      const iframe = document.getElementById('browserFrame-' + tabId);
+    _loadBlank() {
+      const iframe = document.getElementById('browserFrame-main');
       if (iframe) {
         iframe.srcdoc = '<!DOCTYPE html><html><head><style>body{margin:0;background:#05070b;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;flex-direction:column;gap:12px;}h2{color:rgba(255,255,255,0.3);font-weight:400;font-size:1.1rem;}</style></head><body><h2>Enter a URL or search to start browsing</h2></body></html>';
         iframe.src = 'about:blank';
@@ -1016,74 +773,12 @@ document.querySelectorAll('.sc').forEach(function(btn){
     }
 
     _refreshTabBar() {
-      const tabsContainer = document.getElementById('browserTabs');
-      if (tabsContainer) {
-        tabsContainer.innerHTML = this.renderTabsOnly();
-      }
+      // Tab bar removed - no-op
     }
-
-    _syncSuggestions() {
-      const input = document.getElementById('browserAddressInput');
-      if (input && input === document.activeElement) {
-        this._showSuggestions(input.value);
-      }
-    }
-
-    _showSuggestions(value) {
-      const container = document.getElementById('browserSuggestions');
-      if (!container) return;
-      
-      if (!value || value.trim().length < 1) {
-        container.classList.remove('active');
-        container.innerHTML = '';
-        return;
-      }
-
-      const historyItems = this.historyManager.getAllHistory();
-      const suggestions = InputParser.getSuggestions(value, historyItems);
-
-      if (suggestions.length === 0) {
-        // Show search hint
-        container.innerHTML = `
-          <div class="browser-suggestion-item" data-url="${this._escapeHtml(value)}" onclick="VoltraBrowser.navigateFromSuggestion(this.dataset.url)">
-            <span class="browser-suggestion-icon">🔍</span>
-            <span class="browser-suggestion-text">Search the web for "${this._escapeHtml(value)}"</span>
-          </div>
-        `;
-        container.classList.add('active');
-        return;
-      }
-
-      container.innerHTML = suggestions.map(item => `
-        <div class="browser-suggestion-item" data-url="${this._escapeHtml(item.url)}" onclick="VoltraBrowser.navigateFromSuggestion(this.dataset.url)">
-          <span class="browser-suggestion-icon">${item.icon || '🌐'}</span>
-          <span class="browser-suggestion-text">
-            <span class="browser-suggestion-title">${this._escapeHtml(item.title)}</span>
-            <span class="browser-suggestion-url">${this._escapeHtml(item.url)}</span>
-          </span>
-        </div>
-      `).join('') + `
-        <div class="browser-suggestion-item" data-url="${this._escapeHtml(value)}" onclick="VoltraBrowser.navigateFromSuggestion(this.dataset.url)">
-          <span class="browser-suggestion-icon">🔍</span>
-          <span class="browser-suggestion-text">Search the web for "${this._escapeHtml(value)}"</span>
-        </div>
-      `;
-      container.classList.add('active');
-    }
-
-    _hideSuggestions() {
-      const container = document.getElementById('browserSuggestions');
-      if (container) {
-        container.classList.remove('active');
-      }
-    }
-
-    // ---- Public API methods (wired to window.VoltraBrowser) ----
 
     handleAddressKeydown(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
-        this._hideSuggestions();
         const value = e.target.value;
         if (value.trim()) {
           this.navigate(value);
@@ -1091,49 +786,77 @@ document.querySelectorAll('.sc').forEach(function(btn){
         e.target.blur();
       }
       if (e.key === 'Escape') {
-        this._hideSuggestions();
         e.target.blur();
       }
-      if (e.key === 'Tab') {
-        // Allow tab to move focus normally
-        return;
-      }
-    }
-
-    handleAddressInput(value) {
-      this._showSuggestions(value);
-    }
-
-    handleAddressFocus() {
-      const input = document.getElementById('browserAddressInput');
-      if (input) {
-        input.select();
-        this._showSuggestions(input.value);
-      }
-    }
-
-    handleAddressBlur() {
-      // Delay hiding so click on suggestion works
-      setTimeout(() => this._hideSuggestions(), 200);
-    }
-
-    navigateFromSuggestion(url) {
-      this._hideSuggestions();
-      this.navigate(url);
-      const input = document.getElementById('browserAddressInput');
-      if (input) input.blur();
     }
 
     toggleMenu() {
       const menu = document.getElementById('browserMenuDropdown');
       if (menu) {
-        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        menu.classList.toggle('open');
       }
-      // Close search engine dropdown if open
       const searchDropdown = document.getElementById('searchEngineDropdown');
       if (searchDropdown) {
         searchDropdown.style.display = 'none';
       }
+      if (menu && menu.classList.contains('open')) {
+        this._attachMenuOutsideClick();
+      }
+    }
+
+    _attachMenuOutsideClick() {
+      const menu = document.getElementById('browserMenuDropdown');
+
+      const closeMenu = () => {
+        if (menu) menu.classList.remove('open');
+        document.removeEventListener('click', clickHandler, true);
+        document.removeEventListener('keydown', keyHandler);
+      };
+
+      const clickHandler = (e) => {
+        const btn = e.target.closest('.browser-nav-btn[onclick*="toggleMenu"]') || e.target.closest('#browserMenuDropdown');
+        if (!btn && menu) {
+          closeMenu();
+        }
+      };
+
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          closeMenu();
+        }
+      };
+
+      setTimeout(() => {
+        document.addEventListener('click', clickHandler, true);
+        document.addEventListener('keydown', keyHandler);
+      }, 0);
+    }
+
+    toggleBookmarksBar() {
+      const bar = document.getElementById('browserBookmarksBar');
+      const sw = document.getElementById('bookmarksToggleSwitch');
+      if (bar && sw) {
+        bar.classList.toggle('visible');
+        sw.classList.toggle('on');
+      }
+    }
+
+    toggleSound() {
+      const sw = document.getElementById('soundToggleSwitch');
+      if (sw) {
+        sw.classList.toggle('on');
+      }
+    }
+
+    clearCache() {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+        alert('Cache cleared successfully');
+      } catch (err) {
+        alert('Failed to clear cache: ' + err.message);
+      }
+      this.toggleMenu();
     }
 
     toggleSearchEngineDropdown() {
@@ -1178,10 +901,7 @@ document.querySelectorAll('.sc').forEach(function(btn){
 
     clearHistory() {
       this.historyManager.clearAll();
-      this.tabManager.clearAll();
-      // Create a fresh tab after clearing
-      this.tabManager.createTab(BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
-      this.historyManager.push(this.tabManager.activeTabId, BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
+      this.historyManager.push('main', BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
       this._rebuildAll();
       alert('History cleared successfully');
       this.toggleMenu();
@@ -1221,64 +941,101 @@ document.querySelectorAll('.sc').forEach(function(btn){
       this.toggleMenu();
     }
 
-    addTab() {
-      const tabId = this.tabManager.createTab();
-      this.historyManager.push(tabId, BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
-      this._rebuildAll();
+    // --- Menu action handlers (Ultraviolet integration) ---
+
+    reloadPage() {
+      this.refresh();
+      this.toggleMenu();
     }
 
-    switchTab(tabId) {
-      if (tabId === this.tabManager.activeTabId) return;
-      this.tabManager.switchTab(tabId);
-      this._rebuildAll();
-    }
-
-    closeTab(tabId) {
-      const next = this.tabManager.closeTab(tabId);
-      if (next === null) {
-        // Last tab - just refresh
-        this._rebuildAll();
-        return;
+    hardRefresh() {
+      const iframe = document.getElementById('browserFrame-main');
+      if (iframe) {
+        this.showLoading();
+        const src = iframe.src;
+        iframe.src = '';
+        setTimeout(() => { iframe.src = src; }, 10);
+        this.updateNavButtons();
       }
-      this._rebuildAll();
+      this.toggleMenu();
+    }
+
+    // Privacy actions
+    resetCookies() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    wipePageData() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    clearSiteStorage() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    // Site controls
+    sitePermissions() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    pageInformation() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    viewSecurityStatus() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    // Orbit settings
+    orbitSettings() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    appearance() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    browserPreferences() {
+      // TODO: Connect to Ultraviolet
+      this.toggleMenu();
+    }
+
+    duplicateTab() {
+      // Tab system removed
     }
 
     goBack() {
-      const tab = this.tabManager.getActiveTab();
-      if (!tab) return;
-      const entry = this.historyManager.back(tab.id);
+      const entry = this.historyManager.back('main');
       if (entry) {
-        this._loadUrlInActiveTab(entry.url);
-        this.tabManager.updateUrl(tab.id, entry.url);
-        this.tabManager.updateTitle(tab.id, entry.title || this._getDisplayTitle(entry.url));
+        this._loadUrlInFrame(entry.url);
         this.updateAddressBar(entry.url);
         this.updateNavButtons();
-        this._refreshTabBar();
+        this._updateBookmarkBtn();
       }
     }
 
     goForward() {
-      const tab = this.tabManager.getActiveTab();
-      if (!tab) return;
-      const entry = this.historyManager.forward(tab.id);
+      const entry = this.historyManager.forward('main');
       if (entry) {
-        this._loadUrlInActiveTab(entry.url);
-        this.tabManager.updateUrl(tab.id, entry.url);
-        this.tabManager.updateTitle(tab.id, entry.title || this._getDisplayTitle(entry.url));
+        this._loadUrlInFrame(entry.url);
         this.updateAddressBar(entry.url);
         this.updateNavButtons();
-        this._refreshTabBar();
+        this._updateBookmarkBtn();
       }
     }
 
     refresh() {
-      const tab = this.tabManager.getActiveTab();
-      if (!tab) return;
-      const iframe = document.getElementById('browserFrame-' + tab.id);
+      const iframe = document.getElementById('browserFrame-main');
       if (iframe) {
         this.showLoading();
-        this.tabManager.setLoading(tab.id, true);
-        // Reload by re-setting src
         const currentSrc = iframe.src;
         iframe.src = '';
         setTimeout(() => {
@@ -1289,156 +1046,318 @@ document.querySelectorAll('.sc').forEach(function(btn){
     }
 
     toggleBookmark() {
-      // Simple toast feedback
+      const url = this.historyManager.getCurrentUrl('main');
+      if (!url || url === 'about:blank' || url === BRAVE_HOME_INTERNAL) return;
+
+      const bm = this.bookmarkManager;
       const btn = document.getElementById('browserBookmarkBtn');
-      if (btn) {
-        btn.classList.add('active');
-        setTimeout(() => btn.classList.remove('active'), 600);
+      if (bm.isBookmarked(url)) {
+        const existing = bm.getAll().find(b => b.url === url);
+        if (existing) bm.remove(existing.id);
+        if (btn) btn.classList.remove('active');
+      } else {
+        const title = this._getDisplayTitle(url);
+        bm.add(title, url);
+        if (btn) btn.classList.add('active');
       }
+      this._renderBookmarksBar();
     }
 
-    openTabExternally(tabId) {
-      const tab = this.tabManager.tabs[tabId];
-      if (!tab) return;
-      const url = this.historyManager.getCurrentUrl(tabId) || tab.url;
-      if (url && url !== 'about:blank') {
-        const externalUrl = normalizeUrl(url);
-        window.open(externalUrl, '_blank', 'noopener,noreferrer');
-      }
-    }
-
-    handleFrameLoad(tabId) {
-      this.tabManager.setLoading(tabId, false);
+    handleFrameLoad() {
       this.hideLoading();
-      this._refreshTabBar();
-
-      // Try to get the iframe's title
-      const iframe = document.getElementById('browserFrame-' + tabId);
+      const iframe = document.getElementById('browserFrame-main');
       try {
         if (iframe && iframe.contentDocument && iframe.contentDocument.title) {
-          const title = iframe.contentDocument.title;
-          this.tabManager.updateTitle(tabId, title);
-          this._refreshTabBar();
+          // title extracted but no tab bar to update
         }
       } catch (e) {
-        // Cross-origin, try to extract title from URL
-        const tab = this.tabManager.tabs[tabId];
-        if (tab) {
-          const url = this.historyManager.getCurrentUrl(tabId) || tab.url || '';
-          if (url) {
-            // Extract domain or use URL as title
-            try {
-              const urlObj = new URL(url);
-              const title = urlObj.hostname.replace('www.', '') || 'New Tab';
-              this.tabManager.updateTitle(tabId, title);
-              this._refreshTabBar();
-            } catch (e2) {
-              // Invalid URL, use search query or default
-              if (url.includes('search.brave.com')) {
-                this.tabManager.updateTitle(tabId, 'Brave Search');
-              } else {
-                this.tabManager.updateTitle(tabId, 'New Tab');
-              }
-              this._refreshTabBar();
-            }
-          }
-        }
+        // cross-origin
       }
-
-      const blockedOverlay = document.getElementById('browserFrameBlocked-' + tabId);
-      if (blockedOverlay) {
-        blockedOverlay.style.display = 'none';
-      }
-
-      // Update address bar if this is the active tab
-      if (tabId === this.tabManager.activeTabId) {
-        const activeTab = this.tabManager.getActiveTab();
-        if (activeTab && activeTab.url) {
-          this.updateAddressBar(activeTab.url);
-        }
-        this.updateNavButtons();
-      }
+      this.updateAddressBar(this.historyManager.getCurrentUrl('main'));
+      this.updateNavButtons();
+      this._updateBookmarkBtn();
     }
 
-    handleFrameError(tabId) {
-      this.tabManager.setLoading(tabId, false);
+    handleFrameError() {
       this.hideLoading();
-      this._refreshTabBar();
     }
 
-    /**
-     * Navigate back to the Brave home page in a specific tab.
-     * @param {string} tabId
-     */
-    goHomeTab(tabId) {
-      const tab = this.tabManager.tabs[tabId];
-      if (!tab) return;
-      this.historyManager.push(tabId, BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
-      this.tabManager.updateUrl(tabId, BRAVE_HOME_INTERNAL);
-      this.tabManager.updateTitle(tabId, SEARCH_PROVIDER_NAME);
-      this._rebuildAll();
-    }
-
-    /**
-     * Open the blocked page's URL in a new Brave Search tab.
-     * @param {string} tabId
-     */
-    searchBraveTab(tabId) {
-      const tab = this.tabManager.tabs[tabId];
-      if (!tab) return;
-      const currentUrl = this.historyManager.getCurrentUrl(tabId) || tab.url || '';
-      if (currentUrl && !isBraveHome(currentUrl)) {
-        const braveUrl = SEARCH_ENGINE_BASE + encodeURIComponent(currentUrl);
-        this.historyManager.push(tabId, braveUrl, SEARCH_PROVIDER_NAME);
-        this.tabManager.updateUrl(tabId, braveUrl);
-        this.tabManager.updateTitle(tabId, SEARCH_PROVIDER_NAME);
-        this.tabManager.setLoading(tabId, true);
-        const iframe = document.getElementById('browserFrame-' + tabId);
-        if (iframe) {
-          this.showLoading();
-          iframe.src = braveUrl;
-        }
-        this.updateAddressBar(braveUrl);
-        this.updateNavButtons();
-        this._refreshTabBar();
-      }
-    }
-
-    _loadUrlInActiveTab(url) {
-      const tab = this.tabManager.getActiveTab();
-      if (!tab) return;
-      const iframe = document.getElementById('browserFrame-' + tab.id);
+    _loadUrlInFrame(url) {
+      const iframe = document.getElementById('browserFrame-main');
       if (!iframe) return;
 
-      // If navigating to the home page, rebuild with srcdoc
       if (isBraveHome(url)) {
-        this._rebuildAll();
+        iframe.srcdoc = getBraveHomeSrcDoc();
+        this.updateAddressBar(BRAVE_HOME_INTERNAL);
+        this.updateNavButtons();
         return;
       }
 
       this.showLoading();
-      this.tabManager.setLoading(tab.id, true);
-      iframe.src = normalizeUrl(url);
+      const normalized = normalizeUrl(url);
+      const useUv = shouldUseUV(normalized) && typeof window.encodeUVUrl === 'function';
+      let finalSrc;
+      if (useUv) {
+        finalSrc = window.encodeUVUrl(normalized);
+      } else {
+        finalSrc = normalized;
+      }
+      console.log('[UV-ROUTE] input:', url, '| normalized:', normalized, '| shouldUseUV:', useUv, '| encoded:', finalSrc !== normalized ? finalSrc : '(direct)', '| has /service/:', finalSrc.includes('/service/'));
+      window.__UV_ROUTE_DEBUG__ = {
+        lastUrl: url,
+        lastNormalized: normalized,
+        lastShouldUseUV: useUv,
+        lastEncoded: finalSrc !== normalized ? finalSrc : '',
+        lastFinalSrc: finalSrc,
+        lastHasService: finalSrc.includes('/service/'),
+      };
+      iframe.removeAttribute('srcdoc');
+      iframe.src = finalSrc;
       this.updateNavButtons();
+    }
+
+    _restoreTabUrl(url) {
+      const iframe = document.getElementById('browserFrame-main');
+      if (!iframe || !url || url === 'about:blank') return;
+
+      if (isBraveHome(url)) {
+        iframe.srcdoc = getBraveHomeSrcDoc();
+        console.log('[RESTORE] restored Brave Home');
+        return;
+      }
+
+      const normalized = normalizeUrl(url);
+      const useUv = shouldUseUV(normalized) && typeof window.encodeUVUrl === 'function';
+      let finalSrc;
+      if (useUv) {
+        finalSrc = window.encodeUVUrl(normalized);
+      } else {
+        finalSrc = normalized;
+      }
+      console.log('[RESTORE] at', Date.now(), 'url:', url, 'encoded:', (finalSrc !== normalized ? finalSrc : '(direct)'));
+      window.__UV_ROUTE_DEBUG__ = {
+        lastUrl: url,
+        lastNormalized: normalized,
+        lastShouldUseUV: useUv,
+        lastEncoded: finalSrc !== normalized ? finalSrc : '',
+        lastFinalSrc: finalSrc,
+        lastHasService: finalSrc.includes('/service/'),
+      };
+      iframe.removeAttribute('srcdoc');
+      iframe.src = finalSrc;
+      this.updateNavButtons();
+    }
+
+    _restoreUrlDeferred(url) {
+      const portReady = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady;
+      if (!portReady) {
+        console.log('[DEFER] url=' + url + ' portReady=' + portReady);
+        if (!this._pendingRestoreTabs) this._pendingRestoreTabs = [];
+        if (!this._pendingRestoreTabs.find(t => t.url === url)) {
+          this._pendingRestoreTabs.push({ url });
+        }
+        return;
+      }
+      this._restoreTabUrl(url);
+    }
+
+    _processPendingRestoreTabs() {
+      const pending = this._pendingRestoreTabs || [];
+      this._pendingRestoreTabs = [];
+      if (pending.length === 0) return;
+      pending.forEach(({ url }) => {
+        this._restoreTabUrl(url);
+      });
+    }
+
+    _updateBookmarkBtn() {
+      const btn = document.getElementById('browserBookmarkBtn');
+      if (!btn) return;
+      const url = this.historyManager.getCurrentUrl('main');
+      if (url && this.bookmarkManager.isBookmarked(url)) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+
+    _renderBookmarksBar() {
+      const bar = document.getElementById('browserBookmarksBar');
+      if (!bar) return;
+      const bookmarks = this.bookmarkManager.getAll();
+
+      if (bookmarks.length === 0) {
+        bar.innerHTML = '<span class="browser-bookmark-add-btn" onclick="VoltraBrowser.addBookmark()">+ Add Bookmark</span>';
+        bar.classList.remove('hidden');
+        this._initBookmarkDrop(bar);
+        return;
+      }
+
+      bar.innerHTML = bookmarks.map((bm) => {
+        let hostname = '';
+        try { hostname = new URL(bm.url).hostname; } catch (e) {}
+        return `
+        <span class="browser-bookmark-item" data-bm-id="${bm.id}">
+          <img class="browser-bookmark-icon" src="https://www.google.com/s2/favicons?domain=${hostname}&sz=16" onerror="this.style.display='none'" alt="">
+          <span class="browser-bookmark-label">${this._escapeHtml(bm.title)}</span>
+          <span class="browser-bookmark-remove" onclick="event.stopPropagation(); VoltraBrowser.removeBookmark('${bm.id}')">×</span>
+        </span>
+      `}).join('') + `
+        <span class="browser-bookmark-add-btn" onclick="VoltraBrowser.addBookmark()">+ Add Bookmark</span>
+      `;
+
+      bar.querySelectorAll('.browser-bookmark-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.browser-bookmark-remove')) return;
+          const id = item.dataset.bmId;
+          const bm = this.bookmarkManager.getAll().find(b => b.id === id);
+          if (bm) this.navigate(bm.url);
+        });
+      });
+
+      this._initBookmarkDrop(bar);
+    }
+
+    addBookmark() {
+      const url = this.historyManager.getCurrentUrl('main');
+      if (!url || url === 'about:blank' || url === BRAVE_HOME_INTERNAL) return;
+      const title = this._getDisplayTitle(url);
+      this.bookmarkManager.add(title, url);
+      this._renderBookmarksBar();
+      this._updateBookmarkBtn();
+    }
+
+    removeBookmark(id) {
+      this.bookmarkManager.remove(id);
+      this._renderBookmarksBar();
+      this._updateBookmarkBtn();
+    }
+
+    toggleBookmarksBar() {
+      const bar = document.getElementById('browserBookmarksBar');
+      const sw = document.getElementById('bookmarksToggleSwitch');
+      if (bar && sw) {
+        bar.classList.toggle('hidden');
+        sw.classList.toggle('on');
+      }
+    }
+
+    _isValidBookmarkDrop(text) {
+      if (!text || typeof text !== 'string') return false;
+      const trimmed = text.trim();
+      if (!trimmed) return false;
+
+      // Allow http/https URLs
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        try {
+          new URL(trimmed);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // Allow valid domain-like strings (e.g., "example.com")
+      const domainPattern = /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/;
+      if (domainPattern.test(trimmed)) {
+        return true;
+      }
+
+      return false;
+    }
+
+    _initBookmarkDrop(bar) {
+      let dragEnterCount = 0;
+
+      bar.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragEnterCount++;
+        bar.classList.add('drag-over');
+      });
+
+      bar.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      bar.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragEnterCount--;
+        if (dragEnterCount <= 0) {
+          dragEnterCount = 0;
+          bar.classList.remove('drag-over');
+        }
+      });
+
+      bar.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragEnterCount = 0;
+        bar.classList.remove('drag-over');
+
+        let droppedText = '';
+
+        // Try to get URL from various data transfer formats
+        const url = e.dataTransfer.getData('text/uri-list');
+        if (url && this._isValidBookmarkDrop(url)) {
+          droppedText = url;
+        }
+
+        if (!droppedText) {
+          const html = e.dataTransfer.getData('text/html');
+          if (html) {
+            const match = html.match(/href="([^"]+)"/i);
+            if (match && this._isValidBookmarkDrop(match[1])) {
+              droppedText = match[1];
+            }
+          }
+        }
+
+        if (!droppedText) {
+          const plain = e.dataTransfer.getData('text/plain');
+          if (plain && this._isValidBookmarkDrop(plain)) {
+            droppedText = plain;
+          }
+        }
+
+        if (!droppedText) return;
+
+        const trimmed = droppedText.trim();
+        let title = trimmed;
+
+        // Try to extract a title from HTML data
+        if (e.dataTransfer.getData('text/html')) {
+          const titleMatch = e.dataTransfer.getData('text/html').match(/<a[^>]*>([^<]+)<\/a>/i);
+          if (titleMatch) {
+            title = titleMatch[1].trim();
+          }
+        }
+
+        // Ensure URL is fully qualified for domain-only drops
+        let finalUrl = trimmed;
+        if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+          finalUrl = 'https://' + trimmed;
+        }
+
+        this.bookmarkManager.add(title, finalUrl);
+        this._renderBookmarksBar();
+        this._updateBookmarkBtn();
+      });
     }
 
     _rebuildAll() {
       const container = document.getElementById('browserContainer');
       if (!container) return;
       container.outerHTML = this.buildHTML();
-      // Re-run init for new DOM
-      this._init();
-    }
 
-    _init() {
-      // Store reference to new input/container
-      const activeTab = this.tabManager.getActiveTab();
-      if (activeTab) {
-        this.updateAddressBar(this.historyManager.getCurrentUrl(activeTab.id) || activeTab.url || '');
-        this.updateNavButtons();
-      }
+      this.updateAddressBar(this.historyManager.getCurrentUrl('main') || '');
+      this.updateNavButtons();
 
-      // Hide loading bar initially
+      this._renderBookmarksBar();
+      this._updateBookmarkBtn();
+
       const bar = document.getElementById('browserLoadingBar');
       if (bar) bar.classList.remove('loading', 'loaded');
     }
@@ -1450,7 +1369,25 @@ document.querySelectorAll('.sc').forEach(function(btn){
       if (containerElement) {
         containerElement.innerHTML = this.buildHTML();
       }
-      this._init();
+
+      this.updateAddressBar(this.historyManager.getCurrentUrl('main') || '');
+      this.updateNavButtons();
+
+      this._renderBookmarksBar();
+      this._updateBookmarkBtn();
+
+      const bar = document.getElementById('browserLoadingBar');
+      if (bar) bar.classList.remove('loading', 'loaded');
+
+      // Restoration pass: load persisted URL through UV proxy
+      const mainUrl = this.historyManager.getCurrentUrl('main');
+      if (mainUrl && mainUrl !== 'about:blank' && !isBraveHome(mainUrl)) {
+        this._restoreUrlDeferred(mainUrl);
+        this.showLoading();
+        console.log('[RESTORE] iframe set for main url:', mainUrl);
+      } else if (mainUrl && isBraveHome(mainUrl)) {
+        this._restoreTabUrl(mainUrl);
+      }
     }
   }
 
@@ -1459,49 +1396,56 @@ document.querySelectorAll('.sc').forEach(function(btn){
   // Create the singleton browser engine
   const browserUI = new BrowserUI();
 
-  // Initialize ProxyEngine on load
-  initProxyEngine();
-
   window.VoltraBrowser = {
     // Navigation
     navigate: (url) => browserUI.navigate(url),
-    navigateFromSuggestion: (url) => browserUI.navigateFromSuggestion(url),
     goBack: () => browserUI.goBack(),
     goForward: () => browserUI.goForward(),
     refresh: () => browserUI.refresh(),
     toggleBookmark: () => browserUI.toggleBookmark(),
-    
-    // Tab management
-    addTab: () => browserUI.addTab(),
-    switchTab: (id) => browserUI.switchTab(id),
-    closeTab: (id) => browserUI.closeTab(id),
+    goHome: () => browserUI.goHome(),
     
     // Address bar events
     handleAddressKeydown: (e) => browserUI.handleAddressKeydown(e),
-    handleAddressInput: (val) => browserUI.handleAddressInput(val),
-    handleAddressFocus: () => browserUI.handleAddressFocus(),
-    handleAddressBlur: () => browserUI.handleAddressBlur(),
     
     // Frame events
-    handleFrameLoad: (id) => browserUI.handleFrameLoad(id),
-    handleFrameError: (id) => browserUI.handleFrameError(id),
-    openTabExternally: (id) => browserUI.openTabExternally(id),
-    goHome: () => browserUI.goHome(),
-    searchBrave: (id) => browserUI.searchBraveTab(id),
+    handleFrameLoad: () => browserUI.handleFrameLoad(),
+    handleFrameError: () => browserUI.handleFrameError(),
     
+    // Menu
+    toggleMenu: () => browserUI.toggleMenu(),
+
     // Search engine
     toggleSearchEngineDropdown: () => browserUI.toggleSearchEngineDropdown(),
     selectSearchEngine: (key) => browserUI.selectSearchEngine(key),
-    showUserID: () => browserUI.showUserID(),
+
+    // Menu action handlers
+    toggleBookmarksBar: () => browserUI.toggleBookmarksBar(),
+    toggleSound: () => browserUI.toggleSound(),
+    clearCache: () => browserUI.clearCache(),
+    clearHistory: () => browserUI.clearHistory(),
+    reloadPage: () => browserUI.reloadPage(),
+    hardRefresh: () => browserUI.hardRefresh(),
+    resetCookies: () => browserUI.resetCookies(),
+    wipePageData: () => browserUI.wipePageData(),
+    clearSiteStorage: () => browserUI.clearSiteStorage(),
+    sitePermissions: () => browserUI.sitePermissions(),
+    pageInformation: () => browserUI.pageInformation(),
+    viewSecurityStatus: () => browserUI.viewSecurityStatus(),
+    orbitSettings: () => browserUI.orbitSettings(),
+    appearance: () => browserUI.appearance(),
+    browserPreferences: () => browserUI.browserPreferences(),
+
+    // Bookmarks
+    addBookmark: () => browserUI.addBookmark(),
+    removeBookmark: (id) => browserUI.removeBookmark(id),
 
     // Render
     render: (container) => browserUI.render(container),
     
     // Internal reference for state checks
     _browserUI: browserUI,
-    _tabManager: browserUI.tabManager,
-    _historyManager: browserUI.historyManager,
-    _proxyEngine: proxyEngine
+    _historyManager: browserUI.historyManager
   };
 
 })();

@@ -1,0 +1,18 @@
+node:events:491
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: aborted
+    at connResetException (node:internal/errors:717:14)
+    at TLSSocket.socketCloseListener (node:_http_client:462:19)
+    at TLSSocket.emit (node:events:525:35)
+    at node:net:322:12
+    at TCP.done (node:_tls_wrap:588:7)
+Emitted 'error' event on Readable instance at:
+    at emitErrorNT (node:internal/streams/destroy:151:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:116:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  code: 'ECONNRESET'
+}
+
+Node.js v18.16.0
