@@ -2413,6 +2413,34 @@
             loadingOverlay.classList.add('hidden');
           }
         }, 5000);
+
+        // Game content monitor: detect blank/error states after 30 seconds
+        var gameLoadTimer = setTimeout(function() {
+          try {
+            var d = iframe.contentDocument;
+            if (!d || !d.body) {
+              showGameError('Game failed to load (no content)');
+              return;
+            }
+            var txt = d.body.innerText || '';
+            if (txt.trim().length === 0) {
+              showGameError('Game failed to load (blank page)');
+            }
+          } catch(e) {
+            if (e.message && e.message.includes('cross-origin')) {
+              console.warn('[GAME-MONITOR] cross-origin iframe, skipping blank check');
+            } else {
+              showGameError('Game failed to load (' + e.message + ')');
+            }
+          }
+        }, 30000);
+      }
+
+      function showGameError(msg) {
+        if (loadingOverlay) {
+          loadingOverlay.innerHTML = '<div class="game-loading-error"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><p>' + escapeHTML(msg) + '</p><button onclick="document.getElementById(\'gameLoadingOverlay\').classList.add(\'hidden\');document.getElementById(\'gameLoadingOverlay\').innerHTML=\'\';openGame(\'' + id + '\')" class="game-error-retry">Retry</button></div>';
+          loadingOverlay.classList.remove('hidden');
+        }
       }
 
       // Wait for proxy port to be ready before loading the game
