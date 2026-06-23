@@ -1,0 +1,10 @@
+ORBIT SERVER RUNNING ON 8080
+Stable server + bare proxy ready
+[SERVER] GET /bare/v1/ -> 500 (bare: true )
+[SERVER] GET /bare/v1/ -> 500 (bare: true )
+[SERVER] GET /bare/v1/ -> 200 (bare: true )
+[SERVER] GET /bare/v1/ -> 500 (bare: true )
+[SERVER] GET /bare/v1/ -> 500 (bare: true )
+[SERVER] GET /bare/v1/ -> 500 (bare: true )
+[SERVER] GET /bare/v1/ -> 500 (bare: true )
+[SERVER] GET /bare/v1/ -> 500 (bare: true )

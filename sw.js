@@ -5,6 +5,14 @@ importScripts('./uv/uv.sw.js');
 const _B = (msg, ...rest) => console.log('[BOOT-SW]', msg, 'at', Date.now(), ...rest);
 const _FETCH_LOG = (url, portStatus, responseStatus, reason, ...rest) => console.log('[SW-FETCH] url:', url, 'portStatus:', portStatus, 'responseStatus:', responseStatus, 'reason:', reason, 'at', Date.now(), ...rest);
 const _HOP = (hop, url, status, detail) => console.log('[HOP] hop:', hop, 'status:', status, 'url:', url, 'detail:', detail, 'at', Date.now());
+
+// Generate a proper error HTML page instead of a blank white screen
+function _ERROR_PAGE(status, message, detail) {
+  const escapedMsg = String(message).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const escapedDetail = String(detail).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbit — ' + status + '</title><style>body{margin:0;background:#0d0d12;color:#e0e0e0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}.error-card{background:#1a1a24;border:1px solid #2a2a3a;border-radius:12px;padding:32px;max-width:480px;width:90%;text-align:center}.error-icon{width:48px;height:48px;margin:0 auto 16px;color:#ff6b6b}.error-code{font-size:14px;color:#888;margin-bottom:4px}.error-title{font-size:20px;font-weight:600;margin-bottom:12px}.error-detail{font-size:13px;color:#888;line-height:1.5;margin-bottom:24px}.error-retry{background:#2a2a3a;color:#e0e0e0;border:1px solid #3a3a4a;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer}.error-retry:hover{background:#3a3a4a}</style></head><body><div class="error-card"><svg class="error-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><div class="error-code">HTTP ' + status + '</div><div class="error-title">' + escapedMsg + '</div><div class="error-detail">' + escapedDetail + '</div><button class="error-retry" onclick="location.reload()">Retry</button></div></body></html>';
+}
+
 _B('SW script evaluated');
 
 // Helper to decode UV-proxied URLs back to original target URLs
@@ -299,7 +307,7 @@ sw.fetch = async function (event) {
   if (portState.status !== 'ready') {
     _FETCH_LOG(url, portState.status, 503, 'port-not-ready', 'dest:', dest);
     _HOP('1-sw-wrapper', url, 503, 'port-not-ready dest:' + dest + ' decoded:' + dec.decoded);
-    return new Response(null, { status: 503, statusText: 'Service Unavailable' });
+    return new Response(_ERROR_PAGE(503, 'Proxy Not Ready', 'The proxy connection is initializing. Please wait a moment and try again.'), { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
   try {
     const resp = await _origFetch(event);
@@ -313,7 +321,7 @@ sw.fetch = async function (event) {
   } catch (err) {
     _FETCH_LOG(url, portState.status, 503, 'origFetch-threw', 'message:', err.message, 'dest:', dest, 'decoded:', dec.decoded);
     _HOP('6-sw-wrapper-response', url, 503, 'threw:' + err.message + ' dest:' + dest + ' decoded:' + dec.decoded);
-    return new Response(null, { status: 503, statusText: 'Service Unavailable' });
+    return new Response(_ERROR_PAGE(503, 'Proxy Error', 'The proxy encountered an error: ' + err.message), { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 };
 
@@ -478,7 +486,7 @@ self.addEventListener('fetch', (event) => {
       return resp;
     }).catch((err) => {
       _FETCH_LOG(event.request.url, portState.status, 503, 'timeout-or-race-rejection', 'err:', err.message);
-      return new Response(null, { status: 503, statusText: 'Service Unavailable' });
+      return new Response(_ERROR_PAGE(503, 'Proxy Timeout', 'The proxy request timed out. Please try again.'), { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     })
   );
 });

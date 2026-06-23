@@ -397,7 +397,7 @@
    * @returns {boolean}
    */
   function isBraveHome(url) {
-    return url === BRAVE_HOME_INTERNAL || url === '';
+    return url === BRAVE_HOME_INTERNAL || url === '' || url === 'orbit://home';
   }
 
   /**
@@ -553,6 +553,7 @@
     if (/^about:/i.test(targetUrl)) return targetUrl;
     if (targetUrl === BRAVE_HOME_INTERNAL) return targetUrl;
     if (targetUrl === 'orbit://settings') return targetUrl;
+    if (targetUrl === 'orbit://home') return targetUrl;
     
     if (!/^https?:\/\//i.test(targetUrl)) {
       targetUrl = 'https://' + targetUrl;
@@ -676,6 +677,7 @@
       this.bookmarkManager = new BookmarkManager();
       this._onUrlChange = null;
       this._pendingRestoreTabs = [];
+      this._pendingNavigations = [];
       loadBrowserSettings();
     }
 
@@ -1199,8 +1201,20 @@
       this._renderBookmarksBar();
     }
 
+    _showErrorPage(status, title, detail) {
+      const iframe = document.getElementById('browserFrame-main');
+      if (!iframe) return;
+      const escapedTitle = String(title).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const escapedDetail = String(detail).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbit — ' + status + '</title><style>body{margin:0;background:#0d0d12;color:#e0e0e0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}.error-card{background:#1a1a24;border:1px solid #2a2a3a;border-radius:12px;padding:32px;max-width:480px;width:90%;text-align:center}.error-icon{width:48px;height:48px;margin:0 auto 16px;color:#ff6b6b}.error-code{font-size:14px;color:#888;margin-bottom:4px}.error-title{font-size:20px;font-weight:600;margin-bottom:12px}.error-detail{font-size:13px;color:#888;line-height:1.5;margin-bottom:24px}.error-retry{background:#2a2a3a;color:#e0e0e0;border:1px solid #3a3a4a;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer}.error-retry:hover{background:#3a3a4a}</style></head><body><div class="error-card"><svg class="error-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><div class="error-code">' + status + '</div><div class="error-title">' + escapedTitle + '</div><div class="error-detail">' + escapedDetail + '</div><button class="error-retry" onclick="parent.VoltraBrowser.refresh()">Retry</button></div></body></html>';
+    }
+
     handleFrameLoad() {
       this.hideLoading();
+      if (this._frameLoadTimeout) {
+        clearTimeout(this._frameLoadTimeout);
+        this._frameLoadTimeout = null;
+      }
       const iframe = document.getElementById('browserFrame-main');
       try {
         if (iframe && iframe.contentDocument && iframe.contentDocument.title) {
@@ -1217,6 +1231,11 @@
 
     handleFrameError() {
       this.hideLoading();
+      if (this._frameLoadTimeout) {
+        clearTimeout(this._frameLoadTimeout);
+        this._frameLoadTimeout = null;
+      }
+      this._showErrorPage('Error', 'This page could not be loaded', 'The proxy was unable to retrieve the requested page. Please check your connection and try again.');
     }
 
     _loadSettings() {
@@ -1253,6 +1272,10 @@
       bar.classList.toggle('auto-hide', enabled);
     }
 
+    _isPortReady() {
+      return window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
+    }
+
     _loadUrlInFrame(url) {
       const iframe = document.getElementById('browserFrame-main');
       if (!iframe) return;
@@ -1271,9 +1294,19 @@
         return;
       }
 
-      this.showLoading();
       const normalized = normalizeUrl(url);
       const useUv = shouldUseUV(normalized) && typeof window.encodeUVUrl === 'function';
+
+      // Defer proxied navigation until the UV proxy stack is ready
+      if (useUv && !this._isPortReady()) {
+        console.log('[DEFER-NAV] url=' + url + ' port not ready, queuing at ' + Date.now());
+        if (!this._pendingNavigations.find(n => n.url === url)) {
+          this._pendingNavigations.push({ url, normalized, ts: Date.now() });
+        }
+        return;
+      }
+
+      this.showLoading();
       let finalSrc;
       if (useUv) {
         finalSrc = window.encodeUVUrl(normalized);
@@ -1290,8 +1323,29 @@
         lastHasService: finalSrc.includes('/service/'),
       };
       iframe.removeAttribute('srcdoc');
+      if (this._frameLoadTimeout) clearTimeout(this._frameLoadTimeout);
+      this._frameLoadTimeout = setTimeout(() => {
+        if (iframe && iframe.src && iframe.src === finalSrc) {
+          try {
+            if (iframe.contentDocument && iframe.contentDocument.body && iframe.contentDocument.body.innerHTML.length > 100) {
+              return;
+            }
+          } catch(e) {}
+          this._showErrorPage('Timeout', 'Page is taking too long to load', 'The proxy request timed out. The page may be unavailable or the proxy connection may be slow.');
+        }
+      }, 20000);
       iframe.src = finalSrc;
       this.updateNavButtons();
+    }
+
+    _flushPendingNavigations() {
+      const pending = this._pendingNavigations || [];
+      this._pendingNavigations = [];
+      if (pending.length === 0) return;
+      console.log('[FLUSH-NAV] flushing ' + pending.length + ' deferred navigation(s) at ' + Date.now());
+      pending.forEach(({ url }) => {
+        this._loadUrlInFrame(url);
+      });
     }
 
     _restoreTabUrl(url) {

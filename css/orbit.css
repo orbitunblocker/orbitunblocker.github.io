@@ -1550,6 +1550,44 @@ body.game-page-active .main-content {
   }
 }
 
+.game-loading-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #e0e0e0;
+  text-align: center;
+  padding: 32px;
+}
+
+.game-loading-error svg {
+  color: #ff6b6b;
+}
+
+.game-loading-error p {
+  margin: 0;
+  font-size: 14px;
+  color: #888;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.game-error-retry {
+  background: #2a2a3a;
+  color: #e0e0e0;
+  border: 1px solid #3a3a4a;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.game-error-retry:hover {
+  background: #3a3a4a;
+}
+
 /* Games Page Loading Spinner */
 .games-page-loading-overlay {
   position: fixed;

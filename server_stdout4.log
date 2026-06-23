@@ -1,0 +1,167 @@
+ORBIT SERVER RUNNING ON 8080
+Orbit + Ultraviolet running on http://localhost:8080
+[SERVER] GET / -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: text/html; charset=UTF-8
+[SERVER] GET / -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: text/html; charset=UTF-8
+[SERVER] GET /js/browser-engine.js?v=20260604 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /css/orbit.css?v=20260606 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: text/css; charset=UTF-8
+[SERVER] GET /js/app.js?v=20260604 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.bundle.js?v=3.2.8 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /sw.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.bundle.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.config.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.sw.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/bare-mux-worker.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET / -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: text/html; charset=UTF-8
+[SERVER] GET /css/orbit.css?v=20260606 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: text/css; charset=UTF-8
+[SERVER] GET /uv/uv.bundle.js?v=3.2.8 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /js/browser-engine.js?v=20260604 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /js/app.js?v=20260604 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /sw.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.bundle.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.config.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.sw.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/bare-mux-worker.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /icons/Brave.png -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: image/png
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.client.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.handler.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.client.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.handler.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.client.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.handler.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /icons/Brave.png -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: POST /bare/v1/
+[SERVER-BARE] ROUTING to bare: POST /bare/v1/
+[SERVER] POST /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] POST /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET / -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: text/html; charset=UTF-8
+[SERVER] GET /css/orbit.css?v=20260606 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: text/css; charset=UTF-8
+[SERVER] GET /uv/uv.bundle.js?v=3.2.8 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /js/browser-engine.js?v=20260604 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /js/app.js?v=20260604 -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /sw.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.bundle.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.config.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.sw.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/bare-mux-worker.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.client.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.handler.js -> 200 (bare: false ) host: 127.0.0.1:8080 content-type: application/javascript; charset=UTF-8
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: POST /bare/v1/
+[SERVER] POST /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: GET /bare/v1/
+[SERVER] GET /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.bundle.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.config.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER] GET /uv/uv.sw.js -> 304 (bare: false ) host: 127.0.0.1:8080 content-type: unknown
+[SERVER-BARE] ROUTING to bare: POST /bare/v1/
+[SERVER] POST /bare/v1/ -> 200 (bare: true ) host: 127.0.0.1:8080 content-type: unknown

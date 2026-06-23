@@ -2382,38 +2382,63 @@
       // Load iframe src from data-src for obfuscation
       const iframe = document.getElementById('gameFrame');
       const loadingOverlay = document.getElementById('gameLoadingOverlay');
-      if (iframe) {
-        const src = iframe.getAttribute('data-src');
-        if (src) {
-          // Show loading overlay
-          if (loadingOverlay) {
-            loadingOverlay.classList.remove('hidden');
-          }
+      if (!iframe) return;
+      const src = iframe.getAttribute('data-src');
+      if (!src) return;
 
-          setTimeout(() => {
-            // Route through UV proxy for all game loads
-            var gameSrc = src;
-            if (typeof window.encodeUVUrl === 'function') {
-              gameSrc = window.encodeUVUrl(src);
-            }
-            iframe.src = gameSrc;
-            iframe.removeAttribute('data-src');
+      // Show loading overlay
+      if (loadingOverlay) {
+        loadingOverlay.classList.remove('hidden');
+      }
 
-            // Hide loading overlay when iframe loads
-            iframe.onload = () => {
-              if (loadingOverlay) {
-                loadingOverlay.classList.add('hidden');
-              }
-            };
-
-            // Fallback: hide loading overlay after 5 seconds
-            setTimeout(() => {
-              if (loadingOverlay) {
-                loadingOverlay.classList.add('hidden');
-              }
-            }, 5000);
-          }, 100);
+      // Route through UV proxy for all game loads
+      function doLoadGame() {
+        var gameSrc = src;
+        if (typeof window.encodeUVUrl === 'function') {
+          gameSrc = window.encodeUVUrl(src);
         }
+        iframe.src = gameSrc;
+        iframe.removeAttribute('data-src');
+
+        // Hide loading overlay when iframe loads
+        iframe.onload = () => {
+          if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+          }
+        };
+
+        // Fallback: hide loading overlay after 5 seconds
+        setTimeout(() => {
+          if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+          }
+        }, 5000);
+      }
+
+      // Wait for proxy port to be ready before loading the game
+      var portReady = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
+      if (portReady) {
+        doLoadGame();
+      } else {
+        console.log('[GAME-DEFER] waiting for portReady before loading game:', id, 'at', Date.now());
+        var pollInterval = setInterval(function() {
+          var ready = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
+          if (ready) {
+            clearInterval(pollInterval);
+            console.log('[GAME-DEFER] portReady, loading game:', id, 'at', Date.now());
+            doLoadGame();
+          }
+        }, 100);
+        // Timeout after 15 seconds — show error state in loading overlay
+        setTimeout(function() {
+          clearInterval(pollInterval);
+          if (iframe && !iframe.src) {
+            console.warn('[GAME-DEFER] timeout waiting for portReady, showing error');
+            if (loadingOverlay) {
+              loadingOverlay.innerHTML = '<div class="game-loading-error"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><p>Failed to load game. The proxy connection timed out.</p><button onclick="openGame(\'' + id + '\')" class="game-error-retry">Retry</button></div>';
+            }
+          }
+        }, 15000);
       }
     }
 
@@ -3905,25 +3930,39 @@
           window.__UV_BOOT_STATUS__._update('portRequestReceived', true);
           console.log('[BOOT] getPort received from SW, creating SharedWorker at', Date.now());
           console.log('[BOOT] getPort event source:', event.source ? event.source.constructor.name : 'no source', 'event.data.port type:', typeof event.data.port, 'isMessagePort:', event.data.port instanceof MessagePort);
-          let worker;
-          try {
-            worker = new SharedWorker('/uv/bare-mux-worker.js', 'bare-mux-worker');
-            console.log('[BOOT] SharedWorker CONSTRUCTED OK at', Date.now(), 'worker.port type:', typeof worker.port, 'isMessagePort:', worker.port instanceof MessagePort);
-          } catch (e) {
-            console.error('[BOOT] SharedWorker CONSTRUCTION FAILED at', Date.now(), 'error:', e.message, 'stack:', e.stack);
-            return;
-          }
-          window.__UV_BOOT_STATUS__._update('workerConstructed', true);
-          console.log('[BOOT] SharedWorker constructed, transferring port at', Date.now());
-          try {
-            event.data.port.postMessage(worker.port, [worker.port]);
-            console.log('[BOOT] SharedWorker port TRANSFERRED OK at', Date.now());
-          } catch (e) {
-            console.error('[BOOT] SharedWorker port TRANSFER FAILED at', Date.now(), 'error:', e.message, 'stack:', e.stack);
-            return;
-          }
-          window.__UV_BOOT_STATUS__._update('portTransferred', true);
-          console.log('[BOOT] SharedWorker port transferred to SW at', Date.now());
+          (function tryCreateWorker(attempt) {
+            var maxAttempts = 3;
+            var worker;
+            try {
+              worker = new SharedWorker('/uv/bare-mux-worker.js', 'bare-mux-worker');
+              console.log('[BOOT] SharedWorker CONSTRUCTED OK at', Date.now(), 'attempt:', attempt, 'worker.port type:', typeof worker.port, 'isMessagePort:', worker.port instanceof MessagePort);
+            } catch (e) {
+              console.error('[BOOT] SharedWorker CONSTRUCTION FAILED at', Date.now(), 'attempt:', attempt, 'error:', e.message);
+              if (attempt < maxAttempts) {
+                console.log('[BOOT] retrying SharedWorker creation in 500ms (attempt ' + (attempt + 1) + ')');
+                setTimeout(function() { tryCreateWorker(attempt + 1); }, 500);
+              } else {
+                console.error('[BOOT] SharedWorker creation failed after ' + maxAttempts + ' attempts');
+                window.__UV_BOOT_STATUS__._update('failedStage', 'worker-creation');
+              }
+              return;
+            }
+            window.__UV_BOOT_STATUS__._update('workerConstructed', true);
+            console.log('[BOOT] SharedWorker constructed, transferring port at', Date.now());
+            try {
+              event.data.port.postMessage(worker.port, [worker.port]);
+              console.log('[BOOT] SharedWorker port TRANSFERRED OK at', Date.now());
+            } catch (e) {
+              console.error('[BOOT] SharedWorker port TRANSFER FAILED at', Date.now(), 'error:', e.message);
+              if (attempt < maxAttempts) {
+                console.log('[BOOT] retrying SharedWorker transfer in 500ms (attempt ' + (attempt + 1) + ')');
+                setTimeout(function() { tryCreateWorker(attempt + 1); }, 500);
+              }
+              return;
+            }
+            window.__UV_BOOT_STATUS__._update('portTransferred', true);
+            console.log('[BOOT] SharedWorker port transferred to SW at', Date.now());
+          })(1);
           // Port state determined by SW authority — will be synced below
         }
         // SW broadcasts port state changes via PORT_STATE_SYNC after trackPort resolves
@@ -3945,9 +3984,15 @@
           if (event.data.portReady === true) {
             console.log('[PORT_READY] received at ' + Date.now());
             const ui = window.VoltraBrowser && window.VoltraBrowser._browserUI;
-            if (ui && typeof ui._processPendingRestoreTabs === 'function') {
-              console.log('[PORT_READY] flushing pending restores');
-              ui._processPendingRestoreTabs();
+            if (ui) {
+              if (typeof ui._processPendingRestoreTabs === 'function') {
+                console.log('[PORT_READY] flushing pending restores');
+                ui._processPendingRestoreTabs();
+              }
+              if (typeof ui._flushPendingNavigations === 'function') {
+                console.log('[PORT_READY] flushing pending navigations');
+                ui._flushPendingNavigations();
+              }
             }
           }
           if (event.data.bareMuxReady !== undefined) {
@@ -3958,9 +4003,8 @@
             window.__UV_BOOT_STATUS__._update('swPortStatus', event.data.status);
           }
           // Auto-recovery: port failed after reload — refresh SharedWorker port via UV's yn()
-          if (event.data.portReady === false && event.data.status === 'failed' && !window.__UV_RECOVERY_ATTEMPTED__) {
-            window.__UV_RECOVERY_ATTEMPTED__ = true;
-            console.log('[RECOVERY] Port failed — starting recovery');
+          if (event.data.portReady === false && event.data.status === 'failed') {
+            console.log('[RECOVERY] Port failed — starting recovery at', Date.now());
             // Step A: Trigger UV's internal yn() refresh via BroadcastChannel
             try {
               const bc = new BroadcastChannel('bare-mux');
@@ -3971,17 +4015,17 @@
               console.warn('[RECOVERY] BroadcastChannel failed:', e);
             }
             // Step B+C: Wait for UV to create fresh port, then reinit SW portState
-            setTimeout(async () => {
+            var recoveryTimeout = setTimeout(async function retryReinit() {
               try {
                 const reg = await navigator.serviceWorker.ready;
                 if (reg.active) {
                   reg.active.postMessage({ type: 'REINIT_PORT' });
-                  console.log('[RECOVERY] REINIT_PORT sent to SW');
+                  console.log('[RECOVERY] REINIT_PORT sent to SW at', Date.now());
                 }
               } catch (e) {
                 console.warn('[RECOVERY] REINIT_PORT failed:', e);
               }
-            }, 3000);
+            }, 1000);
           }
         }
       });
@@ -4021,6 +4065,14 @@
         window.__UV_BOOT_STATUS__._update('failedStage', 'sw');
         console.warn('[BOOT] Service workers not supported');
       }
+
+      // Periodic port health check — detect stale ports proactively
+      setInterval(function() {
+        var portReady = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
+        if (portReady && window.syncPortStateFromSW) {
+          window.syncPortStateFromSW();
+        }
+      }, 30000);
     });
 
     window.startOnboarding = startOnboarding;
