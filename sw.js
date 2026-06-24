@@ -384,28 +384,27 @@ self.addEventListener('message', (event) => {
           _replyState();
           broadcastState('sync-port-state');
         } else if (wasReady) {
-          _B('[SYNC] stale port detected at', Date.now(), 'triggering proactive refresh', 'stack:', new Error().stack);
+          _B('[SYNC-REFRESH] stale port detected at', Date.now());
           try {
-            const bc = new BroadcastChannel('bare-mux');
-            bc.postMessage({ type: 'refreshPort' });
-            bc.close();
-          } catch(e) {
-            _B('[SYNC] BroadcastChannel refreshPort failed:', e.message);
-          }
-          const bm = sw.bareClient;
-          if (bm && bm.worker && bm.worker.port instanceof Promise) {
-            try {
-              const newPort = await bm.worker.port;
+            const worker = sw.bareClient && sw.bareClient.worker;
+            if (worker && typeof worker.createChannel === 'function') {
+              _B('[SYNC-REFRESH] refreshPort sent at', Date.now());
+              worker.createChannel();
+              _B('[SYNC-REFRESH] yn() started at', Date.now(), 'port is Promise:', worker.port instanceof Promise);
+              _B('[SYNC-REFRESH] awaiting port at', Date.now());
+              const newPort = await worker.port;
+              _B('[SYNC-REFRESH] port received at', Date.now(), 'type:', typeof newPort, 'isMessagePort:', newPort instanceof MessagePort);
               portState.port = newPort;
-              _B('[SYNC] new port received from refresh at', Date.now(), 'validating');
+              _B('[SYNC-REFRESH] ping sent at', Date.now());
               await checkPortHealth();
-            } catch(err) {
+              _B('[SYNC-REFRESH] pong status:', portState.status, 'at', Date.now());
+            } else {
               portState.status = 'failed';
-              _B('[STATE] portState.status → failed (SYNC refresh acquisition) at', Date.now(), 'err:', err.message, 'stack:', new Error().stack);
+              _B('[STATE] portState.status → failed (SYNC no worker/createChannel) at', Date.now());
             }
-          } else {
+          } catch(err) {
             portState.status = 'failed';
-            _B('[STATE] portState.status → failed (SYNC no worker promise) at', Date.now(), 'stack:', new Error().stack);
+            _B('[STATE] portState.status → failed (SYNC refresh) at', Date.now(), 'err:', err && err.message);
           }
           _replyState();
           broadcastState('sync-port-state');
