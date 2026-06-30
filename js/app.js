@@ -126,6 +126,8 @@
         if (heroSection) heroSection.classList.add('reveal');
         const infoIcon = document.querySelector('.hero-info-icon');
         if (infoIcon) infoIcon.style.opacity = '1';
+        const dock = document.querySelector('.bottom-dock');
+        if (dock) dock.classList.add('reveal');
       }, 500);
     }
 
@@ -285,6 +287,8 @@
     const flappyBirdUrl = "https://scratch.mit.edu/projects/embed/17964117/";
     const fruitNinjaIcon = "https://outred.org/g/assets/fruitninja/FruitNinjaTeaser.jpg";
     const fruitNinjaUrl = "https://classroom2111.github.io/g50/class-22/";
+
+    const appData = [];
 
     const sectionData = {
       games: [
@@ -757,7 +761,8 @@
           url: "https://script.google.com/macros/s/AKfycbx61mSm2aEx_wwEQB66hIGUZm8hV2dBZvo2QXcabpXvc0r25c22pW-pdE8tmxBjOWcWCw/exec"
         }
       ],
-      tools: []
+      tools: [],
+      apps: appData
     };
 
     const gameIndex = Object.fromEntries(sectionData.games.map(game => [game.id, game]));
@@ -778,6 +783,7 @@
     const searchPages = {
       games: { label: "Games", items: sectionData.games },
       tools: { label: "Tools", items: sectionData.tools },
+      apps: { label: "Apps", items: sectionData.apps },
       info: { label: "Info", items: infoSearchData }
     };
 
@@ -1605,7 +1611,7 @@
     const homeSearchResults = document.getElementById('homeSearchResults');
     const homeSearchInput = document.getElementById('homeSearchInput');
 
-    const fullPageSections = ['settings', 'games', 'search', 'tools', 'info', 'browser'];
+    const fullPageSections = ['settings', 'games', 'search', 'tools', 'apps', 'info', 'browser'];
 
     function escapeHTML(value) {
       return String(value)
@@ -1687,7 +1693,8 @@
       const titles = {
         games: "Games",
         proxies: "Proxies",
-        tools: "Tools"
+        tools: "Tools",
+        apps: "Apps"
       };
 
       const source = sectionData[section] || [];
@@ -1701,8 +1708,8 @@
                 <input
                   id="searchInput"
                   oninput="handleSearch(this.value)"
-                  placeholder="Search Orbit for games"
-                  aria-label="Search Orbit for games">
+                  placeholder="Search ${titles[section] ? titles[section].toLowerCase() : section}"
+                  aria-label="Search Orbit for ${titles[section] ? titles[section].toLowerCase() : section}">
                 <span class="search-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M10 18a8 8 0 1 1 5.29-2.12l4.9 4.9-1.42 1.42-4.9-4.9A7.96 7.96 0 0 1 10 18zm0-14a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"></path></svg>
                 </span>
@@ -1753,7 +1760,7 @@
                   <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
                 </svg>
               </button>
-              <button class="game-notch-btn" onclick="openGameTab('${game.id}')" title="Open in New Tab">
+              <button class="game-notch-btn" onclick="openGameTab()" title="Open in New Tab">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
                 </svg>
@@ -2084,80 +2091,177 @@
         <button class="settings-reset" type="button" onclick="wipeAllData()" style="margin-top:8px; border-color:rgba(255,80,80,0.3);">Wipe All Data</button>
       `);
 
+      const helpPanel = panel('help', 'Help', 'Frequently asked questions, quick start guide, and troubleshooting.', `
+        <div class="help-section" style="animation-delay:0ms">
+          <h4 class="help-section-title">Frequently Asked Questions</h4>
+          <p class="help-section-desc">Common questions about using Orbit.</p>
+          <div style="display:grid;gap:10px;width:100%;">
+            <details class="help-card">
+              <summary>How do I create my own Orbit links?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Orbit uses the Ultraviolet proxy to create encoded links. Open the Browser tab, navigate to any site, and the URL bar will show the proxied link. You can copy and share that link with others.</div>
+            </details>
+            <details class="help-card">
+              <summary>How do I host Orbit myself?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Clone the repository from GitHub, install Node.js dependencies, and run the server locally. See the Quick Start guide below for detailed steps. You can also deploy to Railway or any Node.js-compatible platform.</div>
+            </details>
+            <details class="help-card">
+              <summary>How do I deploy using Railway?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Fork the repository, connect your GitHub account to Railway, create a new project from the fork, and set the start command to node server.js. Railway handles the rest automatically.</div>
+            </details>
+            <details class="help-card">
+              <summary>Why do some websites not load?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Some sites block proxy connections or require modern browser features. Try switching search engines in the browser settings, clearing the proxy cache, or loading the site directly without the proxy.</div>
+            </details>
+            <details class="help-card">
+              <summary>How do proxy links work?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Orbit encodes the target URL using the Ultraviolet XOR codec and routes traffic through a service worker and bare server. This makes it appear as if you are browsing a different site.</div>
+            </details>
+            <details class="help-card">
+              <summary>Can I customize Orbit?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Yes. Use Settings to change accent themes, glow intensity, particles, cloaking, audio, and more. The Visuals panel gives you full control over the look and feel of the interface.</div>
+            </details>
+            <details class="help-card">
+              <summary>Where are themes located?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Themes are built into the codebase. You can select from nine accent themes in Settings of the Appearance panel. Custom themes are not yet supported but may be added in future updates.</div>
+            </details>
+            <details class="help-card">
+              <summary>How do I update Orbit?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Pull the latest changes from the GitHub repository. If deployed on Railway, reconnect your project to the repository and Railway will redeploy automatically.</div>
+            </details>
+            <details class="help-card">
+              <summary>How do I report bugs?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Open an issue on the GitHub repository with a description of the bug, steps to reproduce, and any console errors. Include your browser version and OS for faster resolution.</div>
+            </details>
+            <details class="help-card">
+              <summary>How do I clear cached proxy data?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-answer">Go to your browser's developer tools, navigate to Application Service Workers, and unregister the service worker. Then clear your browser cache and reload Orbit. This resets all proxy state.</div>
+            </details>
+          </div>
+        </div>
+
+        <div class="help-section" style="animation-delay:60ms">
+          <h4 class="help-section-title">Quick Start</h4>
+          <p class="help-section-desc">Get Orbit up and running in minutes.</p>
+          <div class="help-timeline">
+            <div class="help-timeline-step">
+              <div class="help-timeline-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </div>
+              <div class="help-timeline-content">
+                <strong>Clone the repository</strong>
+                <span><code>git clone https://github.com/your-username/orbit.git</code></span>
+              </div>
+            </div>
+            <div class="help-timeline-step">
+              <div class="help-timeline-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+              </div>
+              <div class="help-timeline-content">
+                <strong>Install dependencies</strong>
+                <span><code>npm install</code></span>
+              </div>
+            </div>
+            <div class="help-timeline-step">
+              <div class="help-timeline-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="18" y1="16" x2="22" y2="16"/></svg>
+              </div>
+              <div class="help-timeline-content">
+                <strong>Start the server</strong>
+                <span><code>node server.js</code></span>
+                <span>Orbit runs on <code>http://localhost:8080</code></span>
+              </div>
+            </div>
+            <div class="help-timeline-step">
+              <div class="help-timeline-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+              <div class="help-timeline-content">
+                <strong>Deploy (optional)</strong>
+                <span>Connect your GitHub fork to Railway for free hosting. Set the start command to <code>node server.js</code>.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section" style="animation-delay:120ms">
+          <h4 class="help-section-title">Troubleshooting</h4>
+          <p class="help-section-desc">Common issues and their fixes.</p>
+          <div style="display:grid;gap:8px;width:100%;">
+            <details class="help-category">
+              <summary class="help-category-btn">Proxy<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-category-solution">If proxy pages fail to load, try switching search engines or clearing the service worker cache. Some websites block known proxy IP ranges.</div>
+            </details>
+            <details class="help-category">
+              <summary class="help-category-btn">Games<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-category-solution">Ensure your browser supports iframe embeds and that the game URL is accessible. Some games require direct loading (no proxy) which Orbit handles automatically.</div>
+            </details>
+            <details class="help-category">
+              <summary class="help-category-btn">Downloads<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-category-solution">Hard refresh (Ctrl+Shift+R) to bypass cached assets. Clear your browser cache in Settings Privacy if pages appear broken.</div>
+            </details>
+            <details class="help-category">
+              <summary class="help-category-btn">Cache<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-category-solution">Open DevTools, go to Application Service Workers, click Unregister. Reload the page. This fixes most proxy and UV initialization issues.</div>
+            </details>
+            <details class="help-category">
+              <summary class="help-category-btn">Service Worker<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
+              <div class="help-category-solution">Restart the server, update Node.js, check for port conflicts on 8080, and verify the UV bundle files are present in the <code>uv/</code> directory.</div>
+            </details>
+          </div>
+        </div>
+
+        <div class="help-section" style="animation-delay:180ms">
+          <h4 class="help-section-title">Helpful Links</h4>
+          <p class="help-section-desc">Resources to help you get the most out of Orbit.</p>
+          <div class="help-links">
+            <a href="https://github.com/your-username/orbit" target="_blank" class="help-link-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+              GitHub
+            </a>
+            <a href="https://railway.app" target="_blank" class="help-link-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              Railway
+            </a>
+            <a href="https://github.com/your-username/orbit/wiki" target="_blank" class="help-link-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              Documentation
+            </a>
+            <a href="https://discord.gg/orbit" target="_blank" class="help-link-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.074.074 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+              Discord
+            </a>
+          </div>
+        </div>
+      `);
+
       const settingsNavIconHTML = (panelId) => {
-        // Sleek outline-style icons (matched to sidebar meaning)
         switch (panelId) {
           case 'audio':
-            // Speaker / sound
-            return `
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 5 6 9H2v6h4l5 4z"></path>
-                <path d="M15.5 8.5a4 4 0 0 1 0 7"></path>
-                <path d="M18.8 5.2a9 9 0 0 1 0 13.6"></path>
-              </svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M560-131v-82q90-26 145-100t55-168q0-94-55-168T560-749v-82q124 28 202 125.5T840-481q0 127-78 224.5T560-131ZM120-360v-240h160l200-200v640L280-360H120Zm440 40v-322q47 22 73.5 66t26.5 96q0 51-26.5 94.5T560-320ZM400-606l-86 86H200v80h114l86 86v-252ZM300-480Z"/></svg>`;
 
           case 'appearance':
-            // Palette / theme
-            return `
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 21a9 9 0 1 1 9-9c0 2.5-1.3 4-3.2 4H16a2 2 0 0 0-2 2c0 1.8-1.2 3-2 3z"></path>
-                <path d="M7.5 10.2h.01"></path>
-                <path d="M10.2 7.5h.01"></path>
-                <path d="M14.3 7.5h.01"></path>
-                <path d="M16.9 10.2h.01"></path>
-              </svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-177 23q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120-160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm200 0q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120 160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></svg>`;
 
           case 'layout':
-            // Cloaking / hidden (eye-off)
-            return `
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path>
-                <path d="M9.5 9.5a3.5 3.5 0 0 0 5 5"></path>
-                <path d="M1 1l22 22"></path>
-              </svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="m644-428-58-58q9-47-27-88t-93-32l-58-58q17-8 34.5-12t37.5-4q75 0 127.5 52.5T660-500q0 20-4 37.5T644-428Zm128 126-58-56q38-29 67.5-63.5T832-500q-50-101-143.5-160.5T480-720q-29 0-57 4t-55 12l-62-62q41-17 84-25.5t90-8.5q151 0 269 83.5T920-500q-23 59-60.5 109.5T772-302Zm20 246L624-222q-35 11-70.5 16.5T480-200q-151 0-269-83.5T40-500q21-53 53-98.5t73-81.5L56-792l56-56 736 736-56 56ZM222-624q-29 26-53 57t-41 67q50 101 143.5 160.5T480-280q20 0 39-2.5t39-5.5l-36-38q-11 3-21 4.5t-21 1.5q-75 0-127.5-52.5T300-500q0-11 1.5-21t4.5-21l-84-82Zm319 93Zm-151 75Z"/></svg>`;
 
           case 'browser':
-            // Browser / globe (proxy icon)
-            return `
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M3 12h18"></path>
-                <path d="M12 3a15 15 0 0 1 0 18"></path>
-                <path d="M12 3a15 15 0 0 0 0 18"></path>
-              </svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM440-162v-78q-33 0-56.5-23.5T360-320v-40L168-552q-3 18-5.5 36t-2.5 36q0 121 79.5 212T440-162Zm276-102q41-45 62.5-100.5T800-480q0-98-54.5-179T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h240q17 0 28.5 11.5T600-440v120h40q26 0 47 15.5t29 40.5Z"/></svg>`;
 
           case 'launching':
-            // Launching / rocket
-            return `
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
-                <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
-                <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
-                <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
-              </svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="m226-559 78 33q14-28 29-54t33-52l-56-11-84 84Zm142 83 114 113q42-16 90-49t90-75q70-70 109.5-155.5T806-800q-72-5-158 34.5T492-656q-42 42-75 90t-49 90Zm155-121.5q0-33.5 23-56.5t57-23q34 0 57 23t23 56.5q0 33.5-23 56.5t-57 23q-34 0-57-23t-23-56.5ZM565-220l84-84-11-56q-26 18-52 32.5T532-299l33 79Zm313-653q19 121-23.5 235.5T708-419l20 99q4 20-2 39t-20 33L538-80l-84-197-171-171-197-84 167-168q14-14 33.5-20t39.5-2l99 20q104-104 218-147t235-24ZM157-321q35-35 85.5-35.5T328-322q35 35 34.5 85.5T327-151q-25 25-83.5 43T82-76q14-103 32-161.5t43-83.5Zm57 56q-10 10-20 36.5T180-175q27-4 53.5-13.5T270-208q12-12 13-29t-11-29q-12-12-29-11.5T214-265Z"/></svg>`;
 
           case 'about':
-            // Info / question
-            return `
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M12 11v5"></path>
-                <path d="M12 8h.01"></path>
-              </svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>`;
+
+          case 'help':
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M513.5-254.5Q528-269 528-290t-14.5-35.5Q499-340 478-340t-35.5 14.5Q428-311 428-290t14.5 35.5Q457-240 478-240t35.5-14.5ZM442-394h74q0-33 7.5-52t42.5-52q26-26 41-49.5t15-56.5q0-56-41-86t-97-30q-57 0-92.5 30T342-618l66 26q5-18 22.5-39t53.5-21q32 0 48 17.5t16 38.5q0 20-12 37.5T506-526q-44 39-54 59t-10 73Zm38 314q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>`;
 
           case 'performance':
-            // Account / user profile
-            return `
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-246q54-53 125.5-83.5T480-360q83 0 154.5 30.5T760-246v-514H200v514Zm379-235q41-41 41-99t-41-99q-41-41-99-41t-99 41q-41 41-41 99t41 99q41 41 99 41t99-41ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm69-80h422q-44-39-99.5-59.5T480-280q-56 0-112.5 20.5T269-200Zm168.5-337.5Q420-555 420-580t17.5-42.5Q455-640 480-640t42.5 17.5Q540-605 540-580t-17.5 42.5Q505-520 480-520t-42.5-17.5ZM480-503Z"/></svg>`;
 
           default:
-            return `
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"></path>
-              </svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-177 23q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120-160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm200 0q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120 160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></svg>`;
         }
       };
 
@@ -2190,6 +2294,7 @@
                 ${navItem('browser', 'Browser', 'Browser launch and behavior')}
                 ${navItem('performance', 'Account', 'User profile and identity settings')}
                 ${navItem('about', 'About & Statistics', 'Version, data, and reset')}
+                ${navItem('help', 'Help', 'FAQ, quick start, and troubleshooting')}
 
               </nav>
               <div class="settings-panels">
@@ -2200,6 +2305,7 @@
                 ${browserPanel}
                 ${performancePanel}
                 ${aboutPanel}
+                ${helpPanel}
               </div>
             </div>
           </div>
@@ -2224,7 +2330,7 @@
     function render(section, query = '') {
       currentSection = section;
       if (section !== null) heroSearchWidthInitialized = false;
-      if (section === 'games' || section === 'tools') {
+      if (section === 'games' || section === 'tools' || section === 'apps') {
         lastBrowseQuery = query;
       }
       updateCustomScrollbar();
@@ -2356,9 +2462,22 @@
       lastBrowseQuery = searchInput ? searchInput.value : '';
     }
 
-    function openGame(id) {
+    // ── Single source of truth for game launch URL ──────────────────
+    function resolveGameLaunchURL(game) {
+      if (!game) return '';
+      if (game.local === true) {
+        console.log('[GAME-LAUNCH] local game detected:', game.id, '→', '/games/' + game.id + '/');
+        return '/games/' + game.id + '/';
+      }
+      console.log('[GAME-LAUNCH] remote game:', game.id, '→', game.url);
+      return game.url;
+    }
+
+    async function openGame(id) {
       const game = gameIndex[id];
       if (!game) return;
+      const isLocalGame = game.local === true;
+      const launchUrl = resolveGameLaunchURL(game);
 
       captureBrowseState('games');
       currentSection = 'game';
@@ -2367,7 +2486,7 @@
       setActiveNav('games');
       attachHoverSFX();
       updateTabCloakState();
-      maybeAutoLaunchExternal(game.url, game.title);
+      maybeAutoLaunchExternal(launchUrl, game.title);
       // Hide sidebar on game pages
       document.body.classList.add('game-page-active');
       window.scrollTo({ top: 0, behavior: scrollBehavior() });
@@ -2391,49 +2510,69 @@
         loadingOverlay.classList.remove('hidden');
       }
 
-      // Route through UV proxy for all game loads
-      function doLoadGame() {
-        var gameSrc = src;
-        if (typeof window.encodeUVUrl === 'function') {
-          gameSrc = window.encodeUVUrl(src);
+      function doLoadGame(gameMode) {
+        var gameSrc = launchUrl;
+
+        if (!isLocalGame) {
+          if (gameMode === 'proxy' && typeof window.encodeUVUrl === 'function') {
+            var encoded = window.encodeUVUrl(launchUrl);
+            console.log('[GAME-LAUNCH] encoded for proxy:', launchUrl, '→', encoded);
+            gameSrc = encoded;
+          } else {
+            console.log('[GAME-LAUNCH] direct launch:', launchUrl, '(mode:', gameMode + ')');
+          }
+        } else {
+          console.log('[GAME-LAUNCH] embedded launch URL:', gameSrc);
         }
+
         iframe.src = gameSrc;
         iframe.removeAttribute('data-src');
 
-        // Hide loading overlay when iframe loads
-        iframe.onload = () => {
+        var hideOverlay = function() {
           if (loadingOverlay) {
             loadingOverlay.classList.add('hidden');
           }
         };
 
-        // Fallback: hide loading overlay after 5 seconds
-        setTimeout(() => {
-          if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
+        // Timer: 30-second content monitor for blank/error detection
+        var gameLoadTimer = setTimeout(function gameLoadMonitor() {
+          if (loadingOverlay && loadingOverlay.classList.contains('hidden')) {
+            console.log('[GAME-MONITOR] game already loaded, skipping blank check');
+            return;
           }
-        }, 5000);
-
-        // Game content monitor: detect blank/error states after 30 seconds
-        var gameLoadTimer = setTimeout(function() {
           try {
             var d = iframe.contentDocument;
             if (!d || !d.body) {
+              console.warn('[GAME-MONITOR] no content document detected');
               showGameError('Game failed to load (no content)');
               return;
             }
             var txt = d.body.innerText || '';
             if (txt.trim().length === 0) {
+              console.warn('[GAME-MONITOR] blank page detected');
               showGameError('Game failed to load (blank page)');
             }
           } catch(e) {
             if (e.message && e.message.includes('cross-origin')) {
-              console.warn('[GAME-MONITOR] cross-origin iframe, skipping blank check');
+              console.log('[GAME-MONITOR] cross-origin iframe, skipping blank check');
             } else {
+              console.warn('[GAME-MONITOR] unexpected error:', e.message);
               showGameError('Game failed to load (' + e.message + ')');
             }
           }
         }, 30000);
+
+        // On successful iframe load, clear the error monitor and hide overlay
+        iframe.onload = function() {
+          console.log('[GAME-MONITOR] iframe loaded successfully, clearing error timer');
+          clearTimeout(gameLoadTimer);
+          hideOverlay();
+        };
+
+        // Fallback: hide loading overlay after 5 seconds
+        setTimeout(function() {
+          hideOverlay();
+        }, 5000);
       }
 
       function showGameError(msg) {
@@ -2443,30 +2582,53 @@
         }
       }
 
-      // Wait for proxy port to be ready before loading the game
-      var portReady = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
-      if (portReady) {
-        doLoadGame();
+      // Determine game mode and load
+      if (isLocalGame) {
+        doLoadGame('direct');
       } else {
-        console.log('[GAME-DEFER] waiting for portReady before loading game:', id, 'at', Date.now());
-        var pollInterval = setInterval(function() {
-          var ready = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
-          if (ready) {
-            clearInterval(pollInterval);
-            console.log('[GAME-DEFER] portReady, loading game:', id, 'at', Date.now());
-            doLoadGame();
+        // Helper: wait for portReady then load in proxy mode
+        function loadWithProxy() {
+          var portReady = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
+          if (portReady) {
+            doLoadGame('proxy');
+          } else {
+            console.log('[GAME-DEFER] waiting for portReady before loading game:', id, 'at', Date.now());
+            var pollInterval = setInterval(function() {
+              var ready = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
+              if (ready) {
+                clearInterval(pollInterval);
+                console.log('[GAME-DEFER] portReady, loading game:', id, 'at', Date.now());
+                doLoadGame('proxy');
+              }
+            }, 100);
+            setTimeout(function() {
+              clearInterval(pollInterval);
+              if (iframe && !iframe.src) {
+                console.warn('[GAME-DEFER] timeout waiting for portReady, showing error');
+                if (loadingOverlay) {
+                  loadingOverlay.innerHTML = '<div class="game-loading-error"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><p>Failed to load game. The proxy connection timed out.</p><button onclick="openGame(\'' + id + '\')" class="game-error-retry">Retry</button></div>';
+                }
+              }
+            }, 15000);
           }
-        }, 100);
-        // Timeout after 15 seconds — show error state in loading overlay
-        setTimeout(function() {
-          clearInterval(pollInterval);
-          if (iframe && !iframe.src) {
-            console.warn('[GAME-DEFER] timeout waiting for portReady, showing error');
-            if (loadingOverlay) {
-              loadingOverlay.innerHTML = '<div class="game-loading-error"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><p>Failed to load game. The proxy connection timed out.</p><button onclick="openGame(\'' + id + '\')" class="game-error-retry">Retry</button></div>';
-            }
+        }
+
+        // Detect game compatibility mode before loading
+        try {
+          var compat = await window.detectGameMode(game.id, launchUrl);
+          var compatMode = compat.mode;
+          var compatReason = compat.reason;
+          console.log('[GAME MODE] ' + compatMode + ' (' + compatReason + ')');
+
+          if (compatMode === 'direct') {
+            doLoadGame('direct');
+          } else {
+            loadWithProxy();
           }
-        }, 15000);
+        } catch (e) {
+          console.warn('[GAME-COMPAT] error detecting game mode, defaulting to proxy:', e.message);
+          loadWithProxy();
+        }
       }
     }
 
@@ -2500,10 +2662,11 @@
       }
     }
 
-    function openGameTab(id) {
-      const game = gameIndex[id];
-      if (!game) return;
-      window.open(game.url, '_blank', 'noopener,noreferrer');
+    function openGameTab() {
+      var iframe = document.getElementById('gameFrame');
+      if (!iframe || !iframe.src) return;
+      console.log('[GAME-LAUNCH] Open in New Tab: iframe.src =', iframe.src);
+      window.open(iframe.src, '_blank', 'noopener,noreferrer');
     }
 
     function refreshGame() {
@@ -2840,22 +3003,13 @@
       }
       const heroNotifs = document.getElementById('heroNotifications');
       if (heroNotifs) {
-        heroNotifs.style.transition = 'none';
-        heroNotifs.style.opacity = '0';
         heroNotifs.innerHTML = renderNotifications();
-        notifExpanded = false;
-        heroNotifs.classList.remove('expanded');
-        requestAnimationFrame(() => {
-          const maxH = getCollapsedMaxHeight(heroNotifs) || heroNotifs.scrollHeight || 54;
-          heroNotifs.style.maxHeight = maxH + 'px';
-          heroNotifs.offsetHeight;
-          heroNotifs.style.transition = 'opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-          heroNotifs.style.opacity = '1';
-        });
+        applyNotificationState(heroNotifs, false);
+        positionNotificationHub();
       }
       mainContent.innerHTML = '';
       currentSection = null;
-      setActiveNav(null);
+      setActiveNav('home');
       document.body.classList.add('on-homepage');
       clearHomeSearch();
       updateTabCloakState();
@@ -3193,13 +3347,82 @@
         const passwordOverlay = document.getElementById('passwordOverlay');
         const passwordInput = document.getElementById('passwordInput');
         const passwordError = document.getElementById('passwordError');
+        const submitText = document.getElementById('passwordSubmitText');
+        const submitBtn = document.getElementById('passwordSubmit');
         
         passwordOverlay.style.display = 'flex';
         passwordInput.value = '';
-        passwordError.classList.remove('show');
-        passwordInput.focus();
+        passwordError.classList.remove('show', 'hide-error');
+        passwordInput.classList.remove('input-error');
+        submitText.textContent = 'Unlock';
+        submitBtn.classList.remove('success');
         
         document.body.style.overflow = 'hidden';
+        
+        initPasswordClock();
+        
+        requestAnimationFrame(() => {
+          passwordOverlay.classList.add('visible');
+        });
+        
+        passwordInput.focus();
+      } else {
+        const introScreen = document.getElementById('introScreen');
+        if (introScreen) introScreen.style.display = 'flex';
+      }
+    }
+
+    function initPasswordClock() {
+      const clockEl = document.getElementById('passwordClock');
+      const dateEl = document.getElementById('passwordDate');
+      if (!clockEl) return;
+      
+      const locale = navigator.language || 'en-US';
+      const hourCycle = Intl.DateTimeFormat(locale).resolvedOptions().hourCycle || 'h12';
+      const is24h = hourCycle === 'h23' || hourCycle === 'h24';
+      const timeFormat = new Intl.DateTimeFormat(locale, {
+        hour: 'numeric',
+        minute: '2-digit',
+        hourCycle: is24h ? 'h23' : 'h12'
+      });
+      const dateFormat = new Intl.DateTimeFormat(locale, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      function update() {
+        const now = new Date();
+        clockEl.textContent = timeFormat.format(now);
+        if (dateEl) dateEl.textContent = dateFormat.format(now);
+      }
+      
+      update();
+      if (window._passwordClockInterval) clearInterval(window._passwordClockInterval);
+      window._passwordClockInterval = setInterval(update, 1000);
+    }
+
+    function afterUnlock() {
+      const passwordOverlay = document.getElementById('passwordOverlay');
+      passwordOverlay.style.display = 'none';
+      document.body.style.overflow = '';
+      passwordOverlay.classList.remove('visible', 'unlocking');
+      
+      const submitText = document.getElementById('passwordSubmitText');
+      const submitBtn = document.getElementById('passwordSubmit');
+      if (submitText) submitText.textContent = 'Unlock';
+      if (submitBtn) submitBtn.classList.remove('success');
+      if (window._passwordClockInterval) {
+        clearInterval(window._passwordClockInterval);
+        window._passwordClockInterval = null;
+      }
+      
+      if (window.__pendingOnboarding) {
+        window.__pendingOnboarding = false;
+        startOnboarding();
+      } else {
+        const introScreen = document.getElementById('introScreen');
+        if (introScreen) introScreen.style.display = 'flex';
       }
     }
 
@@ -3207,14 +3430,28 @@
       const passwordInput = document.getElementById('passwordInput');
       const passwordError = document.getElementById('passwordError');
       const passwordOverlay = document.getElementById('passwordOverlay');
+      const submitText = document.getElementById('passwordSubmitText');
+      const submitBtn = document.getElementById('passwordSubmit');
       
       if (passwordInput.value === settings.websitePassword) {
-        passwordOverlay.style.display = 'none';
-        document.body.style.overflow = '';
+        submitText.textContent = 'Unlocked';
+        submitBtn.classList.add('success');
+        setTimeout(() => {
+          passwordOverlay.classList.add('unlocking');
+          setTimeout(() => {
+            afterUnlock();
+          }, 800);
+        }, 400);
       } else {
+        passwordInput.classList.add('input-error');
+        passwordError.classList.remove('hide-error');
         passwordError.classList.add('show');
         passwordInput.value = '';
         passwordInput.focus();
+        setTimeout(() => {
+          passwordInput.classList.remove('input-error');
+          passwordError.classList.add('hide-error');
+        }, 2500);
       }
     }
 
@@ -3223,8 +3460,7 @@
         const passwordOverlay = document.getElementById('passwordOverlay');
         if (passwordOverlay && passwordOverlay.style.display === 'flex') {
           if (e.shiftKey && e.key.toUpperCase() === settings.bypassKeybind.toUpperCase()) {
-            passwordOverlay.style.display = 'none';
-            document.body.style.overflow = '';
+            afterUnlock();
           }
         }
       }
@@ -3289,6 +3525,11 @@
     }
 
     function initializeIntro() {
+      if (settings.requirePassword && settings.websitePassword) {
+        window.__pendingOnboarding = checkOnboarding();
+        return;
+      }
+
       const introScreen = document.getElementById('introScreen');
       const enterButton = document.getElementById('enterButton');
 
@@ -3694,109 +3935,72 @@
       { id: 'n8', type: 'announce', title: 'Proxy integration coming soon', description: 'Built-in Ultraviolet proxy support is in development.',     time: '3d ago' },
     ];
 
+    const expandSvg = '<svg viewBox="0 -960 960 960"><path d="m480-340 180-180-57-56-123 123-123-123-57 56 180 180Zm0 260q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>';
+
+    const unexpandSvg = '<svg viewBox="0 -960 960 960"><path d="m357-384 123-123 123 123 57-56-180-180-180 180 57 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>';
+
     function createNotificationCard(notif, isFirst) {
-      const badge = notificationCategories[notif.type] || 'Update';
-      const icon = notificationIcons[notif.type] || '📌';
-      const actions = `
-        <div class="nc-card-actions">
-          ${isFirst ? '<button class="nc-expand-btn" aria-label="Toggle notifications">▼</button>' : ''}
-          <button class="nc-dismiss" data-dismiss="${escapeHTML(notif.id)}" aria-label="Dismiss">✕</button>
-        </div>
-      `;
-      return `
-        <div class="nc-card" data-id="${escapeHTML(notif.id)}">
-          ${actions}
-          <div class="nc-card-header">
-            <span class="nc-icon">${icon}</span>
-            <div class="nc-card-info">
-              <span class="nc-title">${escapeHTML(notif.title)}</span>
-              <span class="nc-body">${escapeHTML(notif.description)}</span>
-            </div>
-            <span class="nc-time">${escapeHTML(notif.time)}</span>
-          </div>
-          <div class="nc-card-footer">
-            <span class="nc-badge">${badge}</span>
-          </div>
-        </div>
-      `;
+      const delay = (Math.random() * 1000).toFixed(0);
+      const btn = isFirst ? `<span class="toggle-btn">${expandSvg}</span>` : '';
+      return `<div class="notif-line">${escapeHTML(notif.title)} &mdash; ${escapeHTML(notif.description)} <span class="caret" style="animation-delay:-${delay}ms">|</span>${btn}</div>`;
     }
 
     function renderNotifications() {
-      if (notifications.length === 0) return '<div class="nc-empty">No notifications</div>';
       return notifications.map((n, i) => createNotificationCard(n, i === 0)).join('');
     }
 
-    function getCollapsedMaxHeight(el) {
-      const first = el.querySelector('.nc-card');
-      if (!first) return 0;
-      const style = getComputedStyle(first);
-      const mt = parseFloat(style.marginTop) || 0;
-      const mb = parseFloat(style.marginBottom) || 0;
-      return first.offsetHeight + mt + mb + 2;
+    function applyNotificationState(el, animate) {
+      if (!el) return;
+      const items = el.querySelectorAll('.notif-line:not(:first-child)');
+      const btn = el.querySelector('.toggle-btn');
+      if (notifExpanded) {
+        items.forEach((item, i) => {
+          item.style.transitionDelay = animate ? `${i * 50}ms` : '0ms';
+          item.classList.remove('collapsed');
+        });
+        el.style.maxHeight = el.scrollHeight + 'px';
+        if (btn) btn.innerHTML = unexpandSvg;
+      } else {
+        items.forEach((item, i) => {
+          item.style.transitionDelay = animate ? `${(items.length - 1 - i) * 50}ms` : '0ms';
+          item.classList.add('collapsed');
+        });
+        const firstItem = el.querySelector('.notif-line');
+        const collapsedH = firstItem ? firstItem.offsetHeight : 0;
+        if (animate) {
+          setTimeout(() => { el.style.maxHeight = collapsedH + 'px'; }, 100);
+        } else {
+          el.style.maxHeight = collapsedH + 'px';
+        }
+        if (btn) btn.innerHTML = expandSvg;
+      }
+    }
+
+    function positionNotificationHub() {
+      const el = document.getElementById('heroNotifications');
+      const clock = document.getElementById('heroClock');
+      if (!el || !clock || !heroSection) return;
+      const heroRect = heroSection.getBoundingClientRect();
+      const clockRect = clock.getBoundingClientRect();
+      el.style.top = (clockRect.bottom - heroRect.top + 18) + 'px';
     }
 
     function initNotifications() {
       const el = document.getElementById('heroNotifications');
       if (!el) return;
       if (notifications.length === 0) notifications = defaultNotifications.map(n => ({ ...n }));
-      el.innerHTML = renderNotifications();
       notifExpanded = false;
-      el.classList.remove('expanded');
-      requestAnimationFrame(() => {
-        el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
-      });
-    }
-
-    function equipCards(el) {
-      const cards = el.querySelectorAll('.nc-card:not(:first-child)');
-      cards.forEach((c, i) => {
-        c.style.transitionDelay = (i * 60) + 'ms';
-        c.classList.add('visible');
-      });
-    }
-
-    function toggleNotifCenter() {
-      const el = document.getElementById('heroNotifications');
-      if (!el || notifications.length === 0) return;
-      if (notifExpanded) {
-        const cards = el.querySelectorAll('.nc-card:not(:first-child)');
-        cards.forEach(c => { c.classList.remove('visible'); c.style.transitionDelay = ''; });
-        el.style.maxHeight = el.scrollHeight + 'px';
-        requestAnimationFrame(() => {
-          el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
-          el.classList.remove('expanded');
-        });
-        notifExpanded = false;
-      } else {
-        el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
-        requestAnimationFrame(() => {
-          el.style.maxHeight = el.scrollHeight + 'px';
-          el.classList.add('expanded');
-          equipCards(el);
-        });
-        notifExpanded = true;
-      }
+      el.innerHTML = renderNotifications();
+      applyNotificationState(el, false);
+      positionNotificationHub();
     }
 
     function dismissNotification(id) {
+      notifications = notifications.filter(n => n.id !== id);
       const el = document.getElementById('heroNotifications');
       if (!el) return;
-      if (notifExpanded) {
-        const oldH = el.scrollHeight;
-        el.style.maxHeight = oldH + 'px';
-        notifications = notifications.filter(n => n.id !== id);
-        el.innerHTML = renderNotifications();
-        equipCards(el);
-        requestAnimationFrame(() => {
-          el.style.maxHeight = el.scrollHeight + 'px';
-        });
-      } else {
-        notifications = notifications.filter(n => n.id !== id);
-        el.innerHTML = renderNotifications();
-        requestAnimationFrame(() => {
-          el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
-        });
-      }
+      el.innerHTML = renderNotifications();
+      applyNotificationState(el, false);
     }
 
     function addNotification(notif) {
@@ -3809,78 +4013,16 @@
       const el = document.getElementById('heroNotifications');
       if (!el) return null;
       el.innerHTML = renderNotifications();
-      if (notifExpanded) {
-        equipCards(el);
-        requestAnimationFrame(() => {
-          el.style.maxHeight = el.scrollHeight + 'px';
-        });
-      } else {
-        requestAnimationFrame(() => {
-          el.style.maxHeight = getCollapsedMaxHeight(el) + 'px';
-        });
-      }
+      applyNotificationState(el, false);
       return notif.id;
     }
 
-    // ── Hold-to-clear all notifications ──────
-    let dismissHoldTimer = null;
-    let dismissHandled = false;
-
-    document.addEventListener('pointerdown', (e) => {
-      const btn = e.target?.closest?.('.nc-dismiss');
-      if (!btn) return;
-      dismissHandled = false;
-      btn.classList.add('holding');
-      dismissHoldTimer = setTimeout(() => {
-        btn.classList.remove('holding');
-        dismissHandled = true;
-        const el = document.getElementById('heroNotifications');
-        if (!el) return;
-        notifications = [];
-        el.innerHTML = renderNotifications();
-        notifExpanded = false;
-        el.classList.remove('expanded');
-        requestAnimationFrame(() => {
-          el.style.maxHeight = el.scrollHeight + 'px';
-        });
-      }, 2000);
-    });
-
-    document.addEventListener('pointerup', (e) => {
-      const btn = e.target?.closest?.('.nc-dismiss');
-      if (!btn) return;
-      if (dismissHoldTimer) {
-        clearTimeout(dismissHoldTimer);
-        dismissHoldTimer = null;
-      }
-      btn.classList.remove('holding');
-    });
-
-    document.addEventListener('pointerleave', (e) => {
-      const btn = e.target?.closest?.('.nc-dismiss');
-      if (!btn) return;
-      if (dismissHoldTimer) {
-        clearTimeout(dismissHoldTimer);
-        dismissHoldTimer = null;
-      }
-      btn.classList.remove('holding');
-      dismissHandled = false;
-    });
-
     document.addEventListener('click', (e) => {
-      const dismissBtn = e.target?.closest?.('.nc-dismiss');
-      if (dismissBtn) {
-        e.stopPropagation();
-        e.preventDefault();
-        if (!dismissHandled) {
-          dismissNotification(dismissBtn.dataset.dismiss);
-        }
-        dismissHandled = false;
-        return;
-      }
-      const expandBtn = e.target?.closest?.('.nc-expand-btn');
-      if (expandBtn) { e.stopPropagation(); e.preventDefault(); toggleNotifCenter(); return; }
-      if (e.target?.closest?.('.hero-notifications')) { e.preventDefault(); toggleNotifCenter(); }
+      const btn = e.target.closest('.toggle-btn');
+      if (!btn) return;
+      notifExpanded = !notifExpanded;
+      const el = document.getElementById('heroNotifications');
+      applyNotificationState(el, true);
     });
 
     // Onboarding event listeners
@@ -3942,6 +4084,9 @@
 
       // Initialize notification hub
       initNotifications();
+
+      // Re-position notification hub on resize
+      window.addEventListener('resize', positionNotificationHub);
 
       // Initialize intro/onboarding logic
       initializeIntro();

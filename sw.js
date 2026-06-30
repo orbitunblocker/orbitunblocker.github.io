@@ -304,14 +304,19 @@ sw.fetch = async function (event) {
   const direct = event.request.headers.get('X-SW-Direct');
   const dec = _DECODE_UV_URL(url);
   _HOP('1-sw-wrapper', url, 0, 'dest:' + dest + ' decoded:' + dec.decoded);
+  console.log('[SW-TRACE] portState check:', portState.status, 'dest:', dest, 'decoded:', dec.decoded);
   if (portState.status !== 'ready') {
     _FETCH_LOG(url, portState.status, 503, 'port-not-ready', 'dest:', dest);
     _HOP('1-sw-wrapper', url, 503, 'port-not-ready dest:' + dest + ' decoded:' + dec.decoded);
     return new Response(_ERROR_PAGE(503, 'Proxy Not Ready', 'The proxy connection is initializing. Please wait a moment and try again.'), { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
   try {
+    console.log('[SW-TRACE] calling origFetch (UV handler) decoded:', dec.decoded, 'dest:', dest, 'original:', url);
+    const origStart = Date.now();
     const resp = await _origFetch(event);
+    const elapsed = Date.now() - origStart;
     const is503 = resp.status === 503;
+    console.log('[SW-TRACE] origFetch returned status:', resp.status, 'elapsed:', elapsed + 'ms', 'dest:', dest);
     _FETCH_LOG(url, portState.status, is503 ? 503 : resp.status, is503 ? 'origFetch-returned-503' : 'origFetch-ok', 'dest:', dest, 'decoded:', dec.decoded);
     _HOP('6-sw-wrapper-response', url, resp.status, 'dest:' + dest + ' decoded:' + dec.decoded);
     if (resp.status >= 400) {
@@ -319,6 +324,7 @@ sw.fetch = async function (event) {
     }
     return resp;
   } catch (err) {
+    console.log('[SW-TRACE] origFetch THREW err:', err.message, 'dest:', dest, 'decoded:', dec.decoded);
     _FETCH_LOG(url, portState.status, 503, 'origFetch-threw', 'message:', err.message, 'dest:', dest, 'decoded:', dec.decoded);
     _HOP('6-sw-wrapper-response', url, 503, 'threw:' + err.message + ' dest:' + dest + ' decoded:' + dec.decoded);
     return new Response(_ERROR_PAGE(503, 'Proxy Error', 'The proxy encountered an error: ' + err.message), { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/html; charset=utf-8' } });
@@ -474,16 +480,22 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   const isService = url.pathname.startsWith('/service/');
   fetchCount++;
-  _B('fetch #' + fetchCount + ':', url.pathname, isService ? '/service/* ROUTE' : 'static route (bypassed)');
+  const fc = fetchCount;
+  _B('fetch #' + fc + ':', url.pathname, isService ? '/service/* ROUTE' : 'static route (bypassed)');
   if (!isService) return;
+  const dec = _DECODE_UV_URL(event.request.url);
+  console.log('[SW-TRACE] fetch#' + fc + ' REQUEST  url:', event.request.url, 'decoded:', dec.decoded, 'dest:', event.request.destination, 'method:', event.request.method);
   _B('[TRACE] UV_PROXY_ACTIVE — intercepting:', url.pathname);
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('UV proxy timeout')), 5000)
   );
+  const respondStart = Date.now();
   event.respondWith(
     Promise.race([sw.fetch(event), timeout]).then((resp) => {
+      console.log('[SW-TRACE] fetch#' + fc + ' RESPONSE status:', resp.status, 'type:', resp.type, 'elapsed:', Date.now() - respondStart + 'ms');
       return resp;
     }).catch((err) => {
+      console.log('[SW-TRACE] fetch#' + fc + ' FAILURE err:', err.message, 'elapsed:', Date.now() - respondStart + 'ms');
       _FETCH_LOG(event.request.url, portState.status, 503, 'timeout-or-race-rejection', 'err:', err.message);
       return new Response(_ERROR_PAGE(503, 'Proxy Timeout', 'The proxy request timed out. Please try again.'), { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     })

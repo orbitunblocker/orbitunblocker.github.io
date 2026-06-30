@@ -1,0 +1,518 @@
+{
+  "timeline": [
+    {
+      "t": 1782329963049,
+      "label": "sw:[PORT_SYNC] state transition at 1782329963027",
+      "detail": ""
+    },
+    {
+      "t": 1782329963049,
+      "label": "sw:[PORT_SYNC] portReady: false → true",
+      "detail": ""
+    },
+    {
+      "t": 1782329963051,
+      "label": "sw:[PORT_SYNC] status: none → ready",
+      "detail": ""
+    },
+    {
+      "t": 1782329963051,
+      "label": "sw:[PORT_SYNC] reinitCount: none → 0",
+      "detail": ""
+    },
+    {
+      "t": 1782329963051,
+      "label": "sw:[PORT_SYNC] source: SW broadcast",
+      "detail": ""
+    },
+    {
+      "t": 1782329963051,
+      "label": "sw:[PORT_READY] received at 1782329963027",
+      "detail": ""
+    },
+    {
+      "t": 1782329963051,
+      "label": "sw:[PORT_READY] flushing pending restores",
+      "detail": ""
+    },
+    {
+      "t": 1782329963068,
+      "label": "sw:[PORT_READY] flushing pending navigations",
+      "detail": ""
+    },
+    {
+      "t": 1782329963095,
+      "label": "sw:[PORT_SYNC] state transition at 1782329963091",
+      "detail": ""
+    },
+    {
+      "t": 1782329963095,
+      "label": "sw:[PORT_SYNC] portReady: true → true",
+      "detail": ""
+    },
+    {
+      "t": 1782329963095,
+      "label": "sw:[PORT_SYNC] status: ready → ready",
+      "detail": ""
+    },
+    {
+      "t": 1782329963096,
+      "label": "sw:[PORT_SYNC] reinitCount: 0 → 0",
+      "detail": ""
+    },
+    {
+      "t": 1782329963117,
+      "label": "sw:[PORT_SYNC] source: SW broadcast",
+      "detail": ""
+    },
+    {
+      "t": 1782329963121,
+      "label": "sw:[PORT_READY] received at 1782329963118",
+      "detail": ""
+    },
+    {
+      "t": 1782329963121,
+      "label": "sw:[PORT_READY] flushing pending restores",
+      "detail": ""
+    },
+    {
+      "t": 1782329963121,
+      "label": "sw:[PORT_READY] flushing pending navigations",
+      "detail": ""
+    },
+    {
+      "t": 1782329963321,
+      "label": "page-loaded",
+      "detail": "initial load complete"
+    },
+    {
+      "t": 1782329963568,
+      "label": "port-ready",
+      "detail": "{\"portReady\":true,\"status\":\"ready\"}"
+    },
+    {
+      "t": 1782329965604,
+      "label": "browser-nav-clicked",
+      "detail": ""
+    },
+    {
+      "t": 1782329965607,
+      "label": "iframe-exists",
+      "detail": "browserFrame-main found"
+    },
+    {
+      "t": 1782329965612,
+      "label": "iframe-initial",
+      "detail": "{\"src\":\"about:blank\",\"srcdoc\":true,\"title\":\"Orbit\"}"
+    },
+    {
+      "t": 1782329965618,
+      "label": "sw-diag",
+      "detail": "{\"type\":\"DIAG_RESPONSE\",\"portState\":{\"status\":\"ready\",\"lastPingOK\":1782329963062,\"lastPingFail\":0,\"reinitCount\":0},\"hasBareClient\":true,\"hasWorker\":true,\"workerPortType\":\"object\",\"isPromise\":true,\"swExists\":true}"
+    },
+    {
+      "t": 1782329965618,
+      "label": "navigate-start",
+      "detail": "https://example.com"
+    },
+    {
+      "t": 1782329965630,
+      "label": "sw:[UV-ROUTE] input: https://example.com | normalized: https://example.com | shouldUseUV: true | encoded: /service/hvtrs8%2F-ezaopne%2Ccmm | has /service",
+      "detail": ""
+    },
+    {
+      "t": 1782329966645,
+      "label": "navigate-1s",
+      "detail": ""
+    },
+    {
+      "t": 1782329966649,
+      "label": "route-debug",
+      "detail": "{\"lastUrl\":\"https://example.com\",\"lastNormalized\":\"https://example.com\",\"lastShouldUseUV\":true,\"lastEncoded\":\"/service/hvtrs8%2F-ezaopne%2Ccmm\",\"lastFinalSrc\":\"/service/hvtrs8%2F-ezaopne%2Ccmm\",\"lastHasService\":true}"
+    },
+    {
+      "t": 1782329966654,
+      "label": "iframe-after-nav",
+      "detail": "http://localhost:8080/service/hvtrs8%2F-ezaopne%2Ccmm"
+    },
+    {
+      "t": 1782329967163,
+      "label": "nav-success",
+      "detail": "Example Domain"
+    },
+    {
+      "t": 1782329967170,
+      "label": "sw-diag-after",
+      "detail": "{\"type\":\"DIAG_RESPONSE\",\"portState\":{\"status\":\"ready\",\"lastPingOK\":1782329963062,\"lastPingFail\":0,\"reinitCount\":0},\"hasBareClient\":true,\"hasWorker\":true,\"workerPortType\":\"object\",\"isPromise\":false,\"swExists\":true}"
+    }
+  ],
+  "requests": [
+    {
+      "url": "http://localhost:8080/",
+      "method": "GET",
+      "type": "document",
+      "ts": 1782329960457,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329960504
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@400&family=Chakra+Petch:wght@400&family=Commissioner:wght@300&family=El+Messiri:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap",
+      "method": "GET",
+      "type": "stylesheet",
+      "ts": 1782329960546,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329960649
+    },
+    {
+      "url": "http://localhost:8080/css/orbit.css?v=20260606",
+      "method": "GET",
+      "type": "stylesheet",
+      "ts": 1782329960546,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329960568
+    },
+    {
+      "url": "https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329960547,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329960827
+    },
+    {
+      "url": "http://localhost:8080/uv/uv.bundle.js?v=3.2.8",
+      "method": "GET",
+      "type": "script",
+      "ts": 1782329960550,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329960610
+    },
+    {
+      "url": "http://localhost:8080/js/browser-engine.js?v=20260604",
+      "method": "GET",
+      "type": "script",
+      "ts": 1782329960551,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329960612
+    },
+    {
+      "url": "http://localhost:8080/js/app.js?v=20260604",
+      "method": "GET",
+      "type": "script",
+      "ts": 1782329960551,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329960619
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "method": "GET",
+      "type": "font",
+      "ts": 1782329960753,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329961185
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/commissioner/v24/tDaH2o2WnlgI0FNDgduEk4jAhwgumbU1SVfU5BD8OuRL8OstC6KOhgvBYWSFJ-Mgdrgiju6fF8meZm0rk4eF-ZugTJ1dKPCxFw.woff2",
+      "method": "GET",
+      "type": "font",
+      "ts": 1782329960755,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329961187
+    },
+    {
+      "url": "https://files.catbox.moe/vgjm1c.mp3",
+      "method": "GET",
+      "type": "media",
+      "ts": 1782329960850,
+      "stage": "responded",
+      "status": 206,
+      "error": null,
+      "responseTs": 1782329961273
+    },
+    {
+      "url": "https://files.catbox.moe/h71sur.mp3",
+      "method": "GET",
+      "type": "media",
+      "ts": 1782329960850,
+      "stage": "responded",
+      "status": 206,
+      "error": null,
+      "responseTs": 1782329961387
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/raleway/v37/1Ptxg8zYS_SKggPN4iEgvnHyvveLxVvaorCIPrE.woff2",
+      "method": "GET",
+      "type": "font",
+      "ts": 1782329961064,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329961229
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/chakrapetch/v13/cIf6MapbsEk7TDLdtEz1BwkWn6pg.woff2",
+      "method": "GET",
+      "type": "font",
+      "ts": 1782329961142,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329961467
+    },
+    {
+      "url": "http://localhost:8080/uv/bare-mux-worker.js",
+      "method": "GET",
+      "type": "script",
+      "ts": 1782329962550,
+      "stage": "requested",
+      "status": null,
+      "error": null
+    },
+    {
+      "url": "http://localhost:8080/icons/Brave.png",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963702,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963704
+    },
+    {
+      "url": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963703,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963762
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/geist/v5/gyByhwUxId8gMEwcGFU.woff2",
+      "method": "GET",
+      "type": "font",
+      "ts": 1782329963703,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963815
+    },
+    {
+      "url": "https://i.ytimg.com/vi/s-KZu1kru8Y/sddefault.jpg",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963805,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963916
+    },
+    {
+      "url": "https://freshonthenet.co.uk/wp-content/uploads/2020/10/Twitch-Logo.jpg",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963811,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963956
+    },
+    {
+      "url": "https://www.musicweek.com/cimages/f38efa877c6c7b446c02ae1e89ac44d3.jpg",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963811,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329964009
+    },
+    {
+      "url": "https://www.scdn.co/i/_global/open-graph-default.png",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963811,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963944
+    },
+    {
+      "url": "https://www.internetmatters.org/wp-content/uploads/2025/06/Chat-GPT-logo.webp",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963812,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963986
+    },
+    {
+      "url": "https://gamemakerstoolkit.com/wp-content/uploads/2024/01/perk-discord.jpg",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963812,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963995
+    },
+    {
+      "url": "https://blog.kubesimplify.com/img/blog/git-and-github-a-beginners-guide/q3I5kJ5U9.jpeg",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963812,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329964214
+    },
+    {
+      "url": "https://variety.com/wp-content/uploads/2021/06/TikTok-Jump.png?w=970&h=545&crop=1",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963812,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963986
+    },
+    {
+      "url": "https://media.wired.com/photos/592681ffcfe0d93c47430739/3:2/w_2560%2Cc_limit/Netflix-Logo-Print_CMYK2.jpg",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963812,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963960
+    },
+    {
+      "url": "https://espnpressroom.com/us/files/2021/06/0-ESPN-Logo-for-PressRoom-780x470.jpg",
+      "method": "GET",
+      "type": "image",
+      "ts": 1782329963812,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329963999
+    },
+    {
+      "url": "http://localhost:8080/service/hvtrs8%2F-ezaopne%2Ccmm",
+      "method": "GET",
+      "type": "document",
+      "ts": 1782329965636,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329965976
+    },
+    {
+      "url": "http://localhost:8080/uv/uv.bundle.js",
+      "method": "GET",
+      "type": "script",
+      "ts": 1782329965991,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329966027
+    },
+    {
+      "url": "http://localhost:8080/uv/uv.client.js",
+      "method": "GET",
+      "type": "script",
+      "ts": 1782329965991,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329966019
+    },
+    {
+      "url": "http://localhost:8080/uv/uv.config.js",
+      "method": "GET",
+      "type": "script",
+      "ts": 1782329965992,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329966009
+    },
+    {
+      "url": "http://localhost:8080/uv/uv.handler.js",
+      "method": "GET",
+      "type": "script",
+      "ts": 1782329965992,
+      "stage": "responded",
+      "status": 200,
+      "error": null,
+      "responseTs": 1782329966018
+    }
+  ],
+  "failedReqs": [],
+  "diagBefore": {
+    "type": "DIAG_RESPONSE",
+    "portState": {
+      "status": "ready",
+      "lastPingOK": 1782329963062,
+      "lastPingFail": 0,
+      "reinitCount": 0
+    },
+    "hasBareClient": true,
+    "hasWorker": true,
+    "workerPortType": "object",
+    "isPromise": true,
+    "swExists": true
+  },
+  "diagAfter": {
+    "type": "DIAG_RESPONSE",
+    "portState": {
+      "status": "ready",
+      "lastPingOK": 1782329963062,
+      "lastPingFail": 0,
+      "reinitCount": 0
+    },
+    "hasBareClient": true,
+    "hasWorker": true,
+    "workerPortType": "object",
+    "isPromise": false,
+    "swExists": true
+  },
+  "iframeInitial": {
+    "src": "about:blank",
+    "srcdoc": true,
+    "title": "Orbit"
+  },
+  "iframeNow": {
+    "src": "http://localhost:8080/service/hvtrs8%2F-ezaopne%2Ccmm",
+    "srcdoc": false,
+    "title": "Example Domain",
+    "bodyText": "Example Domain\n\nThis domain is for use in documentation examples without needing permission. Avoid use in operations.\n\nLearn more"
+  },
+  "routeDebug": {
+    "lastUrl": "https://example.com",
+    "lastNormalized": "https://example.com",
+    "lastShouldUseUV": true,
+    "lastEncoded": "/service/hvtrs8%2F-ezaopne%2Ccmm",
+    "lastFinalSrc": "/service/hvtrs8%2F-ezaopne%2Ccmm",
+    "lastHasService": true
+  }
+}

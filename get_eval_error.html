@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Get Eval Error</title></head><body>
+<h1>Checking SW eval error...</h1>
+<div id="result">waiting...</div>
+<script>
+(async function() {
+  const result = document.getElementById('result');
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    result.textContent = 'SW registered: ' + reg.scope;
+    console.log('[TEST] SW registered:', reg.scope);
+    
+    // Wait for activation
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // Try GET_EVAL_ERROR
+    const sw = reg.active || reg.installing || reg.waiting;
+    if (sw) {
+      const { port1, port2 } = new MessageChannel();
+      const resp = await Promise.race([
+        new Promise(r => { port1.onmessage = e => r(JSON.stringify(e.data)); }),
+        new Promise((_, rj) => setTimeout(() => rj('timeout'), 5000))
+      ]);
+      sw.postMessage({ type: 'GET_EVAL_ERROR' }, [port2]);
+      result.textContent += '\nGET_EVAL_ERROR response: ' + resp;
+    }
+  } catch(e) {
+    result.textContent = 'SW registration FAILED: ' + e.message;
+    console.error('[TEST] SW FAILED:', e);
+    
+    // Even if registration failed, try GET_EVAL_ERROR on any active SW
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      console.log('[TEST] Registrations:', regs.length);
+    } catch(e2) {
+      console.log('[TEST] getRegistrations failed:', e2.message);
+    }
+  }
+})();
+</script>
+</body></html>

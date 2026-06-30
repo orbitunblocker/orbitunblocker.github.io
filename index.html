@@ -9,24 +9,25 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@400&family=Chakra+Petch:wght@400&family=Commissioner:wght@300&family=El+Messiri:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@400&family=Chakra+Petch:wght@400&family=Commissioner:wght@300&family=El+Messiri:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Bai+Jamjuree:wght@400&family=Encode+Sans:wght@300&display=swap" rel="stylesheet">
   <link rel="icon" type="image/gif" href="https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif">
   <link rel="stylesheet" href="css/orbit.css?v=20260606">
 </head>
 <body>
 
-  <div id="passwordOverlay" class="password-overlay" style="display: none;">
-    <div class="password-overlay-content">
-      <div class="password-logo">
-        <img src="https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif" alt="Orbit Logo">
-      </div>
-      <h2>Enter Password</h2>
-      <p>Please enter the password to access Orbit.</p>
+  <div id="passwordOverlay" class="password-overlay" style="display:none">
+    <div class="password-blur-bg" id="passwordBlurBg"></div>
+    <div class="password-lock-content">
+      <div class="password-clock" id="passwordClock"></div>
+      <div class="password-date" id="passwordDate"></div>
       <div class="password-input-wrapper">
-        <input type="password" id="passwordInput" placeholder="Enter password..." class="password-input">
-        <button onclick="submitPassword()" class="password-submit">Enter</button>
+        <input type="password" id="passwordInput" placeholder="Password" class="password-input" autocomplete="off">
       </div>
-      <p id="passwordError" class="password-error">Incorrect password. Please try again.</p>
+      <button onclick="submitPassword()" class="password-submit" id="passwordSubmit" type="button">
+        <span id="passwordSubmitText">Unlock</span>
+        <span class="password-spinner" id="passwordSpinner" style="display:none"></span>
+      </button>
+      <p id="passwordError" class="password-error">Incorrect password.</p>
     </div>
   </div>
 
@@ -35,48 +36,36 @@
   <div class="blur-orb orb2"></div>
   <div class="noise"></div>
 
-  <nav class="sidebar-navbar">
-    <div class="nav-logo" onclick="goHome()" title="Home" aria-label="Orbit home">
-      <img src="https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif" alt="Orbit Logo">
-    </div>
-
-    <div class="nav-divider"></div>
-
-    <div class="nav-icons">
-      <div class="nav-icon" data-section="games" onclick="loadSection('games')" title="Games">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-          <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-        </svg>
+  <nav class="bottom-dock">
+    <div class="dock-icons">
+      <div class="nav-icon" data-section="home" onclick="goHome()" title="Home">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>
       </div>
 
-      <div class="nav-icon" data-section="browser" onclick="loadSection('browser')" title="Browser">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93m6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-        </svg>
+      <div class="nav-icon" data-section="games" onclick="loadSection('games')" title="Games">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m272-440 208 120 208-120-168-97v137h-80v-137l-168 97Zm168-189v-17q-44-13-72-49.5T340-780q0-58 41-99t99-41q58 0 99 41t41 99q0 48-28 84.5T520-646v17l280 161q19 11 29.5 29.5T840-398v76q0 22-10.5 40.5T800-252L520-91q-19 11-40 11t-40-11L160-252q-19-11-29.5-29.5T120-322v-76q0-22 10.5-40.5T160-468l280-161Zm0 378L200-389v67l280 162 280-162v-67L520-251q-19 11-40 11t-40-11Zm82.5-486.5Q540-755 540-780t-17.5-42.5Q505-840 480-840t-42.5 17.5Q420-805 420-780t17.5 42.5Q455-720 480-720t42.5-17.5ZM480-160Z"/></svg>
+      </div>
+
+      <div class="nav-icon" data-section="apps" onclick="loadSection('apps')" title="Apps">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M183.5-183.5Q160-207 160-240t23.5-56.5Q207-320 240-320t56.5 23.5Q320-273 320-240t-23.5 56.5Q273-160 240-160t-56.5-23.5Zm240 0Q400-207 400-240t23.5-56.5Q447-320 480-320t56.5 23.5Q560-273 560-240t-23.5 56.5Q513-160 480-160t-56.5-23.5Zm240 0Q640-207 640-240t23.5-56.5Q687-320 720-320t56.5 23.5Q800-273 800-240t-23.5 56.5Q753-160 720-160t-56.5-23.5Zm-480-240Q160-447 160-480t23.5-56.5Q207-560 240-560t56.5 23.5Q320-513 320-480t-23.5 56.5Q273-400 240-400t-56.5-23.5Zm240 0Q400-447 400-480t23.5-56.5Q447-560 480-560t56.5 23.5Q560-513 560-480t-23.5 56.5Q513-400 480-400t-56.5-23.5Zm240 0Q640-447 640-480t23.5-56.5Q687-560 720-560t56.5 23.5Q800-513 800-480t-23.5 56.5Q753-400 720-400t-56.5-23.5Zm-480-240Q160-687 160-720t23.5-56.5Q207-800 240-800t56.5 23.5Q320-753 320-720t-23.5 56.5Q273-640 240-640t-56.5-23.5Zm240 0Q400-687 400-720t23.5-56.5Q447-800 480-800t56.5 23.5Q560-753 560-720t-23.5 56.5Q513-640 480-640t-56.5-23.5Zm240 0Q640-687 640-720t23.5-56.5Q687-800 720-800t56.5 23.5Q800-753 800-720t-23.5 56.5Q753-640 720-640t-56.5-23.5Z"/></svg>
       </div>
 
       <div class="nav-icon" data-section="tools" onclick="loadSection('tools')" title="Tools">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-          <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M739-83.5q-7-2.5-13-8.5L522-296q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l85-85q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l204 204q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13l-85 85q-6 6-13 8.5T754-81q-8 0-15-2.5Zm15-92.5 29-29-147-147-29 29 147 147ZM189.5-83q-7.5-3-13.5-9l-84-84q-6-6-9-13.5T80-205q0-8 3-15t9-13l212-212h85l34-34-165-165h-57L80-765l113-113 121 121v57l165 165 116-116-43-43 56-56H495l-28-28 142-142 28 28v113l56-56 142 142q17 17 26 38.5t9 45.5q0 24-9 46t-26 39l-85-85-56 56-42-42-207 207v84L233-92q-6 6-13 9t-15 3q-8 0-15.5-3Zm15.5-93 170-170v-29h-29L176-205l29 29Zm0 0-29-29 15 14 14 15Zm549 0 29-29-29 29Z"/></svg>
       </div>
-    </div>
 
-    <div class="nav-divider"></div>
+      <div class="nav-icon" data-section="browser" onclick="loadSection('browser')" title="Proxy">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM440-162v-78q-33 0-56.5-23.5T360-320v-40L168-552q-3 18-5.5 36t-2.5 36q0 121 79.5 212T440-162Zm276-102q41-45 62.5-100.5T800-480q0-98-54.5-179T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h240q17 0 28.5 11.5T600-440v120h40q26 0 47 15.5t29 40.5Z"/></svg>
+      </div>
 
-    <div class="nav-settings">
       <div class="nav-icon" data-section="settings" onclick="loadSection('settings')" title="Settings">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-          <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.34.07-.68.07-1.08s-.03-.74-.07-1.08l2.32-1.82c.21-.16.27-.46.13-.7l-2.2-3.82c-.13-.24-.42-.32-.66-.24l-2.73 1.1c-.57-.44-1.18-.8-1.86-1.08l-.42-2.9A.54.54 0 0 0 14 2h-4a.54.54 0 0 0-.54.46l-.42 2.9c-.68.28-1.3.64-1.86 1.08L4.45 5.34c-.24-.09-.53 0-.66.24L1.59 9.4c-.14.24-.08.54.13.7l2.32 1.82c-.04.34-.07.69-.07 1.08s.03.74.07 1.08L1.72 15.9c-.21.16-.27.46-.13.7l2.2 3.82c.13.24.42.32.66.24l2.73-1.1c.57.44 1.18.8 1.86 1.08l.42 2.9c.08.46.46.46.54.46h4c.08 0 .46 0 .54-.46l.42-2.9c.68-.28 1.3-.64 1.86-1.08l2.73 1.1c.24.09.53 0 .66-.24l2.2-3.82c.14-.24.08-.54-.13-.7l-2.32-1.82z"/>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm70-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></svg>
       </div>
     </div>
   </nav>
 
   <div class="hero-info-icon" onclick="loadSection('info')" title="Info">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m1 15h-2v-6h2v6m0-8h-2V7h2v2"/>
-    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
   </div>
 
   <section class="hero" id="heroSection">
@@ -99,7 +88,7 @@
     <div class="custom-scrollbar-thumb"></div>
   </div>
 
-  <div id="introScreen" class="intro-screen" style="display: flex;">
+  <div id="introScreen" class="intro-screen" style="display: none;">
     <div class="intro-content">
       <div class="intro-logo">
         <img src="https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif" alt="Orbit Logo">
@@ -158,7 +147,8 @@
   </div>
 
   <script src="uv/uv.bundle.js?v=3.2.8"></script>
-  <script src="js/browser-engine.js?v=20260604"></script>
-  <script src="js/app.js?v=20260604"></script>
+<script src="js/browser-engine.js?v=20260604"></script>
+<script src="js/game-compat.js?v=20260604"></script>
+<script src="js/app.js?v=20260604"></script>
 </body>
 </html>

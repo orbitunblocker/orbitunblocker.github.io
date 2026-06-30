@@ -1,6 +1,7 @@
 import express from 'express';
 import { createBareServer } from '@tomphttp/bare-server-node';
 import http from 'http';
+import https from 'https';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -24,6 +25,63 @@ app.use(express.static(__dirname, {
     }
   }
 }));
+
+// Game compatibility probe — fetches a URL server-side to bypass CORS restrictions
+// Returns first 256KB of HTML for client-side engine detection
+app.get('/game-probe', (req, res) => {
+  const url = req.query.url;
+  if (!url) { res.status(400).json({ error: 'Missing url parameter' }); return; }
+
+  let urlObj;
+  try { urlObj = new URL(url); } catch(e) { res.status(400).json({ error: 'Invalid URL' }); return; }
+
+  const mod = urlObj.protocol === 'https:' ? https : http;
+  const TIMEOUT_MS = 6000;
+  const MAX_BYTES = 256 * 1024;
+
+  const proxyReq = mod.get(urlObj, {
+    headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' },
+    timeout: TIMEOUT_MS,
+    rejectUnauthorized: false,
+  }, (proxyRes) => {
+    const ct = proxyRes.headers['content-type'] || '';
+
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('X-Detect-Status', String(proxyRes.statusCode || 0));
+    res.set('X-Detect-Content-Type', ct);
+
+    if (proxyRes.statusCode !== 200) {
+      proxyRes.resume();
+      res.end();
+      return;
+    }
+
+    let bytes = 0;
+    proxyRes.on('data', (chunk) => {
+      bytes += chunk.length;
+      if (bytes <= MAX_BYTES) res.write(chunk);
+      if (bytes >= MAX_BYTES) { proxyRes.destroy(); res.end(); }
+    });
+    proxyRes.on('end', () => res.end());
+  });
+
+  proxyReq.on('error', (e) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('X-Detect-Status', '0');
+    res.set('X-Detect-Content-Type', '');
+    res.set('X-Detect-Error', e.message.substring(0, 200));
+    res.end();
+  });
+
+  proxyReq.on('timeout', () => {
+    proxyReq.destroy();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('X-Detect-Status', '0');
+    res.set('X-Detect-Content-Type', '');
+    res.set('X-Detect-Error', 'upstream timeout');
+    res.end();
+  });
+});
 
 // Fallback: send index.html for unknown routes
 app.use((req, res) => {
