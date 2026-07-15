@@ -284,7 +284,7 @@
       -moz-user-drag: none;
     }
 
-    .hero-info-icon {
+    .hero-edit-icon {
       position: fixed;
       top: 20px;
       right: 20px;
@@ -294,19 +294,19 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: background 0.3s ease, border-color 0.3s ease;
       z-index: 10000;
       background: rgba(255,255,255,0.15);
       border: 1px solid rgba(255,255,255,0.4);
       border-radius: 12px;
     }
 
-    .hero-info-icon:hover {
+    .hero-edit-icon:hover {
       background: rgba(255,255,255,0.25);
       border-color: rgba(255,255,255,0.6);
     }
 
-    .hero-info-icon svg {
+    .hero-edit-icon svg {
       width: 28px;
       height: 28px;
       fill: white;
@@ -777,8 +777,6 @@
     body.high-contrast .game-card,
     body.high-contrast .settings-window,
     body.high-contrast .settings-row,
-    body.high-contrast .info-panel,
-    body.high-contrast .info-hero,
     body.high-contrast .game-frame-card,
     body.high-contrast .suggestion-card {
       background: rgba(2,2,2,0.75);
@@ -786,208 +784,10 @@
     }
 
     body.high-contrast .game-card p,
-    body.high-contrast .info-panel p,
     body.high-contrast .settings-row-left p,
     body.high-contrast .settings-desc,
     body.high-contrast .suggestion-card p {
       color: rgba(255,255,255,0.72);
-    }
-
-    .info-page {
-      position: relative;
-      z-index: 2;
-      min-height: calc(100vh - var(--nav-height));
-      padding: 60px 50px 100px;
-    }
-
-    .info-wrap {
-      max-width: 1120px;
-      margin: 0 auto;
-    }
-
-    .info-hero {
-      position: relative;
-      overflow: hidden;
-      isolation: isolate;
-      border-radius: 26px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.1) 48%, rgba(255,255,255,0.035)),
-        rgba(255,255,255,0.035);
-      padding: clamp(30px, 6vw, 64px);
-      box-shadow:
-        0 0 30px rgba(var(--accent-a), 0.12),
-        0 24px 70px rgba(0,0,0,0.34);
-    }
-
-    .info-hero::before {
-      content: '';
-      position: absolute;
-      width: 420px;
-      height: 420px;
-      right: -160px;
-      top: -190px;
-      background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 68%);
-      z-index: -1;
-    }
-
-    .info-kicker {
-      display: inline-flex;
-      align-items: center;
-      margin-bottom: 18px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.72);
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    .info-hero h2 {
-      max-width: 820px;
-      font-size: clamp(2.4rem, 6vw, 5rem);
-      line-height: 0.96;
-      letter-spacing: -0.05em;
-      background: linear-gradient(180deg, white, rgba(255,255,255,0.58));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .info-hero p {
-      max-width: 720px;
-      margin-top: 24px;
-      color: rgba(255,255,255,0.66);
-      line-height: 1.75;
-      font-size: 1.04rem;
-    }
-
-    .info-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-top: 30px;
-    }
-
-    .info-stat {
-      padding: 18px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,0.07);
-      background: rgba(2,2,2,0.45);
-      backdrop-filter: blur(14px);
-    }
-
-    .info-stat strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 1.35rem;
-      color: white;
-    }
-
-    .info-stat span {
-      color: rgba(255,255,255,0.48);
-      font-size: 0.88rem;
-    }
-
-    .info-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-      gap: 24px;
-      margin-top: 24px;
-    }
-
-    .info-panel {
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.075);
-      background: rgba(2,2,2,0.45);
-      backdrop-filter: blur(20px);
-      padding: 26px;
-    }
-
-    .info-panel h3 {
-      font-size: 1.2rem;
-      margin-bottom: 12px;
-      color: rgba(255,255,255,0.92);
-    }
-
-    .info-panel p {
-      color: rgba(255,255,255,0.58);
-      line-height: 1.7;
-      font-size: 0.95rem;
-    }
-
-    .info-feature-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin-top: 20px;
-    }
-
-    .info-feature {
-      min-height: 124px;
-      padding: 18px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,0.07);
-      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.035));
-    }
-
-    .info-feature span {
-      display: block;
-      margin-bottom: 12px;
-      font-size: 1.4rem;
-    }
-
-    .info-feature h4 {
-      margin-bottom: 6px;
-      font-size: 0.98rem;
-      color: rgba(255,255,255,0.9);
-    }
-
-    .info-feature p {
-      font-size: 0.84rem;
-      line-height: 1.55;
-    }
-
-    .info-list {
-      display: grid;
-      gap: 12px;
-    }
-
-    .info-list-item {
-      display: grid;
-      grid-template-columns: 12px 1fr;
-      gap: 12px;
-      align-items: start;
-      padding: 14px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .info-list-item:last-child {
-      border-bottom: 0;
-    }
-
-    .info-dot {
-      width: 9px;
-      height: 9px;
-      margin-top: 7px;
-      border-radius: 50%;
-      background: white;
-      box-shadow:
-        0 0 12px rgba(255,255,255,0.15),
-        0 0 24px rgba(255,255,255,0.1);
-    }
-
-    .info-list-item strong {
-      display: block;
-      margin-bottom: 4px;
-      color: rgba(255,255,255,0.9);
-    }
-
-    .info-list-item p {
-      font-size: 0.88rem;
-      line-height: 1.55;
     }
 
     .settings-page {
@@ -1435,14 +1235,6 @@
       }
     }
 
-    @media (max-width: 900px) {
-      .info-layout,
-      .info-stats,
-      .info-feature-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
     @media (max-width: 768px) {
       :root {
         --sidebar-width: 0px;
@@ -1484,7 +1276,7 @@
       .settings-panels {
         padding: 16px 14px 22px;
       }
-      .info-page { padding: 40px 20px 80px; }
+
       .game-page { padding: 40px 20px 80px; }
       .game-detail-copy {
         grid-template-columns: 68px minmax(0, 1fr);
@@ -1718,7 +1510,7 @@
       font-weight: 500;
       white-space: nowrap;
       max-width: 200px;
-      transition: all 0.3s ease;
+      transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
       -webkit-app-region: no-drag;
       border: 1px solid rgba(255, 255, 255, 0.05);
       min-width: 0;
