@@ -60,7 +60,7 @@
     }
   };
 
-  let currentSearchEngine = 'duckduckgo'; // Default to DuckDuckGo
+  let currentSearchEngine = 'brave'; // Default to Brave
 
   function setSearchEngine(engineKey) {
     if (SEARCH_ENGINES[engineKey]) {
@@ -346,7 +346,7 @@
   const BROWSER_SETTINGS_KEY = 'orbit-browser-settings';
 
   const BROWSER_SETTINGS_DEFAULTS = {
-    searchEngine: 'duckduckgo',
+    searchEngine: 'brave',
     bookmarksAutoHide: false,
     notificationsEnabled: true,
     proxyStatusNotifications: true,

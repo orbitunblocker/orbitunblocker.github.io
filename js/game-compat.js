@@ -53,24 +53,12 @@
   }
 
   function probeUrl(url) {
-    // Abort probe after 4s to avoid blocking game launch
-    var controller = new AbortController();
-    var timeout = setTimeout(function() { controller.abort(); }, 4000);
-    return fetch('/game-probe?url=' + encodeURIComponent(url), { signal: controller.signal }).then(function(r) {
-      clearTimeout(timeout);
+    return fetch('/game-probe?url=' + encodeURIComponent(url)).then(function(r) {
       var status = parseInt(r.headers.get('X-Detect-Status') || '0');
       var ct = r.headers.get('X-Detect-Content-Type') || '';
       if (status !== 200 || !ct.includes('text/html')) return null;
       return r.text();
-    }).catch(function() { clearTimeout(timeout); return null; });
-  }
-
-  // Same-origin URLs should always open directly — no probe needed
-  function isSameOrigin(url) {
-    try {
-      var u = new URL(url, location.origin);
-      return u.origin === location.origin;
-    } catch(e) { return false; }
+    }).catch(function() { return null; });
   }
 
   window.detectGameMode = async function(gameId, gameUrl) {
@@ -78,13 +66,8 @@
       return { mode: 'direct', reason: 'inline content' };
     }
 
-    // Same-origin → direct, no probe
-    if (isSameOrigin(gameUrl)) {
-      return { mode: 'direct', reason: 'same-origin' };
-    }
-
     try {
-      // 1. Probe the root game URL (with 4s timeout)
+      // 1. Probe the root game URL
       var html = await probeUrl(gameUrl);
       if (html === null) return { mode: 'proxy', reason: 'standard iframe' };
 
