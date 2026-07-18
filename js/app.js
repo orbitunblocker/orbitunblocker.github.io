@@ -46,7 +46,7 @@
               channel.port1.close();
               resolve(e.data);
             };
-            registration.active.postMessage({ type: 'SYNC_PORT_STATE', checkHealth: true }, [channel.port2]);
+            registration.active.postMessage({ type: 'SYNC_PORT_STATE', checkHealth: false }, [channel.port2]);
           }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('sync timeout')), 3000))
         ]);
@@ -123,6 +123,7 @@
         typeCyclingText();
         // Reveal hero logo and clock with fade-and-rise
         const heroSection = document.getElementById('heroSection');
+        resetHeroSearchBar({ entrance: true });
         if (heroSection) heroSection.classList.add('reveal');
         const infoIcon = document.querySelector('.hero-info-icon');
         if (infoIcon) infoIcon.style.opacity = '1';
@@ -1577,6 +1578,57 @@
 
     initBgMusic();
 
+    let musicFadeFrame = null;
+    let gameMusicPausedByFade = false;
+
+    function cancelMusicFade() {
+      if (musicFadeFrame !== null) {
+        cancelAnimationFrame(musicFadeFrame);
+        musicFadeFrame = null;
+      }
+    }
+
+    function fadeMusicTo(targetVolume, duration, onComplete) {
+      cancelMusicFade();
+      const startVolume = music.volume;
+      const startTime = performance.now();
+      const delta = targetVolume - startVolume;
+
+      function step(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        music.volume = Math.max(0, Math.min(1, startVolume + delta * eased));
+        if (progress < 1) {
+          musicFadeFrame = requestAnimationFrame(step);
+        } else {
+          musicFadeFrame = null;
+          if (onComplete) onComplete();
+        }
+      }
+
+      musicFadeFrame = requestAnimationFrame(step);
+    }
+
+    function fadeMusicOutForGame() {
+      if (!settings.music || music.muted) return;
+      gameMusicPausedByFade = gameMusicPausedByFade || !music.paused;
+      fadeMusicTo(0, 280, () => {
+        if (currentSection === 'game') music.pause();
+      });
+    }
+
+    function fadeMusicInAfterGame() {
+      const targetVolume = settings.musicVolume / 100;
+      if (!settings.music) return;
+      cancelMusicFade();
+      music.volume = 0;
+      if (gameMusicPausedByFade) {
+        music.play().catch(() => {});
+      }
+      gameMusicPausedByFade = false;
+      fadeMusicTo(targetVolume, 320);
+    }
+
     const accentThemes = {
       snow: { a: '255,255,255', b: '255,255,255', c: '255,255,255' },
       sunset: { a: '255,120,80', b: '255,160,100', c: '255,200,140' },
@@ -1630,9 +1682,11 @@
 
     function buildGameCards(items, section) {
       return items.map(item => `
-        <div class="game-card" ${cardOpenAttrs(section, item)}>
-          <div class="game-thumb">${buildThumb(item)}</div>
-          <span class="game-card-label">${escapeHTML(item.title)}</span>
+        <div class="game-item" ${cardOpenAttrs(section, item)}>
+          <div class="game-card">
+            <div class="game-thumb">${buildThumb(item)}</div>
+          </div>
+          <div class="game-card-title">${escapeHTML(item.title)}</div>
         </div>
       `).join('');
     }
@@ -2481,8 +2535,10 @@
 
       captureBrowseState('games');
       currentSection = 'game';
+      fadeMusicOutForGame();
       heroSection.style.display = 'none';
       mainContent.innerHTML = buildGamePage(id);
+      updateBatteryStatus();
       setActiveNav('games');
       attachHoverSFX();
       updateTabCloakState();
@@ -2640,6 +2696,7 @@
       updateTabCloakState();
       // Show sidebar again when leaving game page
       document.body.classList.remove('game-page-active');
+      fadeMusicInAfterGame();
       window.scrollTo({ top: 0, behavior: 'auto' });
       requestAnimationFrame(syncLayout);
       updateCustomScrollbar();
@@ -2680,20 +2737,33 @@
       }
     }
 
+    let gameNotchStateTimer = null;
+
     function toggleGameNotch() {
       const notch = document.getElementById('gameNotch');
       const toggle = document.getElementById('gameNotchToggle');
+      if (!notch || !toggle) return;
       const arrowUp = toggle.querySelector('.notch-arrow-up');
       const arrowDown = toggle.querySelector('.notch-arrow-down');
-      
-      if (notch.classList.contains('minimized')) {
-        notch.classList.remove('minimized');
-        arrowUp.style.display = '';
-        arrowDown.style.display = 'none';
+
+      if (gameNotchStateTimer) {
+        clearTimeout(gameNotchStateTimer);
+        gameNotchStateTimer = null;
+      }
+
+      if (notch.classList.contains('minimized') || notch.classList.contains('minimizing')) {
+        notch.classList.remove('minimized', 'minimizing');
+        if (arrowUp) arrowUp.style.display = '';
+        if (arrowDown) arrowDown.style.display = 'none';
       } else {
-        notch.classList.add('minimized');
-        arrowUp.style.display = 'none';
-        arrowDown.style.display = '';
+        notch.classList.add('minimizing');
+        if (arrowUp) arrowUp.style.display = 'none';
+        if (arrowDown) arrowDown.style.display = '';
+        gameNotchStateTimer = setTimeout(() => {
+          notch.classList.remove('minimizing');
+          notch.classList.add('minimized');
+          gameNotchStateTimer = null;
+        }, 2500);
       }
     }
 
@@ -2710,52 +2780,58 @@
       timeElement.textContent = timeString;
     }
 
-    function updateBatteryStatus() {
+    let gameBatteryBound = false;
+    let gameBatteryManager = null;
+
+    function renderGameBattery(battery) {
       const batteryElement = document.getElementById('gameNotchBattery');
       if (!batteryElement) return;
 
       const batteryIcon = batteryElement.querySelector('.battery-icon');
       const chargingIcon = batteryElement.querySelector('.charging-icon');
       const batteryLevel = batteryIcon.querySelector('.battery-level');
+      const level = battery ? battery.level : 1;
+      const isCharging = battery ? battery.charging : false;
 
-      if ('getBattery' in navigator) {
-        navigator.getBattery().then(function(battery) {
-          function updateBattery() {
-            const level = battery.level;
-            const isCharging = battery.charging;
+      batteryElement.style.display = '';
+      batteryElement.classList.toggle('charging', isCharging);
+      if (chargingIcon && !isCharging) chargingIcon.style.display = 'none';
 
-            if (isCharging) {
-              batteryIcon.style.display = 'none';
-              chargingIcon.style.display = 'block';
-            } else {
-              batteryIcon.style.display = 'block';
-              chargingIcon.style.display = 'none';
-              
-              // Update battery level width
-              const maxWidth = 12;
-              const newWidth = Math.round(level * maxWidth);
-              batteryLevel.setAttribute('width', newWidth.toString());
-              
-              // Change color based on level
-              if (level <= 0.25) {
-                batteryLevel.setAttribute('fill', 'rgba(255, 100, 100, 0.9)');
-              } else if (level <= 0.5) {
-                batteryLevel.setAttribute('fill', 'rgba(255, 200, 100, 0.9)');
-              } else {
-                batteryLevel.setAttribute('fill', 'rgba(255, 255, 255, 0.7)');
-              }
-            }
-          }
+      const maxWidth = 12;
+      const newWidth = Math.max(1, Math.round(level * maxWidth));
+      batteryLevel.setAttribute('width', newWidth.toString());
 
-          updateBattery();
-
-          battery.addEventListener('levelchange', updateBattery);
-          battery.addEventListener('chargingchange', updateBattery);
-        });
+      if (level <= 0.25) {
+        batteryLevel.setAttribute('fill', 'rgba(255, 100, 100, 0.9)');
+      } else if (level <= 0.5) {
+        batteryLevel.setAttribute('fill', 'rgba(255, 200, 100, 0.9)');
       } else {
-        // Battery API not supported, hide battery indicator
-        batteryElement.style.display = 'none';
+        batteryLevel.setAttribute('fill', 'rgba(255, 255, 255, 0.7)');
       }
+    }
+
+    function updateBatteryStatus() {
+      if (!('getBattery' in navigator)) {
+        renderGameBattery(null);
+        return;
+      }
+
+      if (gameBatteryManager) {
+        renderGameBattery(gameBatteryManager);
+        return;
+      }
+
+      if (gameBatteryBound) return;
+      gameBatteryBound = true;
+      navigator.getBattery().then(function(battery) {
+        gameBatteryManager = battery;
+        const updateBattery = () => renderGameBattery(battery);
+        updateBattery();
+        battery.addEventListener('levelchange', updateBattery);
+        battery.addEventListener('chargingchange', updateBattery);
+      }).catch(function() {
+        renderGameBattery(null);
+      });
     }
 
     setInterval(updateGameNotchTime, 1000);
@@ -2966,10 +3042,17 @@
       attachHoverSFX();
       updateTabCloakState();
       window.scrollTo({ top: 0, behavior: 'auto' });
+      const pendingQuery = window.__pendingHomeSearch;
+      window.__pendingHomeSearch = null;
       requestAnimationFrame(() => {
         const mount = document.getElementById('browserMount');
         if (mount && window.VoltraBrowser) {
           VoltraBrowser.render(mount);
+          if (pendingQuery) {
+            setTimeout(() => {
+              VoltraBrowser.navigate(pendingQuery);
+            }, 50);
+          }
         }
       });
       updateCustomScrollbar();
@@ -2984,29 +3067,17 @@
 
     function goHome() {
       heroSection.style.display = '';
-      // Animate hero logo entrance
-      const heroLogo = document.querySelector('.hero-logo');
-      const heroClock = document.getElementById('heroClock');
-      if (heroLogo) {
-        heroLogo.style.opacity = '0';
+      const heroBrand = document.querySelector('.hero-brand');
+      if (heroBrand) {
+        heroBrand.style.opacity = '0';
         requestAnimationFrame(() => {
-          heroLogo.style.transition = 'opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
-          heroLogo.style.opacity = '1';
+          heroBrand.style.transition = 'opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
+          heroBrand.style.opacity = '1';
         });
       }
-      if (heroClock) {
-        heroClock.style.opacity = '0';
-        requestAnimationFrame(() => {
-          heroClock.style.transition = 'opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
-          heroClock.style.opacity = '1';
-        });
-      }
-      const heroNotifs = document.getElementById('heroNotifications');
-      if (heroNotifs) {
-        heroNotifs.innerHTML = renderNotifications();
-        applyNotificationState(heroNotifs, false);
-        positionNotificationHub();
-      }
+      resetHeroSearchBar();
+      updateHeroEngineIcon();
+      closeHeroEngineMenu();
       mainContent.innerHTML = '';
       currentSection = null;
       setActiveNav('home');
@@ -3029,6 +3100,44 @@
         mainContent.style.animation = 'none';
         mainContent.offsetHeight; // Trigger reflow
         mainContent.style.animation = 'pageFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
+      });
+    }
+
+    function resetHeroSearchBar({ entrance = false } = {}) {
+      const heroSearchBar = document.getElementById('heroSearchBar');
+      if (!heroSearchBar) return;
+
+      heroSearchBar.classList.remove('hover-active', 'hover-delay', 'hero-search-ready', 'hero-search-enter');
+      heroSearchBar.classList.add('hero-search-resetting');
+      heroSearchBar.style.removeProperty('transition');
+      heroSearchBar.style.removeProperty('opacity');
+      heroSearchBar.style.removeProperty('transform');
+      heroSearchBar.style.removeProperty('box-shadow');
+      heroSearchBar.style.removeProperty('width');
+      void heroSearchBar.offsetWidth;
+
+      if (entrance) {
+        heroSearchBar.classList.add('hero-search-enter');
+      }
+
+      requestAnimationFrame(() => {
+        heroSearchBar.classList.remove('hero-search-resetting');
+
+        if (!entrance) {
+          heroSearchBar.classList.add('hero-search-ready');
+          return;
+        }
+
+        let finished = false;
+        const finishEntrance = () => {
+          if (finished) return;
+          finished = true;
+          heroSearchBar.classList.remove('hero-search-enter');
+          heroSearchBar.classList.add('hero-search-ready');
+        };
+
+        heroSearchBar.addEventListener('animationend', finishEntrance, { once: true });
+        setTimeout(finishEntrance, 900);
       });
     }
 
@@ -3280,7 +3389,7 @@
       el.addEventListener('mouseenter', () => playHover(1));
     });
 
-    document.querySelectorAll('.hero-search').forEach(el => {
+    document.querySelectorAll('.hero-search, .hero-search-bar').forEach(el => {
       el.addEventListener('mouseenter', () => playHover(0.92));
     });
 
@@ -3879,151 +3988,112 @@
     }
 
     function initHeroClock() {
-      const clockEl = document.getElementById('heroClock');
-      if (!clockEl) return;
+      const searchInput = document.getElementById('heroSearchInput');
+      if (!searchInput) return;
 
-      const locale = navigator.language || 'en-US';
-      const hourCycle = Intl.DateTimeFormat(locale).resolvedOptions().hourCycle || 'h12';
-      const is24h = hourCycle === 'h23' || hourCycle === 'h24';
+      initHeroSearchEngineSelector();
 
-      function formatTime(date) {
-        const h = date.getHours();
-        const m = date.getMinutes().toString().padStart(2, '0');
-        const s = date.getSeconds().toString().padStart(2, '0');
-        if (is24h) {
-          return `${h.toString().padStart(2, '0')}:${m}:${s}`;
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const query = searchInput.value.trim();
+          if (query) {
+            window.__pendingHomeSearch = query;
+            loadSection('browser');
+          }
         }
-        const p = h >= 12 ? 'PM' : 'AM';
-        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-        return `${h12}:${m}:${s} ${p}`;
+      });
+    }
+
+    function getHeroSearchEngines() {
+      return window.OrbitSearchEngines || {};
+    }
+
+    function getSavedSearchEngineKey() {
+      const engines = getHeroSearchEngines();
+      const saved = localStorage.getItem('orbit_search_engine') || (window.VoltraBrowser && window.VoltraBrowser.getSetting && window.VoltraBrowser.getSetting('searchEngine')) || 'duckduckgo';
+      return engines[saved] ? saved : 'duckduckgo';
+    }
+
+    function updateHeroEngineIcon() {
+      const engines = getHeroSearchEngines();
+      const key = getSavedSearchEngineKey();
+      const icon = document.getElementById('heroEngineIcon');
+      const engine = engines[key];
+      if (icon && engine) {
+        icon.src = engine.icon;
+        icon.alt = engine.name;
       }
-
-      function tick() {
-        clockEl.textContent = formatTime(new Date());
-        timeoutId = setTimeout(tick, 1000 - (Date.now() % 1000));
-      }
-
-      let timeoutId = setTimeout(tick, 1000 - (Date.now() % 1000));
-    }
-
-    // ── Notification Center ──────────────────────────────
-    const notificationIcons = {
-      update:   '🔄',
-      tip:      '💡',
-      game:     '🎮',
-      announce: '📢',
-    };
-
-    const notificationCategories = {
-      update:   'Update',
-      tip:      'Tip',
-      game:     'Recommendation',
-      announce: 'Announcement',
-    };
-
-    let notifications = [];
-    let notifExpanded = false;
-
-    const defaultNotifications = [
-      { id: 'n1', type: 'update',   title: 'Version 1.3 released',         description: 'Faster proxy, new games, and a refined homepage experience.', time: '2h ago' },
-      { id: 'n2', type: 'update',   title: 'Hotfix 1.3.1 deployed',        description: 'Fixed a crash on the settings page.',                      time: '6h ago' },
-      { id: 'n3', type: 'update',   title: 'Version 1.2 is live',          description: 'New tab management features and performance improvements.', time: '1d ago' },
-      { id: 'n4', type: 'tip',      title: 'Middle-click to close',        description: 'Middle-click any tab to close it instantly.',               time: '1d ago' },
-      { id: 'n5', type: 'tip',      title: 'Keyboard shortcuts',           description: 'Press Ctrl+K to search, Ctrl+L for the address bar.',       time: '3d ago' },
-      { id: 'n6', type: 'game',     title: 'Featured: Cookie Clicker',     description: 'The classic idle game is now available in Orbit.',          time: '2d ago' },
-      { id: 'n7', type: 'game',     title: 'New: Snake',                   description: 'Play the classic Snake game right in Orbit.',               time: '4d ago' },
-      { id: 'n8', type: 'announce', title: 'Proxy integration coming soon', description: 'Built-in Ultraviolet proxy support is in development.',     time: '3d ago' },
-    ];
-
-    const expandSvg = '<svg viewBox="0 -960 960 960"><path d="m480-340 180-180-57-56-123 123-123-123-57 56 180 180Zm0 260q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>';
-
-    const unexpandSvg = '<svg viewBox="0 -960 960 960"><path d="m357-384 123-123 123 123 57-56-180-180-180 180 57 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>';
-
-    function createNotificationCard(notif, isFirst) {
-      const delay = (Math.random() * 1000).toFixed(0);
-      const btn = isFirst ? `<span class="toggle-btn">${expandSvg}</span>` : '';
-      return `<div class="notif-line">${escapeHTML(notif.title)} &mdash; ${escapeHTML(notif.description)} <span class="caret" style="animation-delay:-${delay}ms">|</span>${btn}</div>`;
-    }
-
-    function renderNotifications() {
-      return notifications.map((n, i) => createNotificationCard(n, i === 0)).join('');
-    }
-
-    function applyNotificationState(el, animate) {
-      if (!el) return;
-      const items = el.querySelectorAll('.notif-line:not(:first-child)');
-      const btn = el.querySelector('.toggle-btn');
-      if (notifExpanded) {
-        items.forEach((item, i) => {
-          item.style.transitionDelay = animate ? `${i * 50}ms` : '0ms';
-          item.classList.remove('collapsed');
+      const menu = document.getElementById('heroEngineMenu');
+      if (menu) {
+        menu.querySelectorAll('.hero-engine-option').forEach(btn => {
+          btn.hidden = btn.dataset.engine === key;
         });
-        el.style.maxHeight = el.scrollHeight + 'px';
-        if (btn) btn.innerHTML = unexpandSvg;
+        menu.querySelectorAll('.hero-engine-option').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.engine === key);
+        });
+      }
+    }
+
+    function closeHeroEngineMenu() {
+      const menu = document.getElementById('heroEngineMenu');
+      const button = document.getElementById('heroEngineButton');
+      if (menu) menu.classList.remove('open');
+      if (button) button.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleHeroEngineMenu() {
+      const menu = document.getElementById('heroEngineMenu');
+      const button = document.getElementById('heroEngineButton');
+      if (!menu || !button) return;
+      const open = !menu.classList.contains('open');
+      menu.classList.toggle('open', open);
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function selectHeroSearchEngine(key) {
+      const engines = getHeroSearchEngines();
+      if (!engines[key]) key = 'duckduckgo';
+      if (window.VoltraBrowser && typeof window.VoltraBrowser.selectSearchEngine === 'function') {
+        window.VoltraBrowser.selectSearchEngine(key);
       } else {
-        items.forEach((item, i) => {
-          item.style.transitionDelay = animate ? `${(items.length - 1 - i) * 50}ms` : '0ms';
-          item.classList.add('collapsed');
-        });
-        const firstItem = el.querySelector('.notif-line');
-        const collapsedH = firstItem ? firstItem.offsetHeight : 0;
-        if (animate) {
-          setTimeout(() => { el.style.maxHeight = collapsedH + 'px'; }, 100);
-        } else {
-          el.style.maxHeight = collapsedH + 'px';
-        }
-        if (btn) btn.innerHTML = expandSvg;
+        localStorage.setItem('orbit_search_engine', key);
       }
+      updateHeroEngineIcon();
+      closeHeroEngineMenu();
     }
 
-    function positionNotificationHub() {
-      const el = document.getElementById('heroNotifications');
-      const clock = document.getElementById('heroClock');
-      if (!el || !clock || !heroSection) return;
-      const heroRect = heroSection.getBoundingClientRect();
-      const clockRect = clock.getBoundingClientRect();
-      el.style.top = (clockRect.bottom - heroRect.top + 18) + 'px';
+    function initHeroSearchEngineSelector() {
+      const button = document.getElementById('heroEngineButton');
+      const menu = document.getElementById('heroEngineMenu');
+      if (!button || !menu || button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+      const engines = getHeroSearchEngines();
+      menu.innerHTML = Object.entries(engines).map(([key, engine]) => `
+        <button class="hero-engine-option" type="button" data-engine="${escapeHTML(key)}" aria-label="${escapeHTML(engine.name)}">
+          <img src="${escapeHTML(engine.icon)}" alt="">
+        </button>
+      `).join('');
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleHeroEngineMenu();
+      });
+      menu.addEventListener('click', (event) => {
+        const option = event.target.closest('.hero-engine-option');
+        if (!option) return;
+        event.preventDefault();
+        event.stopPropagation();
+        selectHeroSearchEngine(option.dataset.engine);
+      });
+      document.addEventListener('click', (event) => {
+        if (!event.target.closest('#heroSearchBar')) closeHeroEngineMenu();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeHeroEngineMenu();
+      });
+      updateHeroEngineIcon();
     }
-
-    function initNotifications() {
-      const el = document.getElementById('heroNotifications');
-      if (!el) return;
-      if (notifications.length === 0) notifications = defaultNotifications.map(n => ({ ...n }));
-      notifExpanded = false;
-      el.innerHTML = renderNotifications();
-      applyNotificationState(el, false);
-      positionNotificationHub();
-    }
-
-    function dismissNotification(id) {
-      notifications = notifications.filter(n => n.id !== id);
-      const el = document.getElementById('heroNotifications');
-      if (!el) return;
-      el.innerHTML = renderNotifications();
-      applyNotificationState(el, false);
-    }
-
-    function addNotification(notif) {
-      notif.type = notif.type || 'announce';
-      notif.time = notif.time || 'just now';
-      notif.description = notif.description || '';
-      if (!notif.id || !notif.title) return null;
-      if (notifications.some(n => n.id === notif.id)) return null;
-      notifications.unshift(notif);
-      const el = document.getElementById('heroNotifications');
-      if (!el) return null;
-      el.innerHTML = renderNotifications();
-      applyNotificationState(el, false);
-      return notif.id;
-    }
-
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('.toggle-btn');
-      if (!btn) return;
-      notifExpanded = !notifExpanded;
-      const el = document.getElementById('heroNotifications');
-      applyNotificationState(el, true);
-    });
 
     // Onboarding event listeners
     document.addEventListener('DOMContentLoaded', () => {
@@ -4081,12 +4151,6 @@
 
       // Start the live clock
       initHeroClock();
-
-      // Initialize notification hub
-      initNotifications();
-
-      // Re-position notification hub on resize
-      window.addEventListener('resize', positionNotificationHub);
 
       // Initialize intro/onboarding logic
       initializeIntro();
@@ -4175,30 +4239,11 @@
           if (event.data.status) {
             window.__UV_BOOT_STATUS__._update('swPortStatus', event.data.status);
           }
-          // Auto-recovery: port failed after reload — refresh SharedWorker port via UV's yn()
+          // Do not auto-refresh BareMux ports from the page. A delayed or failed
+          // health ping under load must not replace the MessagePort while active
+          // proxy requests are in flight.
           if (event.data.portReady === false && event.data.status === 'failed') {
-            console.log('[RECOVERY] Port failed — starting recovery at', Date.now());
-            // Step A: Trigger UV's internal yn() refresh via BroadcastChannel
-            try {
-              const bc = new BroadcastChannel('bare-mux');
-              bc.postMessage({ type: 'refreshPort' });
-              bc.close();
-              console.log('[RECOVERY] refreshPort sent');
-            } catch (e) {
-              console.warn('[RECOVERY] BroadcastChannel failed:', e);
-            }
-            // Step B+C: Wait for UV to create fresh port, then reinit SW portState
-            var recoveryTimeout = setTimeout(async function retryReinit() {
-              try {
-                const reg = await navigator.serviceWorker.ready;
-                if (reg.active) {
-                  reg.active.postMessage({ type: 'REINIT_PORT' });
-                  console.log('[RECOVERY] REINIT_PORT sent to SW at', Date.now());
-                }
-              } catch (e) {
-                console.warn('[RECOVERY] REINIT_PORT failed:', e);
-              }
-            }, 1000);
+            console.warn('[RECOVERY] Port reported failed; automatic refresh is disabled to avoid disrupting active requests.', Date.now());
           }
         }
       });
@@ -4239,18 +4284,12 @@
         console.warn('[BOOT] Service workers not supported');
       }
 
-      // Periodic port health check — detect stale ports proactively
-      setInterval(function() {
-        var portReady = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
-        if (portReady && window.syncPortStateFromSW) {
-          window.syncPortStateFromSW();
-        }
-      }, 30000);
+      // Port health is not polled during normal browsing. BareMux/UV requests are
+      // allowed to settle naturally so slow subresources are not disrupted.
     });
 
     window.startOnboarding = startOnboarding;
     window.checkOnboarding = checkOnboarding;
-    window.addNotification = addNotification;
     window.selectBgMusic = selectBgMusic;
     window.toggleBgMusicDropdown = toggleBgMusicDropdown;
     window.onBgMusicCustomUrl = onBgMusicCustomUrl;

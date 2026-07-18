@@ -9,7 +9,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@400&family=Chakra+Petch:wght@400&family=Commissioner:wght@300&family=El+Messiri:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Bai+Jamjuree:wght@400&family=Encode+Sans:wght@300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@400&family=Chakra+Petch:wght@400&family=Commissioner:wght@300&family=El+Messiri:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Bai+Jamjuree:wght@400&family=Encode+Sans:wght@300&family=Noto+Sans+SC:wght@300&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=amulya@300,400,500&f[]=nata-sans@400&display=swap" rel="stylesheet">
   <link rel="icon" type="image/gif" href="https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif">
   <link rel="stylesheet" href="css/orbit.css?v=20260606">
 </head>
@@ -69,11 +71,17 @@
   </div>
 
   <section class="hero" id="heroSection">
-    <div class="hero-logo">
-      <img src="https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif" alt="Orbit Logo">
+    <div class="hero-brand" aria-label="Orbit">
+      <img src="public/assets/images/logos/tet-ezgif-com-effects-1.gif" alt="" class="hero-brand-mark">
+      <span class="hero-brand-word">orbit</span>
     </div>
-    <div class="hero-clock" id="heroClock"></div>
-    <div class="hero-notifications" id="heroNotifications"></div>
+    <div class="hero-search-bar" id="heroSearchBar">
+      <button class="hero-engine-button" id="heroEngineButton" type="button" aria-label="Select search engine" aria-expanded="false">
+        <img src="https://duckduckgo.com/favicon.ico" alt="" id="heroEngineIcon">
+      </button>
+      <input type="text" id="heroSearchInput" class="hero-search-input" placeholder="Search the web.." autocomplete="off" spellcheck="false">
+      <div class="hero-engine-menu" id="heroEngineMenu" aria-label="Search engines"></div>
+    </div>
   </section>
 
   <div id="mainContent" style="position:relative; z-index:2;"></div>
