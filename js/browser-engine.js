@@ -419,7 +419,8 @@
 
     var cardsHtml = '';
     for (var i = 0; i < quickLinks.length; i++) {
-      cardsHtml += '<div class="card" data-url="' + quickLinks[i].url + '"><img src="' + quickLinks[i].img + '" alt="' + quickLinks[i].name + '" loading="lazy"></div>';
+      var cardClass = 'card card-' + quickLinks[i].name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      cardsHtml += '<div class="' + cardClass + '" data-url="' + quickLinks[i].url + '"><img src="' + quickLinks[i].img + '" alt="' + quickLinks[i].name + '" loading="lazy"></div>';
     }
 
     return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Orbit</title><style>' +
@@ -437,7 +438,8 @@
       '.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;width:100%;max-width:840px}' +
       '.card{position:relative;aspect-ratio:16/10;border-radius:11px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);transition:transform 0.58s cubic-bezier(0.22,1,0.36,1),box-shadow 0.58s cubic-bezier(0.22,1,0.36,1);transform:scale(1);transform-origin:center}' +
       '.card:hover{transform:scale(1.07);box-shadow:0 8px 24px rgba(0,0,0,0.35)}' +
-      '.card img{width:100%;height:100%;object-fit:cover;display:block}' +
+      '.card img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}' +
+      '.card-youtube img{transform:scale(1.22)}' +
       '@media(max-width:820px){.cards{grid-template-columns:repeat(3,1fr);gap:12px;max-width:460px}}' +
       '@media(max-width:500px){.cards{grid-template-columns:repeat(2,1fr);gap:10px;max-width:320px}}' +
     '</style></head><body><canvas id="constellationBg" aria-hidden="true"></canvas><div class="wrap">' +

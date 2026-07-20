@@ -790,6 +790,7 @@
 
     const SETTINGS_STORAGE_KEY = 'voltra-settings-v1';
     const BASE_PAGE_TITLE = 'Orbit';
+    const CLOAKED_INSTANCE_PARAM = 'orbit_cloaked';
 
     const defaultSettings = {
       music: true,
@@ -1517,6 +1518,31 @@
   <iframe src="${src}" title="${safeTitle}" allow="fullscreen" allowfullscreen loading="lazy"></iframe>
 </body>
 </html>`;
+    }
+
+    function isGeneratedCloakedInstance() {
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get(CLOAKED_INSTANCE_PARAM) === '1') return true;
+        if (new URLSearchParams(url.hash.replace(/^#/, '')).get(CLOAKED_INSTANCE_PARAM) === '1') return true;
+      } catch {}
+
+      try {
+        return window.self !== window.top;
+      } catch {
+        return true;
+      }
+    }
+
+    function withCloakedInstanceMarker(url) {
+      try {
+        const markedUrl = new URL(url, window.location.href);
+        markedUrl.searchParams.set(CLOAKED_INSTANCE_PARAM, '1');
+        return markedUrl.href;
+      } catch {
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}${CLOAKED_INSTANCE_PARAM}=1`;
+      }
     }
 
     function openUrlInAboutBlank(url, title) {
@@ -3423,10 +3449,12 @@
     }
 
     function handleAutoLaunchOnLoad() {
-      if (settings.autoLaunchOnLoad) {
-        const currentUrl = window.location.href;
+      if (settings.autoLaunchOnLoad && !isGeneratedCloakedInstance()) {
+        const currentUrl = escapeHTML(withCloakedInstanceMarker(window.location.href));
         const newTab = window.open('about:blank', '_blank');
         if (newTab) {
+          newTab.opener = null;
+          newTab.document.open();
           newTab.document.write(`
             <!DOCTYPE html>
             <html>
