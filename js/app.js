@@ -27,50 +27,153 @@
       console.warn('[BOOT] Failed to set bare-mux-path:', e);
     }
 
-    // ---- PORT STATE SYNC ----
-    // SW is the single source of truth for port state. On every page load,
-    // ask the SW for its actual port status rather than inferring locally.
-    // The SW responds with a PORT_STATE_SYNC message.
-    async function syncPortStateFromSW() {
-      if (!('serviceWorker' in navigator)) return;
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        if (!registration.active) {
-          window.__UV_BOOT_STATUS__._update('failedStage', 'sync-no-active');
-          return;
-        }
-        const channel = new MessageChannel();
-        const response = await Promise.race([
-          new Promise(resolve => {
-            channel.port1.onmessage = e => {
-              channel.port1.close();
-              resolve(e.data);
-            };
-            registration.active.postMessage({ type: 'SYNC_PORT_STATE', checkHealth: false }, [channel.port2]);
-          }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('sync timeout')), 3000))
-        ]);
-        if (response) {
-          window.__UV_BOOT_STATUS__._update('swSynced', true);
-          // SW's port state is the authority — overwrite local assumptions
-          if (response.portReady !== undefined) {
-            window.__UV_BOOT_STATUS__._update('portReady', response.portReady);
-            window.__UV_BOOT_STATUS__.portReady = response.portReady;
-          }
-          if (response.bareMuxReady !== undefined) {
-            window.__UV_BOOT_STATUS__._update('bareMuxReady', response.bareMuxReady);
-            window.__UV_BOOT_STATUS__.bareMuxReady = response.bareMuxReady;
-          }
-          if (response.status) {
-            window.__UV_BOOT_STATUS__._update('swPortStatus', response.status);
-          }
-          if (response.reinitCount !== undefined) {
-            window.__UV_BOOT_STATUS__._update('swReinitCount', response.reinitCount);
-          }
-        }
-      } catch (e) {
-        window.__UV_BOOT_STATUS__._update('failedStage', 'sync');
+    function updateProxyBootState(state, detail = {}) {
+      window.__UV_BOOT_STATUS__.proxyState = state;
+      window.__UV_BOOT_STATUS__._update('proxyState', state);
+      if ('portReady' in detail) {
+        window.__UV_BOOT_STATUS__.portReady = detail.portReady;
+        window.__UV_BOOT_STATUS__._update('portReady', detail.portReady);
       }
+      if ('bareMuxReady' in detail) {
+        window.__UV_BOOT_STATUS__.bareMuxReady = detail.bareMuxReady;
+        window.__UV_BOOT_STATUS__._update('bareMuxReady', detail.bareMuxReady);
+      }
+      if (detail.status) window.__UV_BOOT_STATUS__._update('swPortStatus', detail.status);
+      if (detail.failedStage) window.__UV_BOOT_STATUS__._update('failedStage', detail.failedStage);
+    }
+
+    const ProxyTransport = (() => {
+      const workerPath = '/uv/bare-mux-worker.js';
+      let state = 'UNINITIALIZED';
+      let readyPromise = null;
+      let reconnectCount = 0;
+      let portSerial = 0;
+
+      function log(message, ...args) {
+        console.log('[PROXY]', message, ...args);
+      }
+
+      function setState(next, detail = {}) {
+        state = next;
+        updateProxyBootState(next, detail);
+      }
+
+      function validatePort(port, timeoutMs = 1500) {
+        return new Promise((resolve, reject) => {
+          if (!(port instanceof MessagePort)) {
+            reject(new Error('invalid MessagePort object'));
+            return;
+          }
+
+          const channel = new MessageChannel();
+          const timer = setTimeout(() => {
+            channel.port1.close();
+            reject(new Error('MessagePort validation timeout'));
+          }, timeoutMs);
+
+          channel.port1.onmessage = (event) => {
+            if (event.data && event.data.type === 'pong') {
+              clearTimeout(timer);
+              channel.port1.close();
+              log('MessagePort validated');
+              resolve(port);
+            }
+          };
+
+          try {
+            if (typeof port.start === 'function') port.start();
+            port.postMessage({ message: { type: 'ping' }, port: channel.port2 }, [channel.port2]);
+          } catch (error) {
+            clearTimeout(timer);
+            channel.port1.close();
+            reject(error);
+          }
+        });
+      }
+
+      async function createValidatedPort(label) {
+        let lastError = null;
+        for (let attempt = 1; attempt <= 3; attempt += 1) {
+          try {
+            log('SharedWorker connecting', label, 'attempt', attempt);
+            const worker = new SharedWorker(workerPath, 'bare-mux-worker');
+            const port = worker.port;
+            portSerial += 1;
+            const currentPortSerial = portSerial;
+            await validatePort(port);
+            log('SharedWorker connected', label, 'port', currentPortSerial);
+            return port;
+          } catch (error) {
+            lastError = error;
+            log('port invalid/disconnected', label, error && error.message ? error.message : error);
+            await new Promise(resolve => setTimeout(resolve, 120 * attempt));
+          }
+        }
+        throw lastError || new Error('Unable to create validated MessagePort');
+      }
+
+      async function ensureReady(reason = 'startup') {
+        if (state === 'READY') return true;
+        if (readyPromise) return readyPromise;
+
+        readyPromise = (async () => {
+          try {
+            setState(state === 'UNINITIALIZED' ? 'INITIALIZING' : 'RECONNECTING', { portReady: false, bareMuxReady: false, status: reason });
+            log(state === 'RECONNECTING' ? 'reconnect started' : 'initialization started', reason);
+
+            if (!('serviceWorker' in navigator)) throw new Error('service workers unsupported');
+            setState('CONNECTING', { portReady: false, bareMuxReady: false, status: 'connecting' });
+            await navigator.serviceWorker.ready;
+            const healthPort = await createValidatedPort('health');
+            try { healthPort.close(); } catch {}
+
+            setState('READY', { portReady: true, bareMuxReady: true, status: 'ready' });
+            log(reason === 'reconnect' ? 'reconnect successful' : 'transport ready');
+            const ui = window.VoltraBrowser && window.VoltraBrowser._browserUI;
+            if (ui) {
+              if (typeof ui._processPendingRestoreTabs === 'function') ui._processPendingRestoreTabs();
+              if (typeof ui._flushPendingNavigations === 'function') ui._flushPendingNavigations();
+            }
+            return true;
+          } catch (error) {
+            setState('DISCONNECTED', { portReady: false, bareMuxReady: false, status: 'failed', failedStage: 'proxy-transport' });
+            console.warn('[PROXY] initialization failed', error && error.message ? error.message : error);
+            throw error;
+          } finally {
+            readyPromise = null;
+          }
+        })();
+
+        return readyPromise;
+      }
+
+      async function providePort(replyPort) {
+        log('requesting MessagePort');
+        const port = await createValidatedPort('sw');
+        replyPort.postMessage(port, [port]);
+        log('MessagePort transferred to service worker');
+      }
+
+      function markDisconnected(reason) {
+        reconnectCount += 1;
+        window.__UV_BOOT_STATUS__._update('swReinitCount', reconnectCount);
+        setState('DISCONNECTED', { portReady: false, bareMuxReady: false, status: 'failed' });
+        console.warn('[PROXY] port invalid/disconnected', reason || 'unknown');
+      }
+
+      return {
+        ensureReady,
+        providePort,
+        markDisconnected,
+        getState: () => state,
+        isReady: () => state === 'READY'
+      };
+    })();
+    window.ProxyTransport = ProxyTransport;
+    window.ensureProxyTransportReady = (reason) => ProxyTransport.ensureReady(reason).catch(() => false);
+
+    async function syncPortStateFromSW() {
+      return ProxyTransport.ensureReady('startup').catch(() => false);
     }
     window.syncPortStateFromSW = syncPortStateFromSW;
 
@@ -2363,7 +2466,7 @@
         <div class="settings-page">
           <div class="settings-window">
             <div class="settings-window-header">
-              <h2>Orbit Settings</h2>
+              <h2>Orbit</h2>
             </div>
             <div class="settings-window-body">
               <nav class="settings-sidebar">
@@ -4186,51 +4289,19 @@
       // ---- Ultraviolet boot ----
       console.log('[BOOT] Registering getPort listener at', Date.now());
       window.__UV_BOOT_STATUS__._update('getPortListenerRegistered', true);
-      // bare-mux port provider: responds to SW's getPort request with a
-      // SharedWorker transport port.  The SW owns the port state — do NOT
-      // infer local portReady/bareMuxReady from this handler firing.
-      // Port state is synced from the SW via SYNC_PORT_STATE.
+      // bare-mux port provider: every SW request gets a freshly validated
+      // SharedWorker MessagePort. Readiness is page-owned by ProxyTransport.
       navigator.serviceWorker.addEventListener('message', (event) => {
+        if (!event.data) return;
         if (event.data.type === 'getPort' && event.data.port) {
           window.__UV_BOOT_STATUS__._update('portRequestReceived', true);
-          console.log('[BOOT] getPort received from SW, creating SharedWorker at', Date.now());
-          console.log('[BOOT] getPort event source:', event.source ? event.source.constructor.name : 'no source', 'event.data.port type:', typeof event.data.port, 'isMessagePort:', event.data.port instanceof MessagePort);
-          (function tryCreateWorker(attempt) {
-            var maxAttempts = 3;
-            var worker;
-            try {
-              worker = new SharedWorker('/uv/bare-mux-worker.js', 'bare-mux-worker');
-              console.log('[BOOT] SharedWorker CONSTRUCTED OK at', Date.now(), 'attempt:', attempt, 'worker.port type:', typeof worker.port, 'isMessagePort:', worker.port instanceof MessagePort);
-            } catch (e) {
-              console.error('[BOOT] SharedWorker CONSTRUCTION FAILED at', Date.now(), 'attempt:', attempt, 'error:', e.message);
-              if (attempt < maxAttempts) {
-                console.log('[BOOT] retrying SharedWorker creation in 500ms (attempt ' + (attempt + 1) + ')');
-                setTimeout(function() { tryCreateWorker(attempt + 1); }, 500);
-              } else {
-                console.error('[BOOT] SharedWorker creation failed after ' + maxAttempts + ' attempts');
-                window.__UV_BOOT_STATUS__._update('failedStage', 'worker-creation');
-              }
-              return;
-            }
-            window.__UV_BOOT_STATUS__._update('workerConstructed', true);
-            console.log('[BOOT] SharedWorker constructed, transferring port at', Date.now());
-            try {
-              event.data.port.postMessage(worker.port, [worker.port]);
-              console.log('[BOOT] SharedWorker port TRANSFERRED OK at', Date.now());
-            } catch (e) {
-              console.error('[BOOT] SharedWorker port TRANSFER FAILED at', Date.now(), 'error:', e.message);
-              if (attempt < maxAttempts) {
-                console.log('[BOOT] retrying SharedWorker transfer in 500ms (attempt ' + (attempt + 1) + ')');
-                setTimeout(function() { tryCreateWorker(attempt + 1); }, 500);
-              }
-              return;
-            }
+          window.ProxyTransport.providePort(event.data.port).then(() => {
             window.__UV_BOOT_STATUS__._update('portTransferred', true);
-            console.log('[BOOT] SharedWorker port transferred to SW at', Date.now());
-          })(1);
-          // Port state determined by SW authority — will be synced below
+          }).catch((error) => {
+            window.__UV_BOOT_STATUS__._update('failedStage', 'worker-creation');
+            console.error('[PROXY] failed to provide MessagePort to service worker', error && error.message ? error.message : error);
+          });
         }
-        // SW broadcasts port state changes via PORT_STATE_SYNC after trackPort resolves
         if (event.data.type === 'PORT_STATE_SYNC') {
           const oldPortReady = window.__UV_BOOT_STATUS__.portReady;
           const oldBareMux = window.__UV_BOOT_STATUS__.bareMuxReady;
@@ -4267,11 +4338,9 @@
           if (event.data.status) {
             window.__UV_BOOT_STATUS__._update('swPortStatus', event.data.status);
           }
-          // Do not auto-refresh BareMux ports from the page. A delayed or failed
-          // health ping under load must not replace the MessagePort while active
-          // proxy requests are in flight.
           if (event.data.portReady === false && event.data.status === 'failed') {
-            console.warn('[RECOVERY] Port reported failed; automatic refresh is disabled to avoid disrupting active requests.', Date.now());
+            window.ProxyTransport.markDisconnected(event.data.reason || 'service-worker reported failure');
+            window.ProxyTransport.ensureReady('reconnect').catch(() => {});
           }
         }
       });
@@ -4298,7 +4367,7 @@
                 });
               }
             });
-            // Also sync if already active (e.g., after page reload)
+            // Also initialize if already active (e.g., after page reload)
             if (reg.active || reg.installing === null) {
               syncPortStateFromSW();
             }

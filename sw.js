@@ -4,6 +4,30 @@ importScripts('./uv/uv.sw.js');
 
 const sw = new UVServiceWorker();
 
+const proxyState = {
+  portReady: false,
+  bareMuxReady: false,
+  status: 'unknown',
+  reinitCount: 0,
+  reason: ''
+};
+
+async function broadcastProxyState() {
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const client of clients) {
+    client.postMessage({ type: 'PORT_STATE_SYNC', ...proxyState });
+  }
+}
+
+function reportProxyFailure(reason) {
+  proxyState.portReady = false;
+  proxyState.bareMuxReady = false;
+  proxyState.status = 'failed';
+  proxyState.reason = reason || 'unknown';
+  proxyState.reinitCount += 1;
+  broadcastProxyState();
+}
+
 function decodeUvUrl(requestUrl) {
   try {
     const url = new URL(requestUrl);
@@ -27,13 +51,7 @@ self.addEventListener('message', (event) => {
   const message = event.data;
   if (!message || message.type !== 'SYNC_PORT_STATE') return;
 
-  const response = {
-    type: 'PORT_STATE_SYNC',
-    portReady: true,
-    bareMuxReady: true,
-    status: 'ready',
-    reinitCount: 0
-  };
+  const response = { type: 'PORT_STATE_SYNC', ...proxyState };
 
   if (event.ports && event.ports[0]) {
     event.ports[0].postMessage(response);
@@ -54,6 +72,14 @@ self.addEventListener('fetch', (event) => {
       const response = await sw.fetch(event);
       const duration = Date.now() - start;
       console.log('[UV REQUEST]', event.request.url, 'decoded:', decodedUrl, 'dest:', event.request.destination, 'status:', response.status, 'duration:', duration + 'ms');
+      if (response.status >= 500) {
+        response.clone().text().then((body) => {
+          if (/invalid MessagePort|All clients returned an invalid MessagePort/i.test(body)) {
+            console.warn('[PROXY] port invalid/disconnected', decodedUrl);
+            reportProxyFailure('invalid MessagePort');
+          }
+        }).catch(() => {});
+      }
       if (duration > 5000) {
         console.log('[SLOW UV REQUEST]', duration + 'ms', 'url:', event.request.url, 'decoded:', decodedUrl, 'dest:', event.request.destination, 'status:', response.status);
       }
@@ -61,6 +87,9 @@ self.addEventListener('fetch', (event) => {
     } catch (error) {
       const duration = Date.now() - start;
       console.error('[UV REQUEST FAILED]', event.request.url, 'decoded:', decodedUrl, 'dest:', event.request.destination, 'duration:', duration + 'ms', 'error:', error && error.message ? error.message : error);
+      if (/invalid MessagePort|All clients returned an invalid MessagePort/i.test(error && error.message ? error.message : String(error))) {
+        reportProxyFailure('invalid MessagePort');
+      }
       throw error;
     }
   })());

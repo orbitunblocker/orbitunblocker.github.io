@@ -414,7 +414,7 @@
       { name: 'GitHub',     url: 'github.com',     img: 'https://blog.kubesimplify.com/img/blog/git-and-github-a-beginners-guide/q3I5kJ5U9.jpeg' },
       { name: 'TikTok',     url: 'tiktok.com',     img: 'https://variety.com/wp-content/uploads/2021/06/TikTok-Jump.png?w=970&h=545&crop=1' },
       { name: 'Netflix',    url: 'netflix.com',    img: 'https://media.wired.com/photos/592681ffcfe0d93c47430739/3:2/w_2560%2Cc_limit/Netflix-Logo-Print_CMYK2.jpg' },
-      { name: 'ESPN',       url: 'espn.com',       img: 'https://espnpressroom.com/us/files/2021/06/0-ESPN-Logo-for-PressRoom-780x470.jpg' },
+      { name: 'ESPN',       url: 'espn.com',       img: 'https://m.media-amazon.com/images/I/41lChb5Q+KL.png' },
     ];
 
     var cardsHtml = '';
@@ -439,7 +439,8 @@
       '.card{position:relative;aspect-ratio:16/10;border-radius:11px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);transition:transform 0.58s cubic-bezier(0.22,1,0.36,1),box-shadow 0.58s cubic-bezier(0.22,1,0.36,1);transform:scale(1);transform-origin:center}' +
       '.card:hover{transform:scale(1.07);box-shadow:0 8px 24px rgba(0,0,0,0.35)}' +
       '.card img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}' +
-      '.card-youtube img{transform:scale(1.22)}' +
+      '.card-youtube img{transform:scale(1.07);object-position:center}' +
+      '.card-espn img{object-fit:contain;object-position:center;background:#fff;padding:10px}' +
       '@media(max-width:820px){.cards{grid-template-columns:repeat(3,1fr);gap:12px;max-width:460px}}' +
       '@media(max-width:500px){.cards{grid-template-columns:repeat(2,1fr);gap:10px;max-width:320px}}' +
     '</style></head><body><canvas id="constellationBg" aria-hidden="true"></canvas><div class="wrap">' +
@@ -1180,6 +1181,11 @@
     refresh() {
       const iframe = document.getElementById('browserFrame-main');
       if (iframe) {
+        const currentUrl = this.historyManager.getCurrentUrl('main');
+        if (currentUrl && !this._isInternalPage(currentUrl) && currentUrl !== 'about:blank') {
+          this._loadUrlInFrame(currentUrl);
+          return;
+        }
         this.showLoading();
         const currentSrc = iframe.src;
         iframe.src = '';
@@ -1281,7 +1287,16 @@
     }
 
     _isPortReady() {
+      if (window.ProxyTransport && typeof window.ProxyTransport.isReady === 'function') {
+        return window.ProxyTransport.isReady();
+      }
       return window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady === true;
+    }
+
+    _ensureProxyReady(reason) {
+      if (window.ensureProxyTransportReady) {
+        window.ensureProxyTransportReady(reason);
+      }
     }
 
     _loadUrlInFrame(url) {
@@ -1307,10 +1322,9 @@
 
       // Defer proxied navigation until the UV proxy stack is ready
       if (useUv && !this._isPortReady()) {
-        console.log('[DEFER-NAV] url=' + url + ' port not ready, queuing at ' + Date.now());
-        if (!this._pendingNavigations.find(n => n.url === url)) {
-          this._pendingNavigations.push({ url, normalized, ts: Date.now() });
-        }
+        console.log('[PROXY] navigation queued:', normalized);
+        this._pendingNavigations = [{ url, normalized, ts: Date.now() }];
+        this._ensureProxyReady('navigation');
         return;
       }
 
@@ -1350,10 +1364,9 @@
       const pending = this._pendingNavigations || [];
       this._pendingNavigations = [];
       if (pending.length === 0) return;
-      console.log('[FLUSH-NAV] flushing ' + pending.length + ' deferred navigation(s) at ' + Date.now());
-      pending.forEach(({ url }) => {
-        this._loadUrlInFrame(url);
-      });
+      const latest = pending[pending.length - 1];
+      console.log('[PROXY] flushing queued navigation:', latest.normalized || latest.url);
+      this._loadUrlInFrame(latest.url);
     }
 
     _restoreTabUrl(url) {
@@ -1399,11 +1412,12 @@
     _restoreUrlDeferred(url) {
       const portReady = window.__UV_BOOT_STATUS__ && window.__UV_BOOT_STATUS__.portReady;
       if (!portReady) {
-        console.log('[DEFER] url=' + url + ' portReady=' + portReady);
+        console.log('[PROXY] restored navigation queued:', url);
         if (!this._pendingRestoreTabs) this._pendingRestoreTabs = [];
         if (!this._pendingRestoreTabs.find(t => t.url === url)) {
           this._pendingRestoreTabs.push({ url });
         }
+        this._ensureProxyReady('restore');
         return;
       }
       this._restoreTabUrl(url);
