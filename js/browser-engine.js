@@ -889,6 +889,11 @@
       }
 
       const isSearch = parsed.type === 'search';
+      if (isSearch) {
+        const engine = getSearchEngine();
+        const uvUrl = typeof window.encodeUVUrl === 'function' ? window.encodeUVUrl(targetUrl) : '';
+        console.log('[SEARCH TRACE]', 'engine=' + engine.name, 'query=' + parsed.query, 'destination=' + targetUrl, 'uv=' + (uvUrl || '(unavailable)'));
+      }
 
       this.historyManager.push('main', targetUrl, parsed.query || targetUrl);
       this._loadUrlInFrame(targetUrl);

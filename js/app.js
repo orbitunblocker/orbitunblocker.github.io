@@ -20,7 +20,7 @@
 
     // Provide UV's BareClient with the SharedWorker path before any proxied navigation
     try {
-      localStorage.setItem('bare-mux-path', '/uv/bare-mux-worker.js');
+      localStorage.setItem('bare-mux-path', '/uv/bare-mux-worker.js?v=20260721d');
       window.__UV_BOOT_STATUS__._update('bareMuxPathSet', true);
       console.log('[BOOT] bare-mux-path set at', Date.now());
     } catch (e) {
@@ -43,7 +43,7 @@
     }
 
     const ProxyTransport = (() => {
-      const workerPath = '/uv/bare-mux-worker.js';
+      const workerPath = '/uv/bare-mux-worker.js?v=20260721d';
       let state = 'UNINITIALIZED';
       let readyPromise = null;
       let reconnectCount = 0;
@@ -190,6 +190,20 @@
     }
     window.encodeUVUrl = encodeUVUrl;
 
+    function decodeProxyNavigationUrl(value) {
+      if (!value) return '';
+      try {
+        const url = new URL(value, window.location.href);
+        if (url.origin === window.location.origin && url.pathname.startsWith(UV_PREFIX)) {
+          return Ultraviolet.codec.xor.decode(url.pathname.slice(UV_PREFIX.length)) + url.search + url.hash;
+        }
+        return url.href;
+      } catch (e) {
+        return String(value);
+      }
+    }
+    window.decodeProxyNavigationUrl = decodeProxyNavigationUrl;
+
     const hoverAudio = new Audio("https://files.catbox.moe/h71sur.mp3");
     hoverAudio.preload = "auto";
     window.__voltraSfxVolume = 0.1;
@@ -243,9 +257,11 @@
     const canvas = document.getElementById('bg');
     const ctx = canvas.getContext('2d');
 
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
     let visualMotionReduced = false;
+    let lastParticleTime = performance.now();
 
     const particles = [];
     let cachedAccentA = '125,211,252';
@@ -257,66 +273,81 @@
       const rootStyle = getComputedStyle(document.documentElement);
       cachedAccentA = rootStyle.getPropertyValue('--accent-a').trim() || '125,211,252';
       cachedAccentB = rootStyle.getPropertyValue('--accent-b').trim() || '192,132,252';
-      aRGB = cachedAccentA.split(',').map(v => parseInt(v.trim()));
-      bRGB = cachedAccentB.split(',').map(v => parseInt(v.trim()));
+      aRGB = cachedAccentA.split(',').map(v => parseInt(v.trim()) || 255);
+      bRGB = cachedAccentB.split(',').map(v => parseInt(v.trim()) || 255);
+    }
+
+    function resizeParticleCanvas() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     class Particle {
       constructor(initial = false) { this.reset(initial); }
       reset(initial = false) {
         this.x = Math.random() * width;
-        if (initial) {
-          this.y = Math.random() * height;
-        } else {
-          this.y = height + Math.random() * 50;
-        }
-        this.radius = Math.random() * 2 + 1;
-        this.baseSpeedX = (Math.random() - 0.5) * 0.1;
-        this.speedY = -(Math.random() * 0.2 + 0.1);
-        this.wobble = Math.random() * Math.PI * 2;
-        this.wobbleSpeed = Math.random() * 0.002 + 0.001;
-        this.wobbleAmplitude = Math.random() * 0.08 + 0.02;
-        this.delay = initial ? 0 : Math.random() * 3000;
-        this.emitted = initial;
+        this.y = initial ? Math.random() * height : height + Math.random() * 24;
+        this.radius = Math.random() * 1.1 + 0.35;
+        this.speedY = -(Math.random() * 6 + 4);
+        this.speedX = (Math.random() - 0.5) * 3;
+        this.floatOffset = Math.random() * Math.PI * 2;
+        this.floatSpeed = Math.random() * 0.00035 + 0.00015;
+        this.floatAmplitude = Math.random() * 0.9 + 0.65;
+        this.opacity = Math.random() * 0.3 + 0.45;
+        this.accentMix = Math.random();
+        this.themeAmount = Math.random() * 0.22 + 0.08;
       }
-      update(time) {
-        if (!this.emitted) {
-          if (time > this.delay) {
-            this.emitted = true;
-          } else {
-            return;
-          }
+      update(deltaTime, time) {
+        this.x += (this.speedX + Math.sin(time * this.floatSpeed + this.floatOffset) * this.floatAmplitude) * deltaTime;
+        this.y += this.speedY * deltaTime;
+        if (this.y < -10) {
+          this.reset(false);
         }
-        this.wobble += this.wobbleSpeed;
-        this.x += this.baseSpeedX + Math.sin(this.wobble) * this.wobbleAmplitude;
-        this.y += this.speedY;
-        if (this.y < -10 || this.x < 0 || this.x > width) {
-          this.reset();
-          this.delay = Math.random() * 2000 + 500;
-          this.emitted = false;
+        if (this.x < -10) {
+          this.x = width + 10;
+        } else if (this.x > width + 10) {
+          this.x = -10;
         }
       }
-      draw(time) {
-        if (!this.emitted) return;
+      draw() {
+        const shade = 235 + Math.floor(this.accentMix * 20);
+        const accent = this.accentMix < 0.5 ? aRGB : bRGB;
+        const r = Math.round(shade * (1 - this.themeAmount) + accent[0] * this.themeAmount);
+        const g = Math.round(shade * (1 - this.themeAmount) + accent[1] * this.themeAmount);
+        const b = Math.round(shade * (1 - this.themeAmount) + accent[2] * this.themeAmount);
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,1)`;
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
         ctx.fill();
+        ctx.globalAlpha = 1;
       }
     }
 
-    for (let i = 0; i < 200; i++) particles.push(new Particle(true));
+    resizeParticleCanvas();
+    updateParticleColors();
+    for (let i = 0; i < 110; i++) particles.push(new Particle(true));
 
-    function animate() {
+    function animate(currentTime) {
+      if (Math.min(window.devicePixelRatio || 1, 2) !== dpr) {
+        resizeParticleCanvas();
+      }
+      const deltaTime = Math.min((currentTime - lastParticleTime) / 1000, 0.05);
+      lastParticleTime = currentTime;
       ctx.clearRect(0, 0, width, height);
-      const time = Date.now();
       particles.forEach(p => {
-        if (!visualMotionReduced) p.update(time);
-        p.draw(time);
+        if (!visualMotionReduced) p.update(deltaTime, currentTime);
+        p.draw();
       });
       requestAnimationFrame(animate);
     }
-    animate();
+    requestAnimationFrame(animate);
 
     function syncLayout() {
       const nav = document.querySelector('.navbar');
@@ -357,8 +388,7 @@
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
+        resizeParticleCanvas();
         syncLayout();
       }, 150);
     });
@@ -1771,9 +1801,9 @@
     };
 
     const particleDensityMap = {
-      low: 80,
-      normal: 160,
-      high: 260
+      low: 70,
+      normal: 110,
+      high: 170
     };
 
     let currentSection = null;
@@ -3297,6 +3327,7 @@
       root.style.setProperty('--glow-card-b', (0.12 * glowLevel).toFixed(3));
       root.style.setProperty('--card-radius', settings.compactCards ? '18px' : '28px');
       root.style.setProperty('--thumb-radius', settings.compactCards ? '14px' : '20px');
+      updateParticleColors();
 
       document.body.classList.toggle('reduced-motion', settings.reducedMotion);
       document.body.classList.toggle('compact-cards', settings.compactCards);
@@ -4302,6 +4333,10 @@
             console.error('[PROXY] failed to provide MessagePort to service worker', error && error.message ? error.message : error);
           });
         }
+        if (event.data.type === 'UV_RESOURCE_FAILURE') {
+          console.warn('[UV RESOURCE FAILURE]', 'type=' + event.data.destination, 'method=' + event.data.method, 'status=' + event.data.status, 'layer=' + event.data.layer, 'original=' + event.data.original);
+          window.__UV_LAST_RESOURCE_FAILURE__ = event.data;
+        }
         if (event.data.type === 'PORT_STATE_SYNC') {
           const oldPortReady = window.__UV_BOOT_STATUS__.portReady;
           const oldBareMux = window.__UV_BOOT_STATUS__.bareMuxReady;
@@ -4342,6 +4377,23 @@
             window.ProxyTransport.markDisconnected(event.data.reason || 'service-worker reported failure');
             window.ProxyTransport.ensureReady('reconnect').catch(() => {});
           }
+        }
+      });
+
+      window.addEventListener('message', (event) => {
+        const message = event.data;
+        if (!message || message.type !== 'ORBIT_PROXY_NAVIGATION') return;
+        if (event.origin !== window.location.origin) return;
+
+        const iframe = document.getElementById('browserFrame-main');
+        if (!iframe || event.source !== iframe.contentWindow) return;
+
+        const targetUrl = decodeProxyNavigationUrl(message.url);
+        if (!targetUrl || /^javascript:/i.test(targetUrl)) return;
+
+        console.log('[PROXY NAV]', 'kind=' + (message.kind || 'navigation'), 'target=' + (message.target || ''), 'url=' + targetUrl);
+        if (window.VoltraBrowser && typeof window.VoltraBrowser.navigate === 'function') {
+          window.VoltraBrowser.navigate(targetUrl);
         }
       });
       console.log('[BOOT] getPort listener registered, now registering SW at', Date.now());

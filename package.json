@@ -2,7 +2,20 @@
   "name": "orbit-ultraviolet",
   "version": "1.0.0",
   "type": "module",
-  "description": "Orbit hub with Ultraviolet proxy backend",
+  "description": "Customizable web hub with games and an Ultraviolet-based proxy browser",
+  "homepage": "https://orbitmath.up.railway.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orbitunblocker/orbitunblocker.github.io.git"
+  },
+  "keywords": [
+    "orbit",
+    "ultraviolet",
+    "bare-mux",
+    "web-proxy",
+    "games",
+    "express"
+  ],
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

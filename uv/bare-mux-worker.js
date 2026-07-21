@@ -1,7 +1,30 @@
-// bare-mux SharedWorker transport for Ultraviolet
-// INSTRUMENTED — original behavior preserved. No fixes.
+// bare-mux SharedWorker transport for Ultraviolet.
+// Keep this worker generic: it forwards Bare protocol requests and avoids
+// buffering response bodies unless transferable streams are unavailable.
 
-const _BW = (msg, ...rest) => console.log('[BOOT-WORKER]', msg, 'at', Date.now(), ...rest);
+const DEBUG_BARE_WORKER = false;
+const _BW = (msg, ...rest) => {
+  if (DEBUG_BARE_WORKER) console.log('[BARE]', msg, 'at', Date.now(), ...rest);
+};
+const _BW_WARN = (msg, ...rest) => console.warn('[BARE]', msg, ...rest);
+
+function postFetchResponse(port, response) {
+  const body = response && response.fetch && response.fetch.body;
+  if (body instanceof ReadableStream) {
+    try {
+      port.postMessage(response, [body]);
+      _BW('streamed response posted, status:', response.fetch && response.fetch.status);
+      return true;
+    } catch (error) {
+      _BW_WARN('transferable stream unavailable, falling back to buffered response:', error && error.message ? error.message : error);
+    }
+  }
+  return false;
+}
+
+async function streamToArrayBuffer(stream) {
+  return await new Response(stream).arrayBuffer();
+}
 
 self.onconnect = (event) => {
   const conPort = event.ports[0];
@@ -48,8 +71,12 @@ self.onconnect = (event) => {
         const targetUrl = new URL(remote);
         const bareUrl = self.origin + '/bare/v1/';
         const outgoingHeaders = headers || {};
+        const forwardHeaders = [];
         if (!outgoingHeaders.Host && !outgoingHeaders.host) {
           outgoingHeaders.Host = targetUrl.hostname;
+        }
+        if (body instanceof Blob || body instanceof ArrayBuffer || body instanceof ReadableStream || typeof body === 'string') {
+          forwardHeaders.push('content-length');
         }
         const bareHeaders = {
           'X-Bare-Host': targetUrl.hostname,
@@ -57,19 +84,21 @@ self.onconnect = (event) => {
           'X-Bare-Protocol': targetUrl.protocol,
           'X-Bare-Path': targetUrl.pathname + targetUrl.search,
           'X-Bare-Headers': JSON.stringify(outgoingHeaders),
-          'X-Bare-Forward-Headers': JSON.stringify([])
+          'X-Bare-Forward-Headers': JSON.stringify(forwardHeaders)
         };
 
-        // === ORIGINAL BEHAVIOR: body assigned directly, NO duplex, NO ArrayBuffer conversion ===
         const fetchOpts = { method: method || 'GET', headers: bareHeaders };
         if (body) {
           let reqBody = body;
+          if (reqBody instanceof Blob) {
+            reqBody = await reqBody.arrayBuffer();
+          }
           if (reqBody instanceof ReadableStream) {
-            reqBody = await new Response(reqBody).blob();
+            reqBody = await streamToArrayBuffer(reqBody);
+            _BW('[STREAM] buffered request body before Bare fetch');
           }
           fetchOpts.body = reqBody;
         }
-        // ====================================================================================
 
         _BW('[INSTR] Pre-fetch bareUrl:', bareUrl, 'method:', fetchOpts.method, 'hasBody:', !!fetchOpts.body, 'bodyConstructor:', bodyConstructor, 'duplex:', fetchOpts.duplex || 'NOT SET');
 
@@ -87,11 +116,7 @@ self.onconnect = (event) => {
           const errStack = fetchErr && fetchErr.stack ? fetchErr.stack : 'NO STACK AVAILABLE';
           const errType = typeof fetchErr;
           const errStr = String(fetchErr);
-          _BW('[INSTR] ***** FETCH THREW *****');
-          _BW('[INSTR] constructor:', errConstructor, 'isTypeError:', errIsTypeError, 'typeof:', errType);
-          _BW('[INSTR] message:', errMsg);
-          _BW('[INSTR] stack:', errStack);
-          _BW('[INSTR] String(fetchErr):', errStr);
+          _BW_WARN('fetch to Bare endpoint failed:', errMsg, 'constructor:', errConstructor, 'isTypeError:', errIsTypeError, 'remote:', remote, 'method:', method);
           throw fetchErr;  // re-throw to original outer catch
         }
 
@@ -122,26 +147,22 @@ self.onconnect = (event) => {
         }
         _BW('[INSTR] remote response status:', bareStatus, 'text:', bareStatusText);
         const noBody = [101, 204, 205, 304].includes(bareStatus);
+        const fetchResponse = { fetch: { body: noBody ? undefined : bareResp.body, headers: bareResHeaders, status: bareStatus, statusText: bareStatusText } };
+        if (!noBody && postFetchResponse(msg.port, fetchResponse)) return;
+
         const responseBody = noBody ? undefined : await bareResp.arrayBuffer();
-        _BW('[INSTR] response body length:', responseBody ? responseBody.byteLength : 0, 'noBody:', noBody);
+        _BW('[INSTR] buffered response body length:', responseBody ? responseBody.byteLength : 0, 'noBody:', noBody);
         msg.port.postMessage(
           { fetch: { body: responseBody, headers: bareResHeaders, status: bareStatus, statusText: bareStatusText } },
           responseBody ? [responseBody] : []
         );
-        _BW('[INSTR] response posted to caller, status:', bareStatus);
+        _BW('[INSTR] buffered response posted to caller, status:', bareStatus);
       } catch (err) {
         // === ORIGINAL CATCH BLOCK BEHAVIOR preserved exactly ===
         // Original code: msg.port.postMessage({ type: 'error', error: err.message });
         // But if err is a string (not Error), err.message is undefined, so we send 'undefined'
         const errMsg = err === undefined ? 'undefined' : (err === null ? 'null' : (typeof err.message === 'string' ? err.message : String(err)));
-        _BW('[INSTR] ***** OUTER CATCH *****');
-        _BW('[INSTR] err === undefined:', err === undefined, 'err === null:', err === null);
-        _BW('[INSTR] typeof err:', typeof err, 'constructor:', err && err.constructor && err.constructor.name);
-        _BW('[INSTR] err.message:', err && err.message);
-        _BW('[INSTR] err.stack:', err && err.stack);
-        _BW('[INSTR] String(err):', String(err));
-        _BW('[INSTR] errMsg to be sent:', errMsg);
-        _BW('[INSTR] postMessaging error:', errMsg);
+        _BW_WARN('request failed:', errMsg, 'remote:', remote, 'method:', method);
         msg.port.postMessage({ type: 'error', error: errMsg });
         _BW('[INSTR] error message posted');
       }
