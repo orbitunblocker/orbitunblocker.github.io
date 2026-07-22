@@ -242,8 +242,8 @@
         const heroSection = document.getElementById('heroSection');
         resetHeroSearchBar({ entrance: true });
         if (heroSection) heroSection.classList.add('reveal');
-        const infoIcon = document.querySelector('.hero-info-icon');
-        if (infoIcon) infoIcon.style.opacity = '1';
+        const editWrap = document.querySelector('.hero-edit-wrap');
+        if (editWrap) editWrap.style.opacity = '1';
         const dock = document.querySelector('.bottom-dock');
         if (dock) dock.classList.add('reveal');
       }, 500);
@@ -273,6 +273,9 @@
       const rootStyle = getComputedStyle(document.documentElement);
       cachedAccentA = rootStyle.getPropertyValue('--accent-a').trim() || '125,211,252';
       cachedAccentB = rootStyle.getPropertyValue('--accent-b').trim() || '192,132,252';
+      const particleColor = window.__orbitParticleColor || '255,255,255';
+      cachedAccentA = particleColor;
+      cachedAccentB = particleColor;
       aRGB = cachedAccentA.split(',').map(v => parseInt(v.trim()) || 255);
       bRGB = cachedAccentB.split(',').map(v => parseInt(v.trim()) || 255);
     }
@@ -316,11 +319,10 @@
         }
       }
       draw() {
-        const shade = 235 + Math.floor(this.accentMix * 20);
-        const accent = this.accentMix < 0.5 ? aRGB : bRGB;
-        const r = Math.round(shade * (1 - this.themeAmount) + accent[0] * this.themeAmount);
-        const g = Math.round(shade * (1 - this.themeAmount) + accent[1] * this.themeAmount);
-        const b = Math.round(shade * (1 - this.themeAmount) + accent[2] * this.themeAmount);
+        const brightness = 0.78 + this.accentMix * 0.44;
+        const r = Math.max(0, Math.min(255, Math.round(aRGB[0] * brightness)));
+        const g = Math.max(0, Math.min(255, Math.round(aRGB[1] * brightness)));
+        const b = Math.max(0, Math.min(255, Math.round(aRGB[2] * brightness)));
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.globalAlpha = this.opacity;
@@ -912,23 +914,15 @@
       { title: "Cozy Classics", desc: "Lightweight browser favorites that fit the same quick-play rhythm.", badge: "NEXT", emoji: "✨" }
     ];
 
-    const infoSearchData = [
-      { title: "About Orbit", desc: "A modern browser hub for games, tools, proxies, and web apps.", badge: "INFO", emoji: "💫" },
-      { title: "Games Library", desc: "46+ playable games with dedicated players and fullscreen support.", badge: "PLAY", emoji: "🎮" },
-      { title: "Proxy Tools", desc: "Built-in proxy integration for unrestricted browsing with privacy controls.", badge: "PROXY", emoji: "🌐" },
-      { title: "Custom Themes", desc: "Personalize colors, blur, particles, motion, and layout density.", badge: "STYLE", emoji: "🎨" }
-    ];
-
     const searchPages = {
       games: { label: "Games", items: sectionData.games },
       tools: { label: "Tools", items: sectionData.tools },
-      apps: { label: "Apps", items: sectionData.apps },
-      info: { label: "Info", items: infoSearchData }
+      apps: { label: "Apps", items: sectionData.apps }
     };
 
     const SETTINGS_STORAGE_KEY = 'voltra-settings-v1';
     const BASE_PAGE_TITLE = 'Orbit';
-    const ORBIT_FAVICON_URL = 'https://i.ibb.co/0j3TN9Cc/Orbit-Favicon-512x512.png';
+    const ORBIT_FAVICON_URL = 'https://i.ibb.co/gMvWgFtK/orbit-favicon.png';
     const CLOAKED_INSTANCE_PARAM = 'orbit_cloaked';
 
     const defaultSettings = {
@@ -962,11 +956,21 @@
       autoLockTime: '15',
       bypassKeybind: '',
       bgMusic: 'orbit',
-      bgMusicCustomUrl: ''
+      bgMusicCustomUrl: '',
+      backgroundMode: 'particles',
+      backgroundImage: 'Zelda.mp4',
+      particleColor: 'white',
+      customParticleColors: [],
+      customBackgroundVideos: []
     };
 
     const settings = { ...defaultSettings };
+    const realSettingsPanels = ['audio', 'appearance', 'layout', 'launching', 'browser', 'performance'];
     let settingsPanel = 'audio';
+
+    function normalizeSettingsPanel(id) {
+      return realSettingsPanels.includes(id) ? id : 'audio';
+    }
 
     const cyclingPhrases = [
       "Welcome, username.",
@@ -1576,7 +1580,10 @@
         Object.keys(defaultSettings).forEach(key => {
           if (stored[key] !== undefined) settings[key] = stored[key];
         });
-        if (stored.settingsPanel) settingsPanel = stored.settingsPanel;
+        if (!Array.isArray(settings.customParticleColors)) settings.customParticleColors = [];
+        if (!Array.isArray(settings.customBackgroundVideos)) settings.customBackgroundVideos = [];
+        if (settings.particleColor === 'theme') settings.particleColor = 'white';
+        if (stored.settingsPanel) settingsPanel = normalizeSettingsPanel(stored.settingsPanel);
       } catch (err) {
         console.warn('Could not load saved settings.', err);
       }
@@ -1708,9 +1715,9 @@
 
     const musicSources = {
       orbit: 'https://files.catbox.moe/vgjm1c.mp3',
-      minecraft: 'https://files.catbox.moe/jeql5p.mp3',
-      zelda: 'https://files.catbox.moe/udpn7n.mp3',
-      rapbeats: 'https://files.catbox.moe/3x5bfe.mp3',
+      minecraft: 'https://h.uguu.se/CXWkwvPf.mp3',
+      zelda: 'https://h.uguu.se/wZxSeinC.mp3',
+      rapbeats: 'https://h.uguu.se/DKymPLyz.mp3',
     };
 
     function initBgMusic() {
@@ -1794,6 +1801,31 @@
       rose: { a: '255,120,180', b: '220,90,150', c: '255,150,200' }
     };
 
+    const backgroundImages = [
+      { file: 'Zelda.mp4', label: 'Zelda' },
+      { file: 'White.png', label: 'White' },
+      { file: 'Red.jpg', label: 'Red' },
+      { file: 'Purple.jpg', label: 'Purple' },
+      { file: 'Purple Live.mp4', label: 'Purple Live' },
+      { file: 'Orange.png', label: 'Orange' },
+      { file: 'Minecraft.mp4', label: 'Minecraft' },
+      { file: 'Green.webp', label: 'Green' }
+    ];
+
+    const CUSTOM_VIDEO_DB = 'orbit-custom-media-v1';
+    const CUSTOM_VIDEO_STORE = 'videos';
+    const customVideoObjectUrls = new Map();
+
+    const particleColorThemes = {
+      white: { label: 'White', value: '255,255,255' },
+      red: { label: 'Red', value: '255,85,85' },
+      orange: { label: 'Orange', value: '255,160,80' },
+      green: { label: 'Green', value: '80,220,140' },
+      blue: { label: 'Blue', value: '80,180,255' },
+      purple: { label: 'Purple', value: '190,120,255' },
+      pink: { label: 'Pink', value: '255,120,180' }
+    };
+
     const particleDensityMap = {
       low: 70,
       normal: 110,
@@ -1816,15 +1848,439 @@
     const homeSearchResults = document.getElementById('homeSearchResults');
     const homeSearchInput = document.getElementById('homeSearchInput');
 
-    const fullPageSections = ['settings', 'games', 'search', 'tools', 'apps', 'info', 'browser'];
+    const fullPageSections = ['settings', 'games', 'search', 'tools', 'apps', 'browser', 'help'];
 
     function escapeHTML(value) {
       return String(value)
-        .replace(/&/g, '&')
-        .replace(/</g, '<')
-        .replace(/>/g, '>')
-        .replace(/"/g, '"');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
+
+    function normalizeHexColor(value) {
+      const hex = String(value || '').trim();
+      const short = /^#?([0-9a-f]{3})$/i.exec(hex);
+      if (short) return `#${short[1].split('').map(ch => ch + ch).join('').toLowerCase()}`;
+      const full = /^#?([0-9a-f]{6})$/i.exec(hex);
+      return full ? `#${full[1].toLowerCase()}` : null;
+    }
+
+    function hexToRGBString(hex) {
+      const normalized = normalizeHexColor(hex) || '#ffffff';
+      return [1, 3, 5].map(index => parseInt(normalized.slice(index, index + 2), 16)).join(',');
+    }
+
+    function getCustomParticleColors() {
+      return Array.isArray(settings.customParticleColors) ? settings.customParticleColors : [];
+    }
+
+    function getParticleColorPalette() {
+      const customColors = getCustomParticleColors().map(color => ({
+        id: color.id,
+        label: color.label || 'Custom',
+        value: color.rgb,
+        custom: true
+      }));
+      return { ...particleColorThemes, ...Object.fromEntries(customColors.map(color => [color.id, color])) };
+    }
+
+    function getAllBackgrounds() {
+      const customVideos = Array.isArray(settings.customBackgroundVideos) ? settings.customBackgroundVideos : [];
+      return [
+        ...backgroundImages.map(image => ({ ...image, builtin: true })),
+        ...customVideos.map(video => ({ ...video, file: `custom:${video.id}`, custom: true, video: true }))
+      ];
+    }
+
+    function getBackgroundEntry(file) {
+      return getAllBackgrounds().find(image => image.file === file) || backgroundImages[0];
+    }
+
+    function getBackgroundImageURL(file) {
+      const selected = getBackgroundEntry(file);
+      if (selected.custom) return customVideoObjectUrls.get(selected.id) || '';
+      return new URL(`backgrounds/${encodeURIComponent(selected.file)}`, window.location.href).href;
+    }
+
+    function isVideoBackground(file) {
+      const selected = getBackgroundEntry(file);
+      return selected.custom || /\.(mp4|webm)$/i.test(selected.file || '');
+    }
+
+    function openCustomMediaDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(CUSTOM_VIDEO_DB, 1);
+        request.onupgradeneeded = () => {
+          request.result.createObjectStore(CUSTOM_VIDEO_STORE);
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function putCustomVideoBlob(id, blob) {
+      const db = await openCustomMediaDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(CUSTOM_VIDEO_STORE, 'readwrite');
+        tx.objectStore(CUSTOM_VIDEO_STORE).put(blob, id);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    }
+
+    async function deleteCustomVideoBlob(id) {
+      const db = await openCustomMediaDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(CUSTOM_VIDEO_STORE, 'readwrite');
+        tx.objectStore(CUSTOM_VIDEO_STORE).delete(id);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    }
+
+    async function loadCustomVideoBlobs() {
+      if (!Array.isArray(settings.customBackgroundVideos) || settings.customBackgroundVideos.length === 0) return;
+      try {
+        const db = await openCustomMediaDB();
+        await Promise.all(settings.customBackgroundVideos.map(video => new Promise(resolve => {
+          const tx = db.transaction(CUSTOM_VIDEO_STORE, 'readonly');
+          const request = tx.objectStore(CUSTOM_VIDEO_STORE).get(video.id);
+          request.onsuccess = () => {
+            if (request.result) {
+              const oldUrl = customVideoObjectUrls.get(video.id);
+              if (oldUrl) URL.revokeObjectURL(oldUrl);
+              customVideoObjectUrls.set(video.id, URL.createObjectURL(request.result));
+            }
+            resolve();
+          };
+          request.onerror = () => resolve();
+        })));
+        db.close();
+        applySettings();
+        if (document.getElementById('heroEditMenu')?.classList.contains('open')) renderHeroEditMenu();
+      } catch (err) {
+        console.warn('Could not load custom background videos.', err);
+      }
+    }
+
+    function getBackgroundVideo() {
+      let video = document.getElementById('orbitBackgroundVideo');
+      if (video) return video;
+      video = document.createElement('video');
+      video.id = 'orbitBackgroundVideo';
+      video.className = 'orbit-background-video';
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('loop', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('aria-hidden', 'true');
+      document.body.prepend(video);
+      return video;
+    }
+
+    function syncBackgroundVideo() {
+      const activeVideo = settings.backgroundMode === 'image' && isVideoBackground(settings.backgroundImage);
+      const video = getBackgroundVideo();
+      if (!activeVideo) {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        return;
+      }
+      const src = getBackgroundImageURL(settings.backgroundImage);
+      if (!src) {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        return;
+      }
+      if (video.getAttribute('src') !== src) {
+        video.src = src;
+        video.load();
+      }
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.play().catch(() => {});
+    }
+
+    function shiftRGB(rgb, amount) {
+      return rgb.split(',').map(value => {
+        const channel = parseInt(value.trim(), 10) || 0;
+        return Math.max(0, Math.min(255, Math.round(channel + (amount >= 0 ? (255 - channel) * amount : channel * amount))));
+      }).join(',');
+    }
+
+    function renderHeroEditMenu() {
+      const menu = document.getElementById('heroEditMenu');
+      if (!menu) return;
+      const activeTab = settings.backgroundMode === 'image' ? 'image' : 'particles';
+
+      const imageOptions = getAllBackgrounds().map(image => {
+        const url = getBackgroundImageURL(image.file);
+        const video = isVideoBackground(image.file);
+        return `
+          <button type="button" class="hero-edit-preview ${video ? 'video' : ''} ${settings.backgroundMode === 'image' && settings.backgroundImage === image.file ? 'active' : ''}" data-background-file="${escapeHTML(image.file)}" onclick="event.stopPropagation(); setBackgroundImage('${escapeHTML(image.file)}')" ${video ? 'onmouseenter="playHeroPreviewVideo(this)" onmouseleave="pauseHeroPreviewVideo(this)"' : ''} aria-label="Use ${escapeHTML(image.label)} background">
+            ${video ? `<video ${url ? `src="${url}"` : ''} muted loop playsinline preload="metadata" aria-label="${escapeHTML(image.label)} video preview"></video><img class="hero-edit-video-icon" src="icons/Video%20Icon.svg" alt="" aria-hidden="true">` : `<img src="${url}" alt="${escapeHTML(image.label)} background" loading="lazy" decoding="async">`}
+            ${image.custom ? `<span class="hero-edit-custom-badge">Custom</span><span class="hero-edit-remove" role="button" tabindex="0" onclick="event.stopPropagation(); removeCustomBackgroundVideo('${escapeHTML(image.id)}')" aria-label="Remove ${escapeHTML(image.label)} background">×</span>` : ''}
+          </button>
+        `;
+      }).join('');
+
+      const particleOptions = Object.entries(getParticleColorPalette()).map(([id, color]) => {
+        const lightSwatch = color.value === '255,255,255';
+        return `
+          <span class="hero-edit-particle-item">
+            <button type="button" class="hero-edit-particle-swatch ${lightSwatch ? 'light' : ''} ${settings.backgroundMode === 'particles' && settings.particleColor === id ? 'active' : ''}" data-particle-color="${escapeHTML(id)}" style="--swatch-color: rgb(${color.value})" onclick="event.stopPropagation(); setParticleColor('${id}')" aria-label="Use ${escapeHTML(color.label)} particles"></button>
+            ${color.custom ? `<button type="button" class="hero-edit-particle-remove" onclick="event.stopPropagation(); removeCustomParticleColor('${escapeHTML(id)}')" aria-label="Remove ${escapeHTML(color.label)} particle color">×</button>` : ''}
+          </span>
+        `;
+      }).join('');
+
+      menu.innerHTML = `
+        <div class="hero-edit-tabs" data-active-tab="${activeTab}">
+          <button type="button" class="hero-edit-tab ${activeTab === 'image' ? 'active' : ''}" onclick="event.stopPropagation(); setHeroEditTab('image')">Image</button>
+          <button type="button" class="hero-edit-tab ${activeTab === 'particles' ? 'active' : ''}" onclick="event.stopPropagation(); setHeroEditTab('particles')">Particles</button>
+          <span class="hero-edit-tab-pill" aria-hidden="true"></span>
+        </div>
+        <div class="hero-edit-panel ${activeTab === 'image' ? 'active' : ''}" data-panel="image">
+          <div class="hero-edit-preview-grid">${imageOptions}</div>
+          <button type="button" class="hero-edit-add-btn" onclick="event.stopPropagation(); openCustomVideoPicker()" aria-label="Add video background">Add Video</button>
+          <input class="hero-edit-file-input" id="customVideoInput" type="file" accept="video/mp4,video/webm" onchange="addCustomBackgroundVideo(this.files && this.files[0]); this.value = ''">
+        </div>
+        <div class="hero-edit-panel ${activeTab === 'particles' ? 'active' : ''}" data-panel="particles">
+          <div class="hero-edit-particle-grid">${particleOptions}</div>
+          <button type="button" class="hero-edit-add-btn" onclick="event.stopPropagation(); toggleCustomColorPanel()" aria-expanded="false" aria-controls="customColorPanel">Add Color</button>
+          <div class="hero-edit-color-panel" id="customColorPanel" aria-hidden="true">
+            <div class="hero-edit-color-preview" id="customColorPreview" style="--custom-preview-color: #ffffff"></div>
+            <div class="hero-edit-color-fields">
+              <input class="hero-edit-color-native" id="customParticleColorInput" type="color" value="#ffffff" oninput="syncCustomColorInput(this.value)">
+              <input class="hero-edit-color-hex" id="customParticleHexInput" type="text" value="#ffffff" maxlength="7" inputmode="text" oninput="syncCustomColorInput(this.value)" aria-label="Custom particle color hex">
+              <button type="button" class="hero-edit-confirm-btn" onclick="event.stopPropagation(); addCustomParticleColor()">Add</button>
+            </div>
+          </div>
+        </div>
+      `;
+      menu.onclick = event => event.stopPropagation();
+    }
+
+    function playHeroPreviewVideo(preview) {
+      const video = preview?.querySelector('video');
+      if (!video) return;
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.play().catch(() => {});
+    }
+
+    function pauseHeroPreviewVideo(preview) {
+      if (preview?.classList.contains('active') && settings.backgroundMode === 'image') return;
+      const video = preview?.querySelector('video');
+      if (video) video.pause();
+    }
+
+    function setHeroEditTab(tab) {
+      if (tab !== 'image' && tab !== 'particles') return;
+      settings.backgroundMode = tab;
+      settings.particles = tab === 'particles';
+      saveStoredSettings();
+      applySettings();
+      updateHeroEditMenuState();
+    }
+
+    function updateHeroEditMenuState() {
+      const menu = document.getElementById('heroEditMenu');
+      if (!menu) return;
+      const activeTab = settings.backgroundMode === 'image' ? 'image' : 'particles';
+      const tabs = menu.querySelector('.hero-edit-tabs');
+      if (tabs) tabs.dataset.activeTab = activeTab;
+      menu.querySelectorAll('.hero-edit-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.textContent.trim().toLowerCase() === activeTab);
+      });
+      menu.querySelectorAll('.hero-edit-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.panel === activeTab);
+      });
+      menu.querySelectorAll('.hero-edit-preview').forEach(preview => {
+        preview.classList.toggle('active', activeTab === 'image' && preview.dataset.backgroundFile === settings.backgroundImage);
+      });
+      menu.querySelectorAll('.hero-edit-particle-swatch').forEach(swatch => {
+        swatch.classList.toggle('active', activeTab === 'particles' && swatch.dataset.particleColor === settings.particleColor);
+      });
+      syncHeroPreviewVideos();
+    }
+
+    function toggleCustomColorPanel(forceOpen) {
+      const panel = document.getElementById('customColorPanel');
+      const button = document.querySelector('.hero-edit-add-btn[aria-controls="customColorPanel"]');
+      if (!panel) return;
+      const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !panel.classList.contains('open');
+      panel.classList.toggle('open', shouldOpen);
+      panel.setAttribute('aria-hidden', String(!shouldOpen));
+      if (button) button.setAttribute('aria-expanded', String(shouldOpen));
+    }
+
+    function syncCustomColorInput(value) {
+      const normalized = normalizeHexColor(value);
+      const colorInput = document.getElementById('customParticleColorInput');
+      const hexInput = document.getElementById('customParticleHexInput');
+      const preview = document.getElementById('customColorPreview');
+      if (!normalized) return;
+      if (colorInput) colorInput.value = normalized;
+      if (hexInput) hexInput.value = normalized;
+      if (preview) preview.style.setProperty('--custom-preview-color', normalized);
+    }
+
+    function addCustomParticleColor() {
+      const input = document.getElementById('customParticleHexInput');
+      const hex = normalizeHexColor(input?.value);
+      if (!hex) return;
+      const rgb = hexToRGBString(hex);
+      const existingBuiltin = Object.entries(particleColorThemes).find(([, color]) => color.value === rgb);
+      const existingCustom = getCustomParticleColors().find(color => color.rgb === rgb);
+      const id = existingBuiltin?.[0] || existingCustom?.id || `custom-color-${hex.slice(1)}`;
+      if (!existingBuiltin && !existingCustom) {
+        settings.customParticleColors = [...getCustomParticleColors(), { id, label: hex.toUpperCase(), hex, rgb }];
+      }
+      settings.backgroundMode = 'particles';
+      settings.particles = true;
+      settings.particleColor = id;
+      saveStoredSettings();
+      applySettings();
+      renderHeroEditMenu();
+      toggleCustomColorPanel(true);
+    }
+
+    function removeCustomParticleColor(id) {
+      const colors = getCustomParticleColors();
+      const nextColors = colors.filter(color => color.id !== id);
+      if (nextColors.length === colors.length) return;
+      settings.customParticleColors = nextColors;
+      if (settings.particleColor === id) settings.particleColor = 'white';
+      saveStoredSettings();
+      applySettings();
+      renderHeroEditMenu();
+    }
+
+    function openCustomVideoPicker() {
+      document.getElementById('customVideoInput')?.click();
+    }
+
+    async function addCustomBackgroundVideo(file) {
+      if (!file || !/\.(mp4|webm)$/i.test(file.name)) return;
+      const id = `custom-video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const ext = file.name.split('.').pop().toLowerCase();
+      const label = file.name.replace(/\.[^.]+$/, '') || 'Custom Video';
+      try {
+        await putCustomVideoBlob(id, file);
+        const objectUrl = URL.createObjectURL(file);
+        customVideoObjectUrls.set(id, objectUrl);
+        settings.customBackgroundVideos = [...(Array.isArray(settings.customBackgroundVideos) ? settings.customBackgroundVideos : []), { id, label, name: file.name, ext }];
+        settings.backgroundMode = 'image';
+        settings.backgroundImage = `custom:${id}`;
+        settings.particles = false;
+        saveStoredSettings();
+        applySettings();
+        renderHeroEditMenu();
+      } catch (err) {
+        console.warn('Could not add custom background video.', err);
+      }
+    }
+
+    async function removeCustomBackgroundVideo(id) {
+      const videos = Array.isArray(settings.customBackgroundVideos) ? settings.customBackgroundVideos : [];
+      const nextVideos = videos.filter(video => video.id !== id);
+      if (nextVideos.length === videos.length) return;
+      settings.customBackgroundVideos = nextVideos;
+      const fileId = `custom:${id}`;
+      if (settings.backgroundImage === fileId) {
+        settings.backgroundImage = backgroundImages[0].file;
+        settings.backgroundMode = 'image';
+        settings.particles = false;
+      }
+      const objectUrl = customVideoObjectUrls.get(id);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      customVideoObjectUrls.delete(id);
+      saveStoredSettings();
+      applySettings();
+      renderHeroEditMenu();
+      deleteCustomVideoBlob(id).catch(err => console.warn('Could not remove custom video blob.', err));
+    }
+
+    function syncHeroPreviewVideos() {
+      const menu = document.getElementById('heroEditMenu');
+      if (!menu) return;
+      const imagePanelActive = menu.classList.contains('open') && settings.backgroundMode === 'image';
+      menu.querySelectorAll('.hero-edit-preview video').forEach(video => {
+        const preview = video.closest('.hero-edit-preview');
+        const shouldPlay = imagePanelActive && preview?.classList.contains('active');
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        if (shouldPlay) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      });
+    }
+
+    function closeHeroEditMenu() {
+      const menu = document.getElementById('heroEditMenu');
+      const button = document.querySelector('.hero-edit-button');
+      if (menu) menu.classList.remove('open');
+      if (button) button.setAttribute('aria-expanded', 'false');
+      syncHeroPreviewVideos();
+    }
+
+    function toggleHeroEditMenu() {
+      const menu = document.getElementById('heroEditMenu');
+      const button = document.querySelector('.hero-edit-button');
+      if (!menu || !button) return;
+      renderHeroEditMenu();
+      const isOpen = menu.classList.toggle('open');
+      button.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) syncHeroPreviewVideos();
+    }
+
+    function setBackgroundImage(file) {
+      if (!getAllBackgrounds().some(image => image.file === file)) return;
+      settings.backgroundMode = 'image';
+      settings.backgroundImage = file;
+      settings.particles = false;
+      saveStoredSettings();
+      applySettings();
+      updateHeroEditMenuState();
+    }
+
+    function setParticleColor(id) {
+      if (!getParticleColorPalette()[id]) return;
+      settings.backgroundMode = 'particles';
+      settings.particles = true;
+      settings.particleColor = id;
+      saveStoredSettings();
+      applySettings();
+      updateHeroEditMenuState();
+    }
+
+    document.addEventListener('click', (event) => {
+      const editWrap = event.target.closest('.hero-edit-wrap');
+      if (!editWrap) closeHeroEditMenu();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeHeroEditMenu();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      customVideoObjectUrls.forEach(url => URL.revokeObjectURL(url));
+      customVideoObjectUrls.clear();
+    });
 
     function buildThumb(item) {
       if (item.image) {
@@ -1850,7 +2306,7 @@
     }
 
     const backButtonHTML = `
-      <button class="icon-btn" data-tooltip="Back" onclick="backFromPlayer()" aria-label="Back">
+      <button class="icon-btn" onclick="backFromPlayer()" aria-label="Back">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M19 12H5"></path>
           <path d="M12 19l-7-7 7-7"></path>
@@ -1858,7 +2314,7 @@
       </button>`;
 
     const fullscreenButtonHTML = `
-      <button class="icon-btn" data-tooltip="Fullscreen" onclick="fullscreenFrame()" aria-label="Fullscreen">
+      <button class="icon-btn" onclick="fullscreenFrame()" aria-label="Fullscreen">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M8 3H3v5"></path>
           <path d="M16 3h5v5"></path>
@@ -1873,7 +2329,7 @@
 
     function incognitoButtonHTML(id) {
       return `
-        <button class="icon-btn" data-tooltip="Open in Incognito Tab" onclick="openProxyBlankTab('${id}')" aria-label="Open in incognito tab">
+        <button class="icon-btn" onclick="openProxyBlankTab('${id}')" aria-label="Open in incognito tab">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 3c-3.4 0-6.3 2.1-7.5 5.1"></path>
             <path d="M12 3c3.4 0 6.3 2.1 7.5 5.1"></path>
@@ -1887,7 +2343,7 @@
     function newTabButtonHTML(id, type) {
       const handler = type === 'proxy' ? `openProxyTab('${id}')` : `openGameTab('${id}')`;
       return `
-        <button class="icon-btn" data-tooltip="Open in New Tab" onclick="${handler}" aria-label="Open in new tab">
+        <button class="icon-btn" onclick="${handler}" aria-label="Open in new tab">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M14 3h7v7"></path>
             <path d="M10 14L21 3"></path>
@@ -1957,22 +2413,22 @@
               <div class="game-notch-time" id="gameNotchTime"></div>
             </div>
             <div class="game-notch-right">
-              <button class="game-notch-btn" onclick="backFromPlayer()" title="Back to Games">
+              <button class="game-notch-btn" onclick="backFromPlayer()" aria-label="Back to Games">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                 </svg>
               </button>
-              <button class="game-notch-btn" onclick="refreshGame()" title="Refresh Game">
+              <button class="game-notch-btn" onclick="refreshGame()" aria-label="Refresh Game">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
                 </svg>
               </button>
-              <button class="game-notch-btn" onclick="openGameTab()" title="Open in New Tab">
+              <button class="game-notch-btn" onclick="openGameTab()" aria-label="Open in New Tab">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
                 </svg>
               </button>
-              <button class="game-notch-control" onclick="toggleGameNotch()" title="Toggle Notch">
+              <button class="game-notch-control" onclick="toggleGameNotch()" aria-label="Toggle Notch">
                 <svg viewBox="0 0 24 24" fill="currentColor" class="notch-toggle-icon">
                   <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
                 </svg>
@@ -1999,77 +2455,10 @@
               id="gameFrame"
               class="game-embed"
               data-src="${escapeHTML(game.url)}"
-              title="${escapeHTML(game.title)}"
               allow="fullscreen; pointer-lock; microphone; camera; autoplay"
               allowfullscreen
               loading="lazy"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation allow-pointer-lock"></iframe>
-          </div>
-        </div>
-      `;
-    }
-
-    function buildInfoHTML() {
-      return `
-        <div class="info-page">
-          <div class="info-wrap">
-            <section class="info-hero">
-              <h1>Orbit</h1>
-              <div class="tagline">Your browser hub for games, tools, and more.</div>
-              <p>A modern launchpad designed for speed, simplicity, and style. Orbit brings together games, proxy tools, utilities, and web apps in a clean, atmospheric interface.</p>
-              <div class="info-stats">
-                <div class="info-stat">
-                  <strong>46+</strong>
-                  <span>Games</span>
-                </div>
-                <div class="info-stat">
-                  <strong>v1.3</strong>
-                  <span>Latest</span>
-                </div>
-                <div class="info-stat">
-                  <strong>Early</strong>
-                  <span>Access</span>
-                </div>
-              </div>
-            </section>
-
-            <div class="info-features">
-              <div class="info-feature">
-                <span class="icon">🎮</span>
-                <h3>Games Library</h3>
-                <p>46+ playable games with dedicated players, fullscreen support, and smooth performance.</p>
-              </div>
-              <div class="info-feature">
-                <span class="icon">🌐</span>
-                <h3>Proxy Tools</h3>
-                <p>Built-in proxy integration for unrestricted browsing with privacy controls.</p>
-              </div>
-              <div class="info-feature">
-                <span class="icon">🧰</span>
-                <h3>Utilities</h3>
-                <p>Lightweight tools for notes, tabs, links, and everyday browser workflows.</p>
-              </div>
-              <div class="info-feature">
-                <span class="icon">🎨</span>
-                <h3>Custom Themes</h3>
-                <p>Personalize colors, blur, particles, motion, and layout density.</p>
-              </div>
-              <div class="info-feature">
-                <span class="icon">⚙️</span>
-                <h3>Settings</h3>
-                <p>Fine-tune audio, visuals, contrast, and behavior to match your preferences.</p>
-              </div>
-              <div class="info-feature">
-                <span class="icon">🔄</span>
-                <h3>Regular Updates</h3>
-                <p>New features, games, and improvements shipped frequently.</p>
-              </div>
-            </div>
-
-            <div class="info-bottom">
-              <div class="version">Orbit v1.3 — Early Access</div>
-              <p>Built for speed, privacy, and play.</p>
-            </div>
           </div>
         </div>
       `;
@@ -2080,7 +2469,184 @@
       return settings[id];
     }
 
+    const browserSettingDefaults = {
+      searchEngine: 'duckduckgo',
+      bookmarksAutoHide: false,
+      addressSelectAll: true
+    };
+
+    function getBrowserSetting(id) {
+      if (window.VoltraBrowser && typeof window.VoltraBrowser.getSetting === 'function') {
+        const value = window.VoltraBrowser.getSetting(id);
+        if (value !== undefined) return value;
+      }
+      return browserSettingDefaults[id];
+    }
+
+    function buildHelpHTML() {
+      const repoUrl = 'https://github.com/orbitunblocker/orbitunblocker.github.io';
+      return `
+        <main class="orbit-help-page" aria-labelledby="orbitHelpTitle">
+          <section class="orbit-help-hero orbit-help-reveal">
+            <div class="orbit-help-hero-label"><span class="orbit-help-hero-dot"></span>Orbit Help &amp; Information</div>
+            <h1 id="orbitHelpTitle">Everything you need to know about Orbit.</h1>
+            <p>Learn what Orbit is, get help with common problems, or follow a beginner-friendly guide to run your own local copy of Orbit on a Windows PC.</p>
+          </section>
+
+          <section class="orbit-help-dashboard">
+            <div class="orbit-help-column">
+              <section class="orbit-help-panel orbit-help-reveal">
+                <div class="orbit-help-panel-header">
+                  <h2>Run Orbit on your own PC</h2>
+                  <p>This is optional. Follow these steps if you want to download Orbit and run your own private local copy on a Windows computer. You do not need coding experience.</p>
+                </div>
+                <div class="orbit-help-quick-start">
+                  ${helpStep('download', 'Download the Orbit project', `On your PC, open the Orbit GitHub repository. Click <strong>Code</strong>, then choose <strong>Download ZIP</strong>.`, `<a class="orbit-help-step-link" href="${repoUrl}" target="_blank" rel="noopener noreferrer">Open the Orbit GitHub repository &rarr;</a>`)}
+                  ${helpStep('folder', 'Extract the downloaded ZIP', `Open your <strong>Downloads</strong> folder and find the Orbit ZIP file. Right-click it, choose <strong>Extract All</strong>, then open the newly extracted Orbit folder.`)}
+                  ${helpStep('terminal-window', 'Copy the Orbit folder path', `While inside the extracted Orbit folder, click the address bar at the top of File Explorer. Copy the full folder location. You will use this to tell Terminal where your Orbit files are.`, `<div class="orbit-help-step-note">Example folder path:</div><code class="orbit-help-command">C:\\Users\\YourName\\Downloads\\orbitunblocker.github.io-master</code>`)}
+                  ${helpStep('terminal', 'Open Windows Terminal', `Open the Windows Start menu, search for <strong>Terminal</strong>, and open Windows Terminal or PowerShell.`)}
+                  ${helpStep('code', 'Move Terminal into the Orbit folder', `Type <strong>cd</strong>, add a space, paste the folder path you copied, and press Enter. Put the path inside quotation marks if it contains spaces.`, `<code class="orbit-help-command">cd "C:\\path\\to\\your\\Orbit\\folder"</code><div class="orbit-help-step-note">After pressing Enter, Terminal will now run commands inside the Orbit project folder.</div>`)}
+                  ${helpStep('install', 'Install Orbit\'s required packages', `Orbit uses Node.js packages that need to be installed before the server can run. Enter the command below and wait for it to finish.`, `<code class="orbit-help-command">npm install</code><div class="orbit-help-step-note">You normally only need to do this the first time you set up the downloaded project.</div>`)}
+                  ${helpStep('play', 'Start your local Orbit server', `Once installation finishes, start Orbit with the command below. Keep this Terminal window open while you use your local copy of Orbit.`, `<code class="orbit-help-command">npm start</code><div class="orbit-help-step-note">This runs the project\'s configured start script, currently <code>node server.js</code>.</div>`)}
+                  ${helpStep('globe', 'Open your local Orbit link', `Open your web browser and visit the address below. This address points to Orbit running directly from your own computer.`, `<code class="orbit-help-command">http://localhost:8080</code><div class="orbit-help-step-note">This local link only works while the Orbit server is running on your PC. Closing the Terminal stops the local server.</div>`)}
+                </div>
+              </section>
+
+              <section class="orbit-help-panel orbit-help-reveal">
+                <div class="orbit-help-panel-header">
+                  <h2>Help Topics</h2>
+                  <p>A quick overview of Orbit's main features and what to check when something is not working.</p>
+                </div>
+                <div class="orbit-help-topic-grid">
+                  ${helpTopic('globe', 'Proxy & Browsing', `Orbit uses an Ultraviolet-based proxy browser for supported external browsing. If every site stops loading, the proxy connection may need to reconnect or Orbit may need to be refreshed.`)}
+                  ${helpTopic('gamepad', 'Games', `Orbit's game library contains multiple games from different sources. One broken game does not always mean the entire Games page is broken.`)}
+                  ${helpTopic('download', 'Downloads', `Downloads started through websites may behave differently when a page is loaded through the proxy. Browser security rules can also affect downloads.`)}
+                </div>
+              </section>
+
+              <section class="orbit-help-panel orbit-help-reveal">
+                <div class="orbit-help-panel-header">
+                  <h2>Frequently Asked Questions</h2>
+                  <p>Straightforward answers to common Orbit questions.</p>
+                </div>
+                <div class="orbit-help-faq-list">
+                  ${helpFaq('Do I need to download Orbit to use it?', `No. The local hosting guide above is only for people who want to run their own copy of Orbit directly from a PC. If you already have a working hosted Orbit link, you can simply open that link in your browser.`)}
+                  ${helpFaq('What is localhost:8080?', `<code>localhost:8080</code> is not a public Orbit website. It is a private address used when you run the Orbit server on your own computer. It normally only works on the computer currently running that server.`)}
+                  ${helpFaq('Why does the proxy sometimes take a moment to load?', `Orbit may need a moment to initialize Ultraviolet, the service worker, and the local proxy transport before the first proxied page can open. This can be more noticeable after a fresh load, browser restart, or service-worker restart.`)}
+                  ${helpFaq('What should I do if every proxied page stops loading?', `Try reloading Orbit first. If you are running Orbit locally, make sure the Terminal running <code>npm start</code> or <code>node server.js</code> is still open. If the problem continues, restarting the Orbit server or clearing old Orbit site data may help.`)}
+                  ${helpFaq('Why does one website fail while other websites work?', `A single website can have compatibility problems without the entire proxy being offline. Websites use different technologies and security systems, so test another website before assuming Orbit is completely down.`)}
+                  ${helpFaq('Why did one game suddenly stop working?', `Games can rely on separate external files or hosting sources. If other games still work, the problem may only affect that specific game rather than Orbit's entire Games system.`)}
+                  ${helpFaq('What does EADDRINUSE mean when starting Orbit?', `It usually means another program or an older copy of the Orbit server is already using the same network port. Close the previous server Terminal before starting another copy, or free port <code>8080</code>.`)}
+                  ${helpFaq('How do I report a useful bug?', `Explain what you were doing before the problem, what you expected to happen, and what actually happened. Include screenshots or error messages when possible. For proxy issues, mention whether every website is affected or only one.`)}
+                </div>
+              </section>
+            </div>
+
+            <div class="orbit-help-column">
+              <section class="orbit-help-panel orbit-help-reveal">
+                <div class="orbit-help-panel-header">
+                  <h2>About Orbit</h2>
+                  <p>A quick explanation of the project.</p>
+                </div>
+                <div class="orbit-help-info-content">
+                  <p>Orbit is a web-based hub that brings browsing, games, tools, apps, and other content together inside one unified interface.</p>
+                  <div class="orbit-help-info-points">
+                    ${helpInfoPoint('Orbit\'s proxy browser uses Ultraviolet to rewrite and route supported websites through the integrated proxy system.')}
+                    ${helpInfoPoint('Games can use independent sources, so individual titles may occasionally become unavailable.')}
+                    ${helpInfoPoint('Orbit can also be downloaded and run locally on your own computer.')}
+                    ${helpInfoPoint('Localhost is only for a copy of Orbit being served directly from your device.')}
+                  </div>
+                </div>
+              </section>
+
+              <section class="orbit-help-panel orbit-help-reveal">
+                <div class="orbit-help-panel-header">
+                  <h2>Quick Troubleshooting</h2>
+                  <p>Start with the situation that best matches your issue.</p>
+                </div>
+                <div class="orbit-help-trouble-list">
+                  ${helpTrouble('Every website fails', 'Proxy', 'Reload Orbit first. If you host Orbit locally, confirm the server Terminal is still running.')}
+                  ${helpTrouble('Only one website fails', 'Website', 'Test another website. The affected site may have a compatibility issue with proxied browsing.')}
+                  ${helpTrouble('One game stopped loading', 'Games', `Try another game. If other titles work normally, the affected game's source may be unavailable.`)}
+                  ${helpTrouble('Localhost will not open', 'Local', 'Check that <code>npm start</code> or <code>node server.js</code> is still running in Terminal and did not display an error.')}
+                </div>
+              </section>
+
+              <section class="orbit-help-panel orbit-help-reveal">
+                <div class="orbit-help-panel-header">
+                  <h2>Community &amp; Support</h2>
+                  <p>Follow Orbit development and find official project resources.</p>
+                </div>
+                <div class="orbit-help-community-list">
+                  ${helpCommunityLink(repoUrl, 'GitHub', 'View the Orbit project and source', 'github')}
+                  <div class="orbit-help-community-card disabled">
+                    <div class="orbit-help-community-icon">${helpIcon('discord')}</div>
+                    <div class="orbit-help-community-content"><div class="orbit-help-community-title">Discord</div><div class="orbit-help-community-sub">Official Orbit community</div></div>
+                    <span class="orbit-help-coming-soon">Coming Soon</span>
+                  </div>
+                  ${helpCommunityLink(`${repoUrl}/issues`, 'Report an Issue', 'Report bugs through GitHub', 'bug')}
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <footer class="orbit-help-footer"><span>Orbit Help &amp; Information</span><span>Explore without leaving your orbit.</span></footer>
+        </main>
+      `;
+    }
+
+    function helpStep(icon, title, description, extra = '') {
+      return `
+        <div class="orbit-help-quick-step">
+          <div class="orbit-help-step-icon">${helpIcon(icon)}</div>
+          <div class="orbit-help-step-content">
+            <div class="orbit-help-step-title">${title}</div>
+            <div class="orbit-help-step-description">${description}</div>
+            ${extra}
+          </div>
+        </div>`;
+    }
+
+    function helpTopic(icon, title, description) {
+      return `<div class="orbit-help-topic-card"><div class="orbit-help-topic-icon">${helpIcon(icon)}</div><div class="orbit-help-topic-title">${title}</div><div class="orbit-help-topic-description">${description}</div></div>`;
+    }
+
+    function helpFaq(question, answer) {
+      return `<div class="orbit-help-faq-item"><button class="orbit-help-faq-question" type="button"><span>${question}</span><span class="orbit-help-chevron" aria-hidden="true"></span></button><div class="orbit-help-faq-answer-wrap"><div class="orbit-help-faq-answer-inner"><div class="orbit-help-faq-answer">${answer}</div></div></div></div>`;
+    }
+
+    function helpInfoPoint(text) {
+      return `<div class="orbit-help-info-point"><span class="orbit-help-info-point-dot"></span><span>${text}</span></div>`;
+    }
+
+    function helpTrouble(title, tag, description) {
+      return `<div class="orbit-help-trouble-item"><div class="orbit-help-trouble-top"><div class="orbit-help-trouble-title">${title}</div><div class="orbit-help-tag">${tag}</div></div><div class="orbit-help-trouble-description">${description}</div></div>`;
+    }
+
+    function helpCommunityLink(url, title, sub, icon) {
+      return `<a class="orbit-help-community-card" href="${url}" target="_blank" rel="noopener noreferrer"><div class="orbit-help-community-icon">${helpIcon(icon)}</div><div class="orbit-help-community-content"><div class="orbit-help-community-title">${title}</div><div class="orbit-help-community-sub">${sub}</div></div><span class="orbit-help-community-arrow">›</span></a>`;
+    }
+
+    function helpIcon(name) {
+      const icons = {
+        download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2"/></svg>',
+        folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5h6l2 2h10v9.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7.5V5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v2.5"/></svg>',
+        'terminal-window': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m7 8 3 3-3 3"/><path d="M12 15h5"/></svg>',
+        terminal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 10 11 4 5"/><path d="M12 19h8"/></svg>',
+        code: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9 4 12l4 3"/><path d="m16 9 4 3-4 3"/><path d="m14 5-4 14"/></svg>',
+        install: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3"/><path d="M12 18v3"/><path d="m4.22 4.22 2.12 2.12"/><path d="m17.66 17.66 2.12 2.12"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="m4.22 19.78 2.12-2.12"/><path d="m17.66 6.34 2.12-2.12"/></svg>',
+        play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 11 7-11 7z"/></svg>',
+        globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg>',
+        gamepad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10h12a4 4 0 0 1 4 4v3a3 3 0 0 1-5.1 2.1L15 17H9l-1.9 2.1A3 3 0 0 1 2 17v-3a4 4 0 0 1 4-4Z"/><path d="M7 13v4"/><path d="M5 15h4"/><circle cx="17" cy="14" r=".5" fill="currentColor"/><circle cx="19" cy="16" r=".5" fill="currentColor"/></svg>',
+        github: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7C5.7.7.6 5.8.6 12.1c0 5 3.3 9.3 7.8 10.8.6.1.8-.3.8-.6v-2.2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.6 1.2 3.3.9.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11.1 11.1 0 0 1 5.8 0C17.8 4.7 18.8 5 18.8 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.1v3.2c0 .4.2.7.8.6a11.5 11.5 0 0 0 7.8-10.8C23.4 5.8 18.3.7 12 .7Z"/></svg>',
+        discord: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 5.3A18 18 0 0 0 15.1 4l-.5 1a16.2 16.2 0 0 0-5.2 0l-.5-1a18 18 0 0 0-4.4 1.3C1.7 9.5 1 13.6 1.4 17.7a17.8 17.8 0 0 0 5.4 2.7l1.3-1.8a11.7 11.7 0 0 1-2.1-1l.5-.4a12.7 12.7 0 0 0 11 0l.6.4a13 13 0 0 1-2.2 1l1.3 1.8a17.8 17.8 0 0 0 5.4-2.7c.5-4.8-.8-8.9-3.1-12.4ZM8.5 15.2c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Zm7 0c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Z"/></svg>',
+        bug: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8"/><path d="M9 2v3"/><path d="M15 2v3"/><rect x="5" y="5" width="14" height="16" rx="7"/><path d="M2 13h3"/><path d="M19 13h3"/><path d="M3 7l3 2"/><path d="M21 7l-3 2"/><path d="M8 12h8"/><path d="M8 16h8"/></svg>'
+      };
+      return icons[name] || icons.globe;
+    }
+
     function buildSettingsHTML() {
+      settingsPanel = normalizeSettingsPanel(settingsPanel);
       const toggleRow = (id, title, desc, checked) => `
         <div class="settings-row">
           <div class="settings-row-left">
@@ -2109,6 +2675,22 @@
         </div>
       `;
 
+      const customSelect = (scope, id, options, currentValue) => {
+        const selected = options.find(opt => opt.value === currentValue) || options[0];
+        return `
+          <div class="settings-custom-select" data-scope="${scope}" data-setting="${id}">
+            <button class="settings-custom-select-trigger" type="button" onclick="toggleSettingsDropdown(this)" onkeydown="handleSettingsDropdownKeydown(event, this)" aria-haspopup="listbox" aria-expanded="false">
+              <span class="settings-custom-select-label">${escapeHTML(selected ? selected.label : '')}</span>
+              <svg class="settings-custom-select-chevron" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            </button>
+            <div class="settings-custom-select-options" role="listbox">
+              ${options.map(opt => `
+                <button class="settings-custom-select-option${opt.value === currentValue ? ' selected' : ''}" type="button" data-value="${escapeHTML(opt.value)}" role="option" aria-selected="${opt.value === currentValue}" onclick="selectSettingsDropdownOption(this)" onkeydown="handleSettingsDropdownOptionKeydown(event, this)">${escapeHTML(opt.label)}</button>
+              `).join('')}
+            </div>
+          </div>`;
+      };
+
       const selectRow = (id, title, desc, options) => `
         <div class="settings-row">
           <div class="settings-row-left">
@@ -2116,9 +2698,53 @@
             <p>${desc}</p>
           </div>
           <div class="settings-control">
-            <select class="settings-select" onchange="onSelect('${id}', this.value)">
-              ${options.map(opt => `<option value="${opt.value}" ${settings[id] === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
-            </select>
+            ${customSelect('settings', id, options, settings[id])}
+          </div>
+        </div>
+      `;
+
+      const browserSelectRow = (id, title, desc, options) => `
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <h4>${title}</h4>
+            <p>${desc}</p>
+          </div>
+          <div class="settings-control">
+            ${customSelect('browser', id, options, getBrowserSetting(id))}
+          </div>
+        </div>
+      `;
+
+      const browserToggleRow = (id, title, desc) => `
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <h4>${title}</h4>
+            <p>${desc}</p>
+          </div>
+          <div class="settings-control">
+            <label class="toggle">
+              <input type="checkbox" ${getBrowserSetting(id) ? 'checked' : ''} onchange="setBrowserSetting('${id}', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      `;
+
+      const settingsSubhead = (title, desc) => `
+        <div class="settings-section-subhead">
+          <h4>${title}</h4>
+          <p>${desc}</p>
+        </div>
+      `;
+
+      const browserActionRow = (title, desc, action, confirmText = '') => `
+        <div class="settings-row settings-action-row">
+          <div class="settings-row-left">
+            <h4>${title}</h4>
+            <p>${desc}</p>
+          </div>
+          <div class="settings-control">
+            <button class="settings-action-btn" type="button" onclick="runBrowserDataAction('${action}', ${JSON.stringify(confirmText)})">Run</button>
           </div>
         </div>
       `;
@@ -2178,25 +2804,7 @@
       const audioPanel = panel('audio', 'Audio', 'Control background music and interface sound effects.', `
         ${toggleRow('music', 'Background Music', 'Play atmospheric music while you browse.', settings.music)}
         ${rangeRow('musicVolume', 'Music Volume', 'Set the background music level.', 0, 50, 1)}
-        <div class="settings-row">
-          <div class="settings-row-left">
-            <h4>Select Background Music</h4>
-            <p>Choose the music source for the homepage.</p>
-          </div>
-          <div class="settings-control">
-            <div class="settings-custom-select">
-              <button class="settings-custom-select-trigger" onclick="toggleBgMusicDropdown()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleBgMusicDropdown()}" aria-haspopup="listbox" aria-expanded="false" role="combobox">
-                <span class="settings-custom-select-label">${bgMusicLabels[settings.bgMusic] || 'Orbit (Default)'}</span>
-                <svg class="settings-custom-select-chevron" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-              </button>
-              <div class="settings-custom-select-options" role="listbox">
-                ${bgMusicOptions.map(opt => `
-                  <button class="settings-custom-select-option${settings.bgMusic === opt.value ? ' selected' : ''}" data-value="${opt.value}" role="option" aria-selected="${settings.bgMusic === opt.value}" onclick="selectBgMusic('${opt.value}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectBgMusic('${opt.value}')}">${opt.label}</button>
-                `).join('')}
-              </div>
-            </div>
-          </div>
-        </div>
+        ${selectRow('bgMusic', 'Select Background Music', 'Choose the music source for the homepage.', bgMusicOptions)}
         <div class="settings-custom-url-row" id="customMusicUrlRow" style="display: ${settings.bgMusic === 'custom' ? 'block' : 'none'}; max-height: ${settings.bgMusic === 'custom' ? '150px' : '0'}; opacity: ${settings.bgMusic === 'custom' ? '1' : '0'};">
           <div class="settings-row" style="border-bottom: none; padding: 0;">
             <div class="settings-row-left">
@@ -2282,163 +2890,21 @@
       `);
 
       const browserPanel = panel('browser', 'Browser', 'Browser launch and behavior settings.', `
-        <div class="settings-note">Browser settings will be added in a future update.</div>
-      `);
+        ${settingsSubhead('General', 'Controls for Orbit\'s integrated proxy browser.')}
+        ${browserSelectRow('searchEngine', 'Default Search Engine', 'Choose the provider used when proxy address-bar text is a search query.', [
+          { value: 'duckduckgo', label: 'DuckDuckGo' },
+          { value: 'brave', label: 'Brave Search' },
+          { value: 'bing', label: 'Bing' }
+        ])}
+        ${browserToggleRow('addressSelectAll', 'Select Address on Focus', 'Select all address-bar text on first click or focus so typing replaces it.')}
+        ${browserToggleRow('bookmarksAutoHide', 'Auto-hide Bookmarks Bar', 'Keep the bookmarks bar tucked away until you hover near it.')}
 
-      const aboutPanel = panel('about', 'About', 'Orbit version and data management.', `
-        <div class="settings-about-card">
-          <strong>🚀 Orbit v2.1</strong>
-          <p>A sleek black-and-white command deck for games, tools, browsing, and immersive web experiences.</p>
-          <div class="settings-about-meta">
-            <span>Early Access</span>
-            <span>Local Storage</span>
-          </div>
-        </div>
-        <button class="settings-reset" type="button" onclick="resetSettings()">Reset All Settings</button>
-        <button class="settings-reset" type="button" onclick="wipeAllData()" style="margin-top:8px; border-color:rgba(255,80,80,0.3);">Wipe All Data</button>
-      `);
+        ${settingsSubhead('Privacy & Data', 'Safe cleanup actions for local browser/proxy data.')}
+        ${browserActionRow('Clear Proxy Cache', 'Deletes Cache Storage entries used by Orbit and the service worker. It does not clear saved Settings.', 'clearCache', 'Clear Orbit cache storage?')}
+        ${browserActionRow('Clear Browser Session Data', 'Clears temporary sessionStorage for the current Orbit tab.', 'clearSession', 'Clear temporary session data for this Orbit tab?')}
 
-      const helpPanel = panel('help', 'Help', 'Frequently asked questions, quick start guide, and troubleshooting.', `
-        <div class="help-section" style="animation-delay:0ms">
-          <h4 class="help-section-title">Frequently Asked Questions</h4>
-          <p class="help-section-desc">Common questions about using Orbit.</p>
-          <div style="display:grid;gap:10px;width:100%;">
-            <details class="help-card">
-              <summary>How do I create my own Orbit links?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Orbit uses the Ultraviolet proxy to create encoded links. Open the Browser tab, navigate to any site, and the URL bar will show the proxied link. You can copy and share that link with others.</div>
-            </details>
-            <details class="help-card">
-              <summary>How do I host Orbit myself?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Clone the repository from GitHub, install Node.js dependencies, and run the server locally. See the Quick Start guide below for detailed steps. You can also deploy to Railway or any Node.js-compatible platform.</div>
-            </details>
-            <details class="help-card">
-              <summary>How do I deploy using Railway?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Fork the repository, connect your GitHub account to Railway, create a new project from the fork, and set the start command to node server.js. Railway handles the rest automatically.</div>
-            </details>
-            <details class="help-card">
-              <summary>Why do some websites not load?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Some sites block proxy connections or require modern browser features. Try switching search engines in the browser settings, clearing the proxy cache, or loading the site directly without the proxy.</div>
-            </details>
-            <details class="help-card">
-              <summary>How do proxy links work?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Orbit encodes the target URL using the Ultraviolet XOR codec and routes traffic through a service worker and bare server. This makes it appear as if you are browsing a different site.</div>
-            </details>
-            <details class="help-card">
-              <summary>Can I customize Orbit?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Yes. Use Settings to change accent themes, glow intensity, particles, cloaking, audio, and more. The Visuals panel gives you full control over the look and feel of the interface.</div>
-            </details>
-            <details class="help-card">
-              <summary>Where are themes located?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Themes are built into the codebase. You can select from nine accent themes in Settings of the Appearance panel. Custom themes are not yet supported but may be added in future updates.</div>
-            </details>
-            <details class="help-card">
-              <summary>How do I update Orbit?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Pull the latest changes from the GitHub repository. If deployed on Railway, reconnect your project to the repository and Railway will redeploy automatically.</div>
-            </details>
-            <details class="help-card">
-              <summary>How do I report bugs?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Open an issue on the GitHub repository with a description of the bug, steps to reproduce, and any console errors. Include your browser version and OS for faster resolution.</div>
-            </details>
-            <details class="help-card">
-              <summary>How do I clear cached proxy data?<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-answer">Go to your browser's developer tools, navigate to Application Service Workers, and unregister the service worker. Then clear your browser cache and reload Orbit. This resets all proxy state.</div>
-            </details>
-          </div>
-        </div>
-
-        <div class="help-section" style="animation-delay:60ms">
-          <h4 class="help-section-title">Quick Start</h4>
-          <p class="help-section-desc">Get Orbit up and running in minutes.</p>
-          <div class="help-timeline">
-            <div class="help-timeline-step">
-              <div class="help-timeline-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </div>
-              <div class="help-timeline-content">
-                <strong>Clone the repository</strong>
-                <span><code>git clone https://github.com/your-username/orbit.git</code></span>
-              </div>
-            </div>
-            <div class="help-timeline-step">
-              <div class="help-timeline-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-              </div>
-              <div class="help-timeline-content">
-                <strong>Install dependencies</strong>
-                <span><code>npm install</code></span>
-              </div>
-            </div>
-            <div class="help-timeline-step">
-              <div class="help-timeline-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="18" y1="16" x2="22" y2="16"/></svg>
-              </div>
-              <div class="help-timeline-content">
-                <strong>Start the server</strong>
-                <span><code>node server.js</code></span>
-                <span>Orbit runs on <code>http://localhost:8080</code></span>
-              </div>
-            </div>
-            <div class="help-timeline-step">
-              <div class="help-timeline-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              </div>
-              <div class="help-timeline-content">
-                <strong>Deploy (optional)</strong>
-                <span>Connect your GitHub fork to Railway for free hosting. Set the start command to <code>node server.js</code>.</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="help-section" style="animation-delay:120ms">
-          <h4 class="help-section-title">Troubleshooting</h4>
-          <p class="help-section-desc">Common issues and their fixes.</p>
-          <div style="display:grid;gap:8px;width:100%;">
-            <details class="help-category">
-              <summary class="help-category-btn">Proxy<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-category-solution">If proxy pages fail to load, try switching search engines or clearing the service worker cache. Some websites block known proxy IP ranges.</div>
-            </details>
-            <details class="help-category">
-              <summary class="help-category-btn">Games<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-category-solution">Ensure your browser supports iframe embeds and that the game URL is accessible. Some games require direct loading (no proxy) which Orbit handles automatically.</div>
-            </details>
-            <details class="help-category">
-              <summary class="help-category-btn">Downloads<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-category-solution">Hard refresh (Ctrl+Shift+R) to bypass cached assets. Clear your browser cache in Settings Privacy if pages appear broken.</div>
-            </details>
-            <details class="help-category">
-              <summary class="help-category-btn">Cache<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-category-solution">Open DevTools, go to Application Service Workers, click Unregister. Reload the page. This fixes most proxy and UV initialization issues.</div>
-            </details>
-            <details class="help-category">
-              <summary class="help-category-btn">Service Worker<svg class="help-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></summary>
-              <div class="help-category-solution">Restart the server, update Node.js, check for port conflicts on 8080, and verify the UV bundle files are present in the <code>uv/</code> directory.</div>
-            </details>
-          </div>
-        </div>
-
-        <div class="help-section" style="animation-delay:180ms">
-          <h4 class="help-section-title">Helpful Links</h4>
-          <p class="help-section-desc">Resources to help you get the most out of Orbit.</p>
-          <div class="help-links">
-            <a href="https://github.com/your-username/orbit" target="_blank" class="help-link-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-              GitHub
-            </a>
-            <a href="https://railway.app" target="_blank" class="help-link-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-              Railway
-            </a>
-            <a href="https://github.com/your-username/orbit/wiki" target="_blank" class="help-link-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-              Documentation
-            </a>
-            <a href="https://discord.gg/orbit" target="_blank" class="help-link-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.074.074 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
-              Discord
-            </a>
-          </div>
-        </div>
+        ${settingsSubhead('Advanced Settings', 'Recovery controls for the proxy environment.')}
+        ${browserActionRow('Reset Proxy Environment', 'Clears Cache Storage, unregisters the Orbit service worker, then reloads so it can register fresh.', 'resetProxyEnvironment', 'Reset the proxy environment and reload Orbit?')}
       `);
 
       const settingsNavIconHTML = (panelId) => {
@@ -2457,9 +2923,6 @@
 
           case 'launching':
             return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="m226-559 78 33q14-28 29-54t33-52l-56-11-84 84Zm142 83 114 113q42-16 90-49t90-75q70-70 109.5-155.5T806-800q-72-5-158 34.5T492-656q-42 42-75 90t-49 90Zm155-121.5q0-33.5 23-56.5t57-23q34 0 57 23t23 56.5q0 33.5-23 56.5t-57 23q-34 0-57-23t-23-56.5ZM565-220l84-84-11-56q-26 18-52 32.5T532-299l33 79Zm313-653q19 121-23.5 235.5T708-419l20 99q4 20-2 39t-20 33L538-80l-84-197-171-171-197-84 167-168q14-14 33.5-20t39.5-2l99 20q104-104 218-147t235-24ZM157-321q35-35 85.5-35.5T328-322q35 35 34.5 85.5T327-151q-25 25-83.5 43T82-76q14-103 32-161.5t43-83.5Zm57 56q-10 10-20 36.5T180-175q27-4 53.5-13.5T270-208q12-12 13-29t-11-29q-12-12-29-11.5T214-265Z"/></svg>`;
-
-          case 'about':
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>`;
 
           case 'help':
             return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M513.5-254.5Q528-269 528-290t-14.5-35.5Q499-340 478-340t-35.5 14.5Q428-311 428-290t14.5 35.5Q457-240 478-240t35.5-14.5ZM442-394h74q0-33 7.5-52t42.5-52q26-26 41-49.5t15-56.5q0-56-41-86t-97-30q-57 0-92.5 30T342-618l66 26q5-18 22.5-39t53.5-21q32 0 48 17.5t16 38.5q0 20-12 37.5T506-526q-44 39-54 59t-10 73Zm38 314q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>`;
@@ -2486,11 +2949,25 @@
         </button>
       `;
 
+      const navAction = (id, label) => `
+        <button
+          type="button"
+          class="settings-nav-item settings-nav-action"
+          data-action="${id}"
+          onclick="loadSection('${id}')"
+          aria-current="false">
+          <span class="settings-nav-left">
+            <span class="settings-nav-icon" aria-hidden="true">${settingsNavIconHTML(id)}</span>
+            <span class="settings-nav-label">${label}</span>
+          </span>
+        </button>
+      `;
+
       return `
         <div class="settings-page">
           <div class="settings-window">
             <div class="settings-window-header">
-              <h2>Orbit</h2>
+              <h2>Settings</h2>
             </div>
             <div class="settings-window-body">
               <nav class="settings-sidebar">
@@ -2500,8 +2977,7 @@
                 ${navItem('launching', 'Launching', 'Game and browser launch behavior')}
                 ${navItem('browser', 'Browser', 'Browser launch and behavior')}
                 ${navItem('performance', 'Account', 'User profile and identity settings')}
-                ${navItem('about', 'About & Statistics', 'Version, data, and reset')}
-                ${navItem('help', 'Help', 'FAQ, quick start, and troubleshooting')}
+                ${navAction('help', 'Help')}
 
               </nav>
               <div class="settings-panels">
@@ -2511,8 +2987,6 @@
                 ${launchingPanel}
                 ${browserPanel}
                 ${performancePanel}
-                ${aboutPanel}
-                ${helpPanel}
               </div>
             </div>
           </div>
@@ -2522,6 +2996,7 @@
 
 
     function switchSettingsPanel(id) {
+      id = normalizeSettingsPanel(id);
       settingsPanel = id;
       saveStoredSettings();
       document.querySelectorAll('.settings-nav-item').forEach(btn => {
@@ -2534,7 +3009,50 @@
       });
     }
 
+    let helpRevealObserver = null;
+
+    function teardownHelpPageInteractions() {
+      if (helpRevealObserver) {
+        helpRevealObserver.disconnect();
+        helpRevealObserver = null;
+      }
+    }
+
+    function initHelpPageInteractions() {
+      teardownHelpPageInteractions();
+      const helpRoot = mainContent.querySelector('.orbit-help-page');
+      if (!helpRoot) return;
+
+      const faqItems = Array.from(helpRoot.querySelectorAll('.orbit-help-faq-item'));
+      faqItems.forEach(item => {
+        const button = item.querySelector('.orbit-help-faq-question');
+        if (!button) return;
+        button.addEventListener('click', () => {
+          const isOpen = item.classList.contains('open');
+          faqItems.forEach(other => other.classList.remove('open'));
+          if (!isOpen) item.classList.add('open');
+        });
+      });
+
+      const revealItems = Array.from(helpRoot.querySelectorAll('.orbit-help-reveal'));
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || typeof IntersectionObserver === 'undefined') {
+        revealItems.forEach(item => item.classList.add('visible'));
+        return;
+      }
+
+      helpRevealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('visible');
+          helpRevealObserver.unobserve(entry.target);
+        });
+      }, { threshold: 0.06 });
+
+      revealItems.forEach(item => helpRevealObserver.observe(item));
+    }
+
     function render(section, query = '') {
+      teardownHelpPageInteractions();
       currentSection = section;
       if (section !== null) heroSearchWidthInitialized = false;
       if (section === 'games' || section === 'tools' || section === 'apps') {
@@ -2570,12 +3088,13 @@
 
       heroSection.style.display = isFullPage ? 'none' : '';
       document.body.classList.remove('on-homepage');
+      document.body.classList.toggle('settings-page-active', section === 'settings');
 
       let html = '';
       if (section === 'settings') {
         html = buildSettingsHTML();
-      } else if (section === 'info') {
-        html = buildInfoHTML();
+      } else if (section === 'help') {
+        html = buildHelpHTML();
       } else {
         html = buildGamesHTML(section, query);
       }
@@ -2586,6 +3105,8 @@
       updateTabCloakState();
       if (section === 'settings') {
         updateLaunchModeVisibility();
+      } else if (section === 'help') {
+        initHelpPageInteractions();
       }
 
       // Hide loading spinner when game icons are loaded (only for first games page load)
@@ -2656,6 +3177,7 @@
 
     function loadSection(section) {
       if (section === 'browser') {
+        document.body.classList.remove('settings-page-active');
         loadBrowserPage();
         return;
       }
@@ -3237,6 +3759,7 @@
       mainContent.innerHTML = '';
       currentSection = null;
       setActiveNav('home');
+      document.body.classList.remove('settings-page-active');
       document.body.classList.add('on-homepage');
       clearHomeSearch();
       updateTabCloakState();
@@ -3304,15 +3827,37 @@
         theme = accentThemes.snow;
         settings.accent = 'snow';
       }
+      if (!Array.isArray(settings.customParticleColors)) settings.customParticleColors = [];
+      if (!Array.isArray(settings.customBackgroundVideos)) settings.customBackgroundVideos = [];
+      if (settings.particleColor === 'theme') settings.particleColor = 'white';
+      if (!getAllBackgrounds().some(image => image.file === settings.backgroundImage)) {
+        settings.backgroundImage = backgroundImages[0].file;
+      }
+      const particlePalette = getParticleColorPalette();
+      if (!particlePalette[settings.particleColor]) {
+        settings.particleColor = 'white';
+      }
+      if (settings.backgroundMode !== 'image' && settings.backgroundMode !== 'particles') {
+        settings.backgroundMode = settings.particles ? 'particles' : 'image';
+      }
       const glowLevel = settings.glow / 100;
-      const targetParticles = settings.particles ? particleDensityMap[settings.particleDensity] : 0;
+      const particlesActive = settings.backgroundMode === 'particles' && settings.particles;
+      const videoBackgroundActive = settings.backgroundMode === 'image' && isVideoBackground(settings.backgroundImage);
+      const staticBackgroundActive = settings.backgroundMode === 'image' && !videoBackgroundActive;
+      const targetParticles = particlesActive ? particleDensityMap[settings.particleDensity] : 0;
+      const accentShade = shiftRGB(theme.a, theme.a === '255,255,255' ? -0.16 : 0.18);
 
       root.style.setProperty('--accent-a', theme.a);
       root.style.setProperty('--accent-b', theme.b);
       root.style.setProperty('--accent-c', theme.c);
+      root.style.setProperty('--accent-near', accentShade);
+      root.style.setProperty('--theme-gradient', `linear-gradient(135deg, rgb(${theme.a}), rgb(${accentShade}))`);
+      root.style.setProperty('--accent-gradient-soft', `linear-gradient(135deg, rgb(${theme.a}), rgb(${accentShade}))`);
       root.style.setProperty('--theme-a', theme.a);
       root.style.setProperty('--theme-b', theme.b);
       root.style.setProperty('--theme-c', theme.c);
+      root.style.setProperty('--custom-bg-image', staticBackgroundActive ? `url("${getBackgroundImageURL(settings.backgroundImage)}")` : 'none');
+      window.__orbitParticleColor = particlePalette[settings.particleColor].value;
       root.style.setProperty('--bg-glow-a', (0.15 * glowLevel).toFixed(3));
       root.style.setProperty('--bg-glow-b', (0.14 * glowLevel).toFixed(3));
       root.style.setProperty('--bg-glow-c', (0.08 * glowLevel).toFixed(3));
@@ -3322,6 +3867,8 @@
       root.style.setProperty('--glow-outline', (0.25 * glowLevel).toFixed(3));
       root.style.setProperty('--glow-card-a', (0.16 * glowLevel).toFixed(3));
       root.style.setProperty('--glow-card-b', (0.12 * glowLevel).toFixed(3));
+      root.style.setProperty('--hover-glow', `0 0 12px rgba(${theme.a}, ${(0.65 * glowLevel).toFixed(3)}), 0 0 24px rgba(${theme.b}, ${(0.48 * glowLevel).toFixed(3)}), 0 0 44px rgba(${theme.c}, ${(0.28 * glowLevel).toFixed(3)})`);
+      root.style.setProperty('--hover-glow-strong', `0 0 16px rgba(${theme.a}, ${(0.72 * glowLevel).toFixed(3)}), 0 0 32px rgba(${theme.b}, ${(0.54 * glowLevel).toFixed(3)}), 0 0 55px rgba(${theme.c}, ${(0.30 * glowLevel).toFixed(3)})`);
       root.style.setProperty('--card-radius', settings.compactCards ? '18px' : '28px');
       root.style.setProperty('--thumb-radius', settings.compactCards ? '14px' : '20px');
       updateParticleColors();
@@ -3330,6 +3877,10 @@
       document.body.classList.toggle('compact-cards', settings.compactCards);
       document.body.classList.toggle('high-contrast', settings.highContrast);
       document.body.classList.toggle('hide-orbs', !settings.backgroundOrbs);
+      document.body.classList.toggle('background-media-mode', settings.backgroundMode === 'image');
+      document.body.classList.toggle('background-image-mode', staticBackgroundActive);
+      document.body.classList.toggle('background-video-mode', videoBackgroundActive);
+      document.body.classList.toggle('background-particles-mode', particlesActive);
       document.body.classList.toggle('smooth-scroll', settings.smoothScroll);
 
       visualMotionReduced = settings.reducedMotion;
@@ -3337,7 +3888,8 @@
       music.muted = !settings.music;
       window.__voltraSfxVolume = settings.sfx ? settings.sfxVolume / 100 : 0;
 
-      canvas.style.opacity = settings.particles ? (settings.highContrast ? '0.68' : '0.9') : '0';
+      canvas.style.opacity = particlesActive ? (settings.highContrast ? '0.68' : '0.9') : '0';
+      syncBackgroundVideo();
 
       syncParticleCount(targetParticles);
 
@@ -3346,6 +3898,10 @@
 
     function onToggle(id, val) {
       settings[id] = val;
+
+      if (id === 'particles' && val === true) {
+        settings.backgroundMode = 'particles';
+      }
 
       if (id === 'autoExternalLaunch' || id === 'autoLaunchOnLoad') {
         updateLaunchModeVisibility();
@@ -3390,7 +3946,7 @@
       settings[id] = val;
       saveStoredSettings();
       applySettings();
-      if (currentSection === 'settings') render('settings');
+      if (currentSection === 'settings' && id !== 'particleDensity') render('settings');
     }
 
     function isValidAudioUrl(str) {
@@ -3421,8 +3977,6 @@
     function selectBgMusic(value) {
       settings.bgMusic = value;
       saveStoredSettings();
-      updateBgMusicUI(value);
-      closeBgMusicDropdown();
 
       if (value === 'custom') {
         const url = settings.bgMusicCustomUrl;
@@ -3439,37 +3993,133 @@
       }
     }
 
-    function toggleBgMusicDropdown() {
-      const el = document.querySelector('.settings-custom-select');
-      if (!el) return;
-      const open = el.classList.toggle('open');
-      const trigger = el.querySelector('.settings-custom-select-trigger');
-      if (trigger) trigger.setAttribute('aria-expanded', open);
-      if (open) {
-        setTimeout(() => document.addEventListener('click', closeBgMusicDropdown), 10);
+    function closeSettingsDropdown(selectEl) {
+      if (!selectEl) return;
+      selectEl.classList.remove('open');
+      const trigger = selectEl.querySelector('.settings-custom-select-trigger');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function closeAllSettingsDropdowns(except = null) {
+      document.querySelectorAll('.settings-custom-select.open').forEach(el => {
+        if (el !== except) closeSettingsDropdown(el);
+      });
+      if (!except) document.removeEventListener('click', handleSettingsDropdownOutsideClick, true);
+    }
+
+    function handleSettingsDropdownOutsideClick(e) {
+      if (e.target.closest('.settings-custom-select')) return;
+      closeAllSettingsDropdowns();
+    }
+
+    function toggleSettingsDropdown(trigger) {
+      const selectEl = trigger && trigger.closest('.settings-custom-select');
+      if (!selectEl) return;
+      const willOpen = !selectEl.classList.contains('open');
+      closeAllSettingsDropdowns(selectEl);
+      selectEl.classList.toggle('open', willOpen);
+      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      if (willOpen) {
+        setTimeout(() => document.addEventListener('click', handleSettingsDropdownOutsideClick, true), 0);
       } else {
-        document.removeEventListener('click', closeBgMusicDropdown);
+        document.removeEventListener('click', handleSettingsDropdownOutsideClick, true);
       }
     }
 
-    function closeBgMusicDropdown(e) {
-      const el = document.querySelector('.settings-custom-select');
-      if (!el) return;
-      if (e && e.target && el.contains(e.target)) return;
-      el.classList.remove('open');
-      const trigger = el.querySelector('.settings-custom-select-trigger');
-      if (trigger) trigger.setAttribute('aria-expanded', 'false');
-      document.removeEventListener('click', closeBgMusicDropdown);
+    function updateSettingsDropdownUI(selectEl, value, label) {
+      const labelEl = selectEl.querySelector('.settings-custom-select-label');
+      if (labelEl) labelEl.textContent = label;
+      selectEl.querySelectorAll('.settings-custom-select-option').forEach(opt => {
+        const selected = opt.dataset.value === value;
+        opt.classList.toggle('selected', selected);
+        opt.setAttribute('aria-selected', selected ? 'true' : 'false');
+      });
     }
 
-    function updateBgMusicUI(value) {
-      const el = document.querySelector('.settings-custom-select');
-      if (!el) return;
-      const label = el.querySelector('.settings-custom-select-label');
-      if (label) label.textContent = bgMusicLabels[value] || 'Orbit (Default)';
-      el.querySelectorAll('.settings-custom-select-option').forEach(opt => {
-        opt.classList.toggle('selected', opt.dataset.value === value);
-      });
+    function selectSettingsDropdownOption(option) {
+      const selectEl = option && option.closest('.settings-custom-select');
+      if (!selectEl) return;
+      const scope = selectEl.dataset.scope;
+      const key = selectEl.dataset.setting;
+      const value = option.dataset.value;
+      updateSettingsDropdownUI(selectEl, value, option.textContent.trim());
+      closeSettingsDropdown(selectEl);
+      document.removeEventListener('click', handleSettingsDropdownOutsideClick, true);
+
+      if (scope === 'browser') {
+        setBrowserSetting(key, value);
+        return;
+      }
+
+      if (key === 'bgMusic') {
+        selectBgMusic(value);
+        return;
+      }
+
+      setOption(key, value);
+    }
+
+    function setBrowserSetting(key, value) {
+      if (key === 'bookmarksAutoHide' || key === 'addressSelectAll') {
+        value = value === true || value === 'true';
+      }
+      if (key === 'searchEngine') {
+        localStorage.setItem('orbit_search_engine', value);
+      }
+      if (window.VoltraBrowser && typeof window.VoltraBrowser.updateBrowserSetting === 'function') {
+        window.VoltraBrowser.updateBrowserSetting(key, value);
+      }
+    }
+
+    async function runBrowserDataAction(action, confirmText) {
+      if (confirmText && !confirm(confirmText)) return;
+      try {
+        let ok = false;
+        if (action === 'clearCache' && window.VoltraBrowser && typeof window.VoltraBrowser.clearCache === 'function') {
+          ok = await window.VoltraBrowser.clearCache();
+          alert(ok ? 'Proxy cache cleared.' : 'Proxy cache could not be cleared.');
+          return;
+        }
+        if (action === 'clearSession' && window.VoltraBrowser && typeof window.VoltraBrowser.clearBrowserSessionData === 'function') {
+          ok = window.VoltraBrowser.clearBrowserSessionData();
+          alert(ok ? 'Browser session data cleared.' : 'Browser session data could not be cleared.');
+          return;
+        }
+        if (action === 'resetProxyEnvironment' && window.VoltraBrowser && typeof window.VoltraBrowser.resetProxyEnvironment === 'function') {
+          ok = await window.VoltraBrowser.resetProxyEnvironment();
+          if (ok) location.reload();
+          else alert('Proxy environment could not be reset.');
+        }
+      } catch (err) {
+        console.warn('Browser action failed:', err);
+        alert('Action failed. Please try again.');
+      }
+    }
+
+    function handleSettingsDropdownKeydown(event, trigger) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleSettingsDropdown(trigger);
+      } else if (event.key === 'Escape') {
+        closeAllSettingsDropdowns();
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        const selectEl = trigger.closest('.settings-custom-select');
+        if (!selectEl.classList.contains('open')) toggleSettingsDropdown(trigger);
+        const first = selectEl.querySelector('.settings-custom-select-option');
+        if (first) first.focus();
+      }
+    }
+
+    function handleSettingsDropdownOptionKeydown(event, option) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        selectSettingsDropdownOption(option);
+      } else if (event.key === 'Escape') {
+        closeAllSettingsDropdowns();
+        const trigger = option.closest('.settings-custom-select').querySelector('.settings-custom-select-trigger');
+        if (trigger) trigger.focus();
+      }
     }
 
     function onBgMusicCustomUrl(val) {
@@ -3506,34 +4156,8 @@
       }
     }
 
-    function resetSettings() {
-      Object.assign(settings, defaultSettings);
-      settingsPanel = 'audio';
-      try {
-        localStorage.removeItem(SETTINGS_STORAGE_KEY);
-      } catch (err) {
-        console.warn('Could not clear saved settings.', err);
-      }
-      resetBgMusic();
-      applySettings();
-      render('settings');
-    }
-
-    function wipeAllData() {
-      if (confirm('Are you sure you want to wipe all saved data? This will reset everything as if you joined the website for the first time.')) {
-        try {
-          localStorage.clear();
-          sessionStorage.clear();
-          location.reload();
-        } catch (err) {
-          console.warn('Could not wipe all data.', err);
-          alert('Could not wipe all data. Please try again.');
-        }
-      }
-    }
-
     function attachHoverSFX() {
-      document.querySelectorAll('.game-card, .info-feature, .settings-reset, .settings-nav-item, .home-search-item, .suggestion-card, .icon-btn, .proxy-open-btn').forEach(el => {
+      document.querySelectorAll('.game-card, .settings-nav-item, .home-search-item, .suggestion-card, .icon-btn, .proxy-open-btn, .orbit-help-topic-card, .orbit-help-community-card, .hero-edit-button, .hero-edit-preview, .hero-edit-particle-swatch, .hero-edit-tab').forEach(el => {
         if (!el.dataset.sfx) {
           el.dataset.sfx = "1";
           el.addEventListener('mouseenter', () => playHover(0.92));
@@ -3550,6 +4174,7 @@
     });
 
     applySettings();
+    loadCustomVideoBlobs();
 
     function updateLaunchModeVisibility() {
       const externalLaunchModeRow = document.getElementById('externalLaunchModeRow');
@@ -4436,6 +5061,23 @@
 
     window.startOnboarding = startOnboarding;
     window.checkOnboarding = checkOnboarding;
-    window.selectBgMusic = selectBgMusic;
-    window.toggleBgMusicDropdown = toggleBgMusicDropdown;
+    window.toggleSettingsDropdown = toggleSettingsDropdown;
+    window.selectSettingsDropdownOption = selectSettingsDropdownOption;
+    window.handleSettingsDropdownKeydown = handleSettingsDropdownKeydown;
+    window.handleSettingsDropdownOptionKeydown = handleSettingsDropdownOptionKeydown;
+    window.setBrowserSetting = setBrowserSetting;
+    window.runBrowserDataAction = runBrowserDataAction;
     window.onBgMusicCustomUrl = onBgMusicCustomUrl;
+    window.toggleHeroEditMenu = toggleHeroEditMenu;
+    window.setHeroEditTab = setHeroEditTab;
+    window.setBackgroundImage = setBackgroundImage;
+    window.setParticleColor = setParticleColor;
+    window.playHeroPreviewVideo = playHeroPreviewVideo;
+    window.pauseHeroPreviewVideo = pauseHeroPreviewVideo;
+    window.toggleCustomColorPanel = toggleCustomColorPanel;
+    window.syncCustomColorInput = syncCustomColorInput;
+    window.addCustomParticleColor = addCustomParticleColor;
+    window.removeCustomParticleColor = removeCustomParticleColor;
+    window.openCustomVideoPicker = openCustomVideoPicker;
+    window.addCustomBackgroundVideo = addCustomBackgroundVideo;
+    window.removeCustomBackgroundVideo = removeCustomBackgroundVideo;

@@ -347,6 +347,7 @@
   const BROWSER_SETTINGS_DEFAULTS = {
     searchEngine: 'duckduckgo',
     bookmarksAutoHide: false,
+    addressSelectAll: true,
     notificationsEnabled: true,
     proxyStatusNotifications: true,
     themeChangeNotifications: true,
@@ -410,7 +411,7 @@
     var quickLinks = [
       { name: 'YouTube',    url: 'youtube.com',    img: 'https://i.ytimg.com/vi/s-KZu1kru8Y/sddefault.jpg' },
       { name: 'Twitch',     url: 'twitch.tv',      img: 'https://freshonthenet.co.uk/wp-content/uploads/2020/10/Twitch-Logo.jpg' },
-      { name: 'SoundCloud', url: 'soundcloud.com', img: 'https://a-v2.sndcdn.com/assets/images/sc-icons/fluid-b4e7a64b8b.png' },
+      { name: 'SoundCloud', url: 'soundcloud.com', img: 'https://www.internetmatters.org/wp-content/uploads/2025/05/SoundCloud-feature.webp' },
       { name: 'Spotify',    url: 'spotify.com',    img: 'https://www.scdn.co/i/_global/open-graph-default.png' },
       { name: 'ChatGPT',    url: 'chatgpt.com',    img: 'https://www.internetmatters.org/wp-content/uploads/2025/06/Chat-GPT-logo.webp' },
       { name: 'Discord',    url: 'discord.com',    img: 'https://gamemakerstoolkit.com/wp-content/uploads/2024/01/perk-discord.jpg' },
@@ -711,21 +712,21 @@
         <div class="browser-container" id="browserContainer">
           <!-- Navigation / Address Bar -->
           <div class="browser-nav-bar" id="browserNavBar">
-            <button class="browser-nav-btn" onclick="VoltraBrowser.goBack()" ${canBack ? '' : 'disabled'} title="Back">
+            <button class="browser-nav-btn" onclick="VoltraBrowser.goBack()" ${canBack ? '' : 'disabled'} aria-label="Back">
               <img class="browser-nav-icon browser-nav-icon-arrow" src="icons/back%20arrow.svg?v=20260722" alt="" aria-hidden="true">
             </button>
-            <button class="browser-nav-btn" onclick="VoltraBrowser.goForward()" ${canForward ? '' : 'disabled'} title="Forward">
+            <button class="browser-nav-btn" onclick="VoltraBrowser.goForward()" ${canForward ? '' : 'disabled'} aria-label="Forward">
               <img class="browser-nav-icon browser-nav-icon-arrow" src="icons/foward%20arrow.svg?v=20260722" alt="" aria-hidden="true">
             </button>
-            <button class="browser-nav-btn" onclick="this.querySelector('svg').classList.add('spinning');VoltraBrowser.refresh()" title="Refresh">
+            <button class="browser-nav-btn" onclick="this.querySelector('svg').classList.add('spinning');VoltraBrowser.refresh()" aria-label="Refresh">
               <svg id="refreshIcon" viewBox="0 0 24 24" fill="currentColor" onanimationend="this.classList.remove('spinning')"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
             </button>
-            <button class="browser-nav-btn" onclick="VoltraBrowser.goHome()" title="Home">
+            <button class="browser-nav-btn" onclick="VoltraBrowser.goHome()" aria-label="Home">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
             </button>
             <div class="browser-address-bar-wrapper">
               <div class="browser-address-bar" id="browserAddressBar">
-                <div class="browser-search-engine-selector" onclick="VoltraBrowser.toggleSearchEngineDropdown()" title="Search Engine">
+                <div class="browser-search-engine-selector" onclick="VoltraBrowser.toggleSearchEngineDropdown()" aria-label="Search Engine">
                   <img src="${this._escapeHtml(getSearchEngine().icon)}" alt="Search Engine" id="searchEngineIcon">
                 </div>
                 <div class="browser-search-engine-dropdown" id="searchEngineDropdown">
@@ -747,45 +748,9 @@
                   onkeydown="VoltraBrowser.handleAddressKeydown(event)">
               </div>
             </div>
-            <button class="browser-nav-btn" onclick="VoltraBrowser.toggleBookmark()" id="browserBookmarkBtn" title="Bookmark">
+            <button class="browser-nav-btn" onclick="VoltraBrowser.toggleBookmark()" id="browserBookmarkBtn" aria-label="Bookmark">
               <svg class="browser-bookmark-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
             </button>
-            <div style="position:relative; display:flex; align-items:center;">
-              <button class="browser-nav-btn" onclick="VoltraBrowser.toggleMenu()" title="Menu">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-              </button>
-              <!-- Menu Dropdown -->
-              <div class="browser-menu-dropdown" id="browserMenuDropdown">
-                <div class="browser-menu-section">Browser Controls</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.toggleSound()">
-                  <span class="browser-menu-toggle">
-                    <span class="browser-menu-toggle-label">Toggle Sound</span>
-                    <span class="browser-menu-toggle-switch" id="soundToggleSwitch"></span>
-                  </span>
-                </div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.reloadPage()">Reload Page</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.hardRefresh()">Hard Refresh</div>
-
-                <div class="browser-menu-separator"></div>
-                <div class="browser-menu-section">Privacy</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.resetCookies()">Reset Cookies</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.wipePageData()">Wipe Page Data</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.clearSiteStorage()">Clear Site Storage</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.clearCache()">Clear Cache</div>
-
-                <div class="browser-menu-separator"></div>
-                <div class="browser-menu-section">Site Controls</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.sitePermissions()">Site Permissions</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.pageInformation()">Page Information</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.viewSecurityStatus()">View Security Status</div>
-
-                <div class="browser-menu-separator"></div>
-                <div class="browser-menu-section">Orbit</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.orbitSettings()">Orbit Settings</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.appearance()">Appearance</div>
-                <div class="browser-menu-item" onclick="event.stopPropagation(); VoltraBrowser.browserPreferences()">Browser Preferences</div>
-              </div>
-            </div>
           </div>
 
           <!-- Bookmarks Bar -->
@@ -946,48 +911,6 @@
       }
     }
 
-    toggleMenu() {
-      const menu = document.getElementById('browserMenuDropdown');
-      if (menu) {
-        menu.classList.toggle('open');
-      }
-      const searchDropdown = document.getElementById('searchEngineDropdown');
-      if (searchDropdown) {
-        searchDropdown.style.display = 'none';
-      }
-      if (menu && menu.classList.contains('open')) {
-        this._attachMenuOutsideClick();
-      }
-    }
-
-    _attachMenuOutsideClick() {
-      const menu = document.getElementById('browserMenuDropdown');
-
-      const closeMenu = () => {
-        if (menu) menu.classList.remove('open');
-        document.removeEventListener('click', clickHandler, true);
-        document.removeEventListener('keydown', keyHandler);
-      };
-
-      const clickHandler = (e) => {
-        const btn = e.target.closest('.browser-nav-btn[onclick*="toggleMenu"]') || e.target.closest('#browserMenuDropdown');
-        if (!btn && menu) {
-          closeMenu();
-        }
-      };
-
-      const keyHandler = (e) => {
-        if (e.key === 'Escape') {
-          closeMenu();
-        }
-      };
-
-      setTimeout(() => {
-        document.addEventListener('click', clickHandler, true);
-        document.addEventListener('keydown', keyHandler);
-      }, 0);
-    }
-
     toggleBookmarksBar() {
       const bar = document.getElementById('browserBookmarksBar');
       const sw = document.getElementById('bookmarksToggleSwitch');
@@ -998,32 +921,50 @@
     }
 
     toggleSound() {
-      const sw = document.getElementById('soundToggleSwitch');
-      if (sw) {
-        sw.classList.toggle('on');
+      // Sound toggle is controlled by Orbit Settings.
+    }
+
+    async clearCache() {
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(key => caches.delete(key)));
+        }
+        return true;
+      } catch (err) {
+        console.warn('Failed to clear proxy cache:', err);
+        return false;
       }
     }
 
-    clearCache() {
+    clearBrowserSessionData() {
       try {
-        localStorage.clear();
         sessionStorage.clear();
-        alert('Cache cleared successfully');
+        return true;
       } catch (err) {
-        alert('Failed to clear cache: ' + err.message);
+        console.warn('Failed to clear browser session data:', err);
+        return false;
       }
-      this.toggleMenu();
+    }
+
+    async resetProxyEnvironment() {
+      try {
+        await this.clearCache();
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(reg => reg.unregister()));
+        }
+        return true;
+      } catch (err) {
+        console.warn('Failed to reset proxy environment:', err);
+        return false;
+      }
     }
 
     toggleSearchEngineDropdown() {
       const dropdown = document.getElementById('searchEngineDropdown');
       if (dropdown) {
         dropdown.classList.toggle('open');
-      }
-      // Close menu dropdown if open
-      const menu = document.getElementById('browserMenuDropdown');
-      if (menu) {
-        menu.classList.remove('open');
       }
     }
 
@@ -1045,7 +986,6 @@
     showUserID() {
       const userId = generateUserID();
       alert(userId);
-      this.toggleMenu();
     }
 
     goHome() {
@@ -1055,7 +995,6 @@
     openSettings() {
       // Navigate to settings page
       this.navigate('orbit://settings');
-      this.toggleMenu();
     }
 
     clearHistory() {
@@ -1063,22 +1002,18 @@
       this.historyManager.push('main', BRAVE_HOME_INTERNAL, SEARCH_PROVIDER_NAME);
       this._rebuildAll();
       alert('History cleared successfully');
-      this.toggleMenu();
     }
 
     openInAboutBlank() {
       openInAboutBlank();
-      this.toggleMenu();
     }
 
     openInBlob() {
       openInBlob();
-      this.toggleMenu();
     }
 
     toggleFullscreen() {
       toggleFullscreen();
-      this.toggleMenu();
     }
 
     generateDataURL() {
@@ -1089,7 +1024,6 @@
       }).catch(() => {
         alert('Failed to copy Data URL');
       });
-      this.toggleMenu();
     }
 
     clearAllData() {
@@ -1097,74 +1031,6 @@
         clearAllData();
         location.reload();
       }
-      this.toggleMenu();
-    }
-
-    // --- Menu action handlers (Ultraviolet integration) ---
-
-    reloadPage() {
-      this.refresh();
-      this.toggleMenu();
-    }
-
-    hardRefresh() {
-      const iframe = document.getElementById('browserFrame-main');
-      if (iframe) {
-        this.showLoading();
-        const src = iframe.src;
-        iframe.src = '';
-        setTimeout(() => { iframe.src = src; }, 10);
-        this.updateNavButtons();
-      }
-      this.toggleMenu();
-    }
-
-    // Privacy actions
-    resetCookies() {
-      // TODO: Connect to Ultraviolet
-      this.toggleMenu();
-    }
-
-    wipePageData() {
-      // TODO: Connect to Ultraviolet
-      this.toggleMenu();
-    }
-
-    clearSiteStorage() {
-      // TODO: Connect to Ultraviolet
-      this.toggleMenu();
-    }
-
-    // Site controls
-    sitePermissions() {
-      // TODO: Connect to Ultraviolet
-      this.toggleMenu();
-    }
-
-    pageInformation() {
-      // TODO: Connect to Ultraviolet
-      this.toggleMenu();
-    }
-
-    viewSecurityStatus() {
-      // TODO: Connect to Ultraviolet
-      this.toggleMenu();
-    }
-
-    // Orbit settings
-    orbitSettings() {
-      this.toggleMenu();
-      this.navigate('orbit://settings');
-    }
-
-    appearance() {
-      this.toggleMenu();
-      this.navigate('orbit://settings');
-    }
-
-    browserPreferences() {
-      this.toggleMenu();
-      this.navigate('orbit://settings');
     }
 
     duplicateTab() {
@@ -1293,6 +1159,10 @@
       // Apply settings that need UI changes
       if (key === 'bookmarksAutoHide') {
         this._applyBookmarksAutoHide(value);
+      }
+
+      if (key === 'addressSelectAll') {
+        this._bindAddressInputSelection(true);
       }
     }
 
@@ -1671,27 +1541,72 @@
       if (bar) bar.classList.remove('loading', 'loaded');
     }
 
-    _bindAddressInputSelection() {
+    _bindAddressInputSelection(force = false) {
       const input = document.getElementById('browserAddressInput');
-      if (!input || input.dataset.selectAllBound === 'true') return;
+      if (!input) return;
+      if (force) {
+        const clone = input.cloneNode(true);
+        delete clone.dataset.selectAllBound;
+        input.replaceWith(clone);
+        this.updateAddressBar(this._isInternalPage(this.historyManager.getCurrentUrl('main')) ? '' : this.historyManager.getCurrentUrl('main'));
+        if (!browserSettings.addressSelectAll) {
+          clone.dataset.selectAllBound = 'false';
+          return;
+        }
+        return this._bindAddressInputSelection(false);
+      }
+      if (!browserSettings.addressSelectAll) {
+        input.dataset.selectAllBound = 'false';
+        return;
+      }
+      if (!force && input.dataset.selectAllBound === 'true') return;
       input.dataset.selectAllBound = 'true';
       let shouldSelectOnFocus = true;
+      let hasEditedDuringFocus = false;
+      const selectAddressText = () => {
+        try {
+          input.setSelectionRange(0, input.value.length);
+        } catch (e) {
+          input.select();
+        }
+      };
 
       input.addEventListener('pointerdown', () => {
         shouldSelectOnFocus = document.activeElement !== input;
       });
 
+      input.addEventListener('mousedown', () => {
+        shouldSelectOnFocus = document.activeElement !== input;
+      });
+
+      input.addEventListener('pointerup', () => {
+        if (!shouldSelectOnFocus) return;
+        setTimeout(selectAddressText, 80);
+      });
+
+      input.addEventListener('mouseup', () => {
+        if (!shouldSelectOnFocus) return;
+        setTimeout(selectAddressText, 80);
+      });
+
+      input.addEventListener('click', () => {
+        if (hasEditedDuringFocus) return;
+        setTimeout(selectAddressText, 80);
+      });
+
       input.addEventListener('focus', () => {
         if (!shouldSelectOnFocus) return;
-        requestAnimationFrame(() => input.select());
+        setTimeout(selectAddressText, 80);
       });
 
       input.addEventListener('input', () => {
         shouldSelectOnFocus = false;
+        hasEditedDuringFocus = true;
       });
 
       input.addEventListener('blur', () => {
         shouldSelectOnFocus = true;
+        hasEditedDuringFocus = false;
       });
     }
 
@@ -1747,29 +1662,17 @@
     handleFrameLoad: () => browserUI.handleFrameLoad(),
     handleFrameError: () => browserUI.handleFrameError(),
     
-    // Menu
-    toggleMenu: () => browserUI.toggleMenu(),
-
     // Search engine
     toggleSearchEngineDropdown: () => browserUI.toggleSearchEngineDropdown(),
     selectSearchEngine: (key) => browserUI.selectSearchEngine(key),
 
-    // Menu action handlers
+    // Browser action handlers
     toggleBookmarksBar: () => browserUI.toggleBookmarksBar(),
     toggleSound: () => browserUI.toggleSound(),
     clearCache: () => browserUI.clearCache(),
+    clearBrowserSessionData: () => browserUI.clearBrowserSessionData(),
+    resetProxyEnvironment: () => browserUI.resetProxyEnvironment(),
     clearHistory: () => browserUI.clearHistory(),
-    reloadPage: () => browserUI.reloadPage(),
-    hardRefresh: () => browserUI.hardRefresh(),
-    resetCookies: () => browserUI.resetCookies(),
-    wipePageData: () => browserUI.wipePageData(),
-    clearSiteStorage: () => browserUI.clearSiteStorage(),
-    sitePermissions: () => browserUI.sitePermissions(),
-    pageInformation: () => browserUI.pageInformation(),
-    viewSecurityStatus: () => browserUI.viewSecurityStatus(),
-    orbitSettings: () => browserUI.orbitSettings(),
-    appearance: () => browserUI.appearance(),
-    browserPreferences: () => browserUI.browserPreferences(),
 
     // Bookmarks
     addBookmark: () => browserUI.addBookmark(),
