@@ -388,6 +388,7 @@
   const SEARCH_ENGINE_BASE = 'https://search.brave.com/search?q=';
   const BRAVE_HOME_URL = 'https://search.brave.com/';
   const BRAVE_HOME_INTERNAL = 'voltra://brave-home';
+  let cachedBraveHomeSrcDoc = '';
 
   /**
    * Check if a URL is our internal home page marker.
@@ -404,10 +405,12 @@
    * It communicates with the parent browser via window.parent.VoltraBrowser.
    */
   function getBraveHomeSrcDoc() {
+    if (cachedBraveHomeSrcDoc) return cachedBraveHomeSrcDoc;
+
     var quickLinks = [
       { name: 'YouTube',    url: 'youtube.com',    img: 'https://i.ytimg.com/vi/s-KZu1kru8Y/sddefault.jpg' },
       { name: 'Twitch',     url: 'twitch.tv',      img: 'https://freshonthenet.co.uk/wp-content/uploads/2020/10/Twitch-Logo.jpg' },
-      { name: 'SoundCloud', url: 'soundcloud.com', img: 'https://www.musicweek.com/cimages/f38efa877c6c7b446c02ae1e89ac44d3.jpg' },
+      { name: 'SoundCloud', url: 'soundcloud.com', img: 'https://a-v2.sndcdn.com/assets/images/sc-icons/fluid-b4e7a64b8b.png' },
       { name: 'Spotify',    url: 'spotify.com',    img: 'https://www.scdn.co/i/_global/open-graph-default.png' },
       { name: 'ChatGPT',    url: 'chatgpt.com',    img: 'https://www.internetmatters.org/wp-content/uploads/2025/06/Chat-GPT-logo.webp' },
       { name: 'Discord',    url: 'discord.com',    img: 'https://gamemakerstoolkit.com/wp-content/uploads/2024/01/perk-discord.jpg' },
@@ -420,10 +423,10 @@
     var cardsHtml = '';
     for (var i = 0; i < quickLinks.length; i++) {
       var cardClass = 'card card-' + quickLinks[i].name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      cardsHtml += '<div class="' + cardClass + '" data-url="' + quickLinks[i].url + '"><img src="' + quickLinks[i].img + '" alt="' + quickLinks[i].name + '" loading="lazy"></div>';
+      cardsHtml += '<div class="' + cardClass + '" data-url="' + quickLinks[i].url + '"><img src="' + quickLinks[i].img + '" alt="' + quickLinks[i].name + '" loading="eager" decoding="async" referrerpolicy="no-referrer"></div>';
     }
 
-    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Orbit</title><style>' +
+    cachedBraveHomeSrcDoc = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Orbit</title><style>' +
       '*{margin:0;padding:0;box-sizing:border-box}' +
       'html,body{height:100%;background:#05060b;color:#fff;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,\'Helvetica Neue\',Arial,sans-serif;font-weight:300;overflow:hidden}' +
       ':root{--accent-a:255,255,255;--accent-b:255,255,255}' +
@@ -453,6 +456,7 @@
       'document.getElementById("searchInput").addEventListener("keydown",function(e){if(e.key==="Enter"){var q=this.value.trim();if(q&&window.parent&&window.parent.VoltraBrowser){window.parent.VoltraBrowser.navigate(q)}}});' +
       'document.querySelectorAll(".card").forEach(function(c){c.addEventListener("click",function(){var u=this.getAttribute("data-url");if(u&&window.parent&&window.parent.VoltraBrowser){window.parent.VoltraBrowser.navigate(u)}})});' +
     '<\/script></body></html>';
+    return cachedBraveHomeSrcDoc;
   }
 
   /**
@@ -708,10 +712,10 @@
           <!-- Navigation / Address Bar -->
           <div class="browser-nav-bar" id="browserNavBar">
             <button class="browser-nav-btn" onclick="VoltraBrowser.goBack()" ${canBack ? '' : 'disabled'} title="Back">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+              <img class="browser-nav-icon browser-nav-icon-arrow" src="icons/back%20arrow.svg?v=20260722" alt="" aria-hidden="true">
             </button>
             <button class="browser-nav-btn" onclick="VoltraBrowser.goForward()" ${canForward ? '' : 'disabled'} title="Forward">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              <img class="browser-nav-icon browser-nav-icon-arrow" src="icons/foward%20arrow.svg?v=20260722" alt="" aria-hidden="true">
             </button>
             <button class="browser-nav-btn" onclick="this.querySelector('svg').classList.add('spinning');VoltraBrowser.refresh()" title="Refresh">
               <svg id="refreshIcon" viewBox="0 0 24 24" fill="currentColor" onanimationend="this.classList.remove('spinning')"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
@@ -860,8 +864,11 @@
     navigate(url) {
       // Intercept internal pages before InputParser (avoids search/proxy/UV)
       if (url === BRAVE_HOME_INTERNAL || url === '' || url === 'orbit://home') {
-        this._loadUrlInFrame(url);
-        this.historyManager.push('main', BRAVE_HOME_INTERNAL, 'Home');
+        const currentUrl = this.historyManager.getCurrentUrl('main');
+        this._loadHome();
+        if (!isBraveHome(currentUrl)) {
+          this.historyManager.push('main', BRAVE_HOME_INTERNAL, 'Home');
+        }
         this.updateAddressBar('');
         this.updateNavButtons();
         this._updateBookmarkBtn();
@@ -906,6 +913,7 @@
     _loadBlank() {
       const iframe = document.getElementById('browserFrame-main');
       if (iframe) {
+        delete iframe.dataset.internalPage;
         iframe.srcdoc = '<!DOCTYPE html><html><head><style>body{margin:0;background:#05070b;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;flex-direction:column;gap:12px;}h2{color:rgba(255,255,255,0.3);font-weight:400;font-size:1.1rem;}</style></head><body><h2>Enter a URL or search to start browsing</h2></body></html>';
         iframe.src = 'about:blank';
       }
@@ -1222,6 +1230,7 @@
     _showErrorPage(status, title, detail) {
       const iframe = document.getElementById('browserFrame-main');
       if (!iframe) return;
+      iframe.dataset.internalPage = 'error';
       const escapedTitle = String(title).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       const escapedDetail = String(detail).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbit — ' + status + '</title><style>body{margin:0;background:#0d0d12;color:#e0e0e0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}.error-card{background:#1a1a24;border:1px solid #2a2a3a;border-radius:12px;padding:32px;max-width:480px;width:90%;text-align:center}.error-icon{width:48px;height:48px;margin:0 auto 16px;color:#ff6b6b}.error-code{font-size:14px;color:#888;margin-bottom:4px}.error-title{font-size:20px;font-weight:600;margin-bottom:12px}.error-detail{font-size:13px;color:#888;line-height:1.5;margin-bottom:24px}.error-retry{background:#2a2a3a;color:#e0e0e0;border:1px solid #3a3a4a;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer}.error-retry:hover{background:#3a3a4a}</style></head><body><div class="error-card"><svg class="error-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><div class="error-code">' + status + '</div><div class="error-title">' + escapedTitle + '</div><div class="error-detail">' + escapedDetail + '</div><button class="error-retry" onclick="parent.VoltraBrowser.refresh()">Retry</button></div></body></html>';
@@ -1259,6 +1268,8 @@
     _loadSettings() {
       const iframe = document.getElementById('browserFrame-main');
       if (!iframe) return;
+      iframe.dataset.internalPage = 'settings';
+      iframe.removeAttribute('src');
       iframe.srcdoc = getSettingsPageSrcDoc();
       this.updateAddressBar('');
       this.updateNavButtons();
@@ -1309,13 +1320,15 @@
       if (!iframe) return;
 
       if (isBraveHome(url)) {
-        iframe.srcdoc = getBraveHomeSrcDoc();
+        this._loadHome();
         this.updateAddressBar('');
         this.updateNavButtons();
         return;
       }
 
       if (url === 'orbit://settings') {
+        iframe.dataset.internalPage = 'settings';
+        iframe.removeAttribute('src');
         iframe.srcdoc = getSettingsPageSrcDoc();
         this.updateAddressBar('');
         this.updateNavButtons();
@@ -1350,6 +1363,7 @@
         lastHasService: finalSrc.includes('/service/'),
       };
       iframe.removeAttribute('srcdoc');
+      delete iframe.dataset.internalPage;
       if (this._frameLoadTimeout) clearTimeout(this._frameLoadTimeout);
       this._frameLoadTimeout = setTimeout(() => {
         if (iframe && iframe.src && iframe.src === finalSrc) {
@@ -1363,6 +1377,24 @@
       }, 20000);
       iframe.src = finalSrc;
       this.updateNavButtons();
+    }
+
+    _isHomeLoaded() {
+      const iframe = document.getElementById('browserFrame-main');
+      return !!(iframe && iframe.dataset.internalPage === 'home' && iframe.srcdoc);
+    }
+
+    _loadHome(options = {}) {
+      const iframe = document.getElementById('browserFrame-main');
+      if (!iframe) return;
+      if (!options.force && this._isHomeLoaded()) return;
+      if (this._frameLoadTimeout) {
+        clearTimeout(this._frameLoadTimeout);
+        this._frameLoadTimeout = null;
+      }
+      iframe.dataset.internalPage = 'home';
+      iframe.removeAttribute('src');
+      iframe.srcdoc = getBraveHomeSrcDoc();
     }
 
     _flushPendingNavigations() {
@@ -1379,13 +1411,15 @@
       if (!iframe || !url || url === 'about:blank') return;
 
       if (isBraveHome(url)) {
-        iframe.srcdoc = getBraveHomeSrcDoc();
+        this._loadHome();
         this.updateAddressBar('');
         console.log('[RESTORE] restored home');
         return;
       }
 
       if (url === 'orbit://settings') {
+        iframe.dataset.internalPage = 'settings';
+        iframe.removeAttribute('src');
         iframe.srcdoc = getSettingsPageSrcDoc();
         this.updateAddressBar('');
         console.log('[RESTORE] restored settings');
@@ -1410,6 +1444,7 @@
         lastHasService: finalSrc.includes('/service/'),
       };
       iframe.removeAttribute('srcdoc');
+      delete iframe.dataset.internalPage;
       iframe.src = finalSrc;
       this.updateNavButtons();
     }
@@ -1630,9 +1665,34 @@
       this._renderBookmarksBar();
       this._applyBookmarksAutoHide(browserSettings.bookmarksAutoHide);
       this._updateBookmarkBtn();
+      this._bindAddressInputSelection();
 
       const bar = document.getElementById('browserLoadingBar');
       if (bar) bar.classList.remove('loading', 'loaded');
+    }
+
+    _bindAddressInputSelection() {
+      const input = document.getElementById('browserAddressInput');
+      if (!input || input.dataset.selectAllBound === 'true') return;
+      input.dataset.selectAllBound = 'true';
+      let shouldSelectOnFocus = true;
+
+      input.addEventListener('pointerdown', () => {
+        shouldSelectOnFocus = document.activeElement !== input;
+      });
+
+      input.addEventListener('focus', () => {
+        if (!shouldSelectOnFocus) return;
+        requestAnimationFrame(() => input.select());
+      });
+
+      input.addEventListener('input', () => {
+        shouldSelectOnFocus = false;
+      });
+
+      input.addEventListener('blur', () => {
+        shouldSelectOnFocus = true;
+      });
     }
 
     /**
@@ -1650,6 +1710,7 @@
       this._renderBookmarksBar();
       this._applyBookmarksAutoHide(browserSettings.bookmarksAutoHide);
       this._updateBookmarkBtn();
+      this._bindAddressInputSelection();
 
       const bar = document.getElementById('browserLoadingBar');
       if (bar) bar.classList.remove('loading', 'loaded');

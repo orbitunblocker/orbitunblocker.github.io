@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Orbit | Clean Command Deck</title>
+  <title>Orbit</title>
   <script>(function(){if(location.protocol==='file:'){document.documentElement.innerHTML='<body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#0d0d12;color:#fff;font-family:sans-serif;flex-direction:column;gap:16px"><h1 style="font-size:28px;font-weight:300;letter-spacing:1px">Run via localhost:8080</h1><p style="font-size:14px;color:#888;max-width:400px;text-align:center;line-height:1.5">Orbit requires a local server. Open http://localhost:8080 in your browser.</p></body>'}})()</script>
   <meta name="description" content="Orbit is a sleek black-and-white command deck for games, tools, browsing, and immersive web experiences." />
 
@@ -12,8 +12,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@400&family=Chakra+Petch:wght@400&family=Commissioner:wght@300&family=El+Messiri:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Bai+Jamjuree:wght@400&family=Encode+Sans:wght@300&family=Noto+Sans+SC:wght@300&family=Nunito:wght@400&family=Quicksand:wght@400&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=amulya@300,400,500&f[]=nata-sans@400&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/gif" href="https://i.ibb.co/xS3pNYjB/tet-ezgif-com-effects-1.gif">
-  <link rel="stylesheet" href="css/orbit.css?v=20260606">
+  <link rel="icon" type="image/png" sizes="512x512" href="https://i.ibb.co/0j3TN9Cc/Orbit-Favicon-512x512.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/1fgZhvPw/Orbit-Favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co/JwNmzFm6/Orbit-Favicon-16x16.png">
+  <link rel="stylesheet" href="css/orbit.css?v=20260722">
 </head>
 <body>
 
@@ -44,6 +46,10 @@
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>
       </div>
 
+      <div class="nav-icon" data-section="browser" onclick="loadSection('browser')" title="Proxy">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM440-162v-78q-33 0-56.5-23.5T360-320v-40L168-552q-3 18-5.5 36t-2.5 36q0 121 79.5 212T440-162Zm276-102q41-45 62.5-100.5T800-480q0-98-54.5-179T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h240q17 0 28.5 11.5T600-440v120h40q26 0 47 15.5t29 40.5Z"/></svg>
+      </div>
+
       <div class="nav-icon" data-section="games" onclick="loadSection('games')" title="Games">
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m272-440 208 120 208-120-168-97v137h-80v-137l-168 97Zm168-189v-17q-44-13-72-49.5T340-780q0-58 41-99t99-41q58 0 99 41t41 99q0 48-28 84.5T520-646v17l280 161q19 11 29.5 29.5T840-398v76q0 22-10.5 40.5T800-252L520-91q-19 11-40 11t-40-11L160-252q-19-11-29.5-29.5T120-322v-76q0-22 10.5-40.5T160-468l280-161Zm0 378L200-389v67l280 162 280-162v-67L520-251q-19 11-40 11t-40-11Zm82.5-486.5Q540-755 540-780t-17.5-42.5Q505-840 480-840t-42.5 17.5Q420-805 420-780t17.5 42.5Q455-720 480-720t42.5-17.5ZM480-160Z"/></svg>
       </div>
@@ -54,10 +60,6 @@
 
       <div class="nav-icon" data-section="tools" onclick="loadSection('tools')" title="Tools">
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M739-83.5q-7-2.5-13-8.5L522-296q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l85-85q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l204 204q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13l-85 85q-6 6-13 8.5T754-81q-8 0-15-2.5Zm15-92.5 29-29-147-147-29 29 147 147ZM189.5-83q-7.5-3-13.5-9l-84-84q-6-6-9-13.5T80-205q0-8 3-15t9-13l212-212h85l34-34-165-165h-57L80-765l113-113 121 121v57l165 165 116-116-43-43 56-56H495l-28-28 142-142 28 28v113l56-56 142 142q17 17 26 38.5t9 45.5q0 24-9 46t-26 39l-85-85-56 56-42-42-207 207v84L233-92q-6 6-13 9t-15 3q-8 0-15.5-3Zm15.5-93 170-170v-29h-29L176-205l29 29Zm0 0-29-29 15 14 14 15Zm549 0 29-29-29 29Z"/></svg>
-      </div>
-
-      <div class="nav-icon" data-section="browser" onclick="loadSection('browser')" title="Proxy">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM440-162v-78q-33 0-56.5-23.5T360-320v-40L168-552q-3 18-5.5 36t-2.5 36q0 121 79.5 212T440-162Zm276-102q41-45 62.5-100.5T800-480q0-98-54.5-179T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h240q17 0 28.5 11.5T600-440v120h40q26 0 47 15.5t29 40.5Z"/></svg>
       </div>
 
       <div class="nav-icon" data-section="settings" onclick="loadSection('settings')" title="Settings">
@@ -155,8 +157,8 @@
   </div>
 
   <script src="uv/uv.bundle.js?v=3.2.8"></script>
-<script src="js/browser-engine.js?v=20260604"></script>
+<script src="js/browser-engine.js?v=20260722"></script>
 <script src="js/game-compat.js?v=20260604"></script>
-<script src="js/app.js?v=20260604"></script>
+<script src="js/app.js?v=20260722"></script>
 </body>
 </html>

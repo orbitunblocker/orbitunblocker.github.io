@@ -289,10 +289,10 @@
     }
 
     class Particle {
-      constructor(initial = false) { this.reset(initial); }
-      reset(initial = false) {
+      constructor(spawnMode = 'viewport') { this.reset(spawnMode); }
+      reset(spawnMode = 'viewport') {
         this.x = Math.random() * width;
-        this.y = initial ? Math.random() * height : height + Math.random() * 24;
+        this.y = spawnMode === 'recycle' ? height + Math.random() * 24 : Math.random() * height;
         this.radius = Math.random() * 1.1 + 0.35;
         this.speedY = -(Math.random() * 6 + 4);
         this.speedX = (Math.random() - 0.5) * 3;
@@ -307,7 +307,7 @@
         this.x += (this.speedX + Math.sin(time * this.floatSpeed + this.floatOffset) * this.floatAmplitude) * deltaTime;
         this.y += this.speedY * deltaTime;
         if (this.y < -10) {
-          this.reset(false);
+          this.reset('recycle');
         }
         if (this.x < -10) {
           this.x = width + 10;
@@ -332,7 +332,12 @@
 
     resizeParticleCanvas();
     updateParticleColors();
-    for (let i = 0; i < 110; i++) particles.push(new Particle(true));
+    for (let i = 0; i < 110; i++) particles.push(new Particle('viewport'));
+
+    function syncParticleCount(targetCount) {
+      while (particles.length < targetCount) particles.push(new Particle('viewport'));
+      if (particles.length > targetCount) particles.length = targetCount;
+    }
 
     function animate(currentTime) {
       if (Math.min(window.devicePixelRatio || 1, 2) !== dpr) {
@@ -923,6 +928,7 @@
 
     const SETTINGS_STORAGE_KEY = 'voltra-settings-v1';
     const BASE_PAGE_TITLE = 'Orbit';
+    const ORBIT_FAVICON_URL = 'https://i.ibb.co/0j3TN9Cc/Orbit-Favicon-512x512.png';
     const CLOAKED_INSTANCE_PARAM = 'orbit_cloaked';
 
     const defaultSettings = {
@@ -1599,23 +1605,11 @@
 
     function restoreTabIdentity() {
       document.title = BASE_PAGE_TITLE;
-      setPageFavicon('data:,');
+      setPageFavicon(ORBIT_FAVICON_URL);
     }
 
     function applyTabCloak() {
-      if (!settings.tabCloak) {
-        restoreTabIdentity();
-        return;
-      }
-
-      const preset = cloakPresets[settings.cloakPreset] || cloakPresets.google;
-      document.title = settings.cloakCustomTitle.trim() || preset.title;
-      
-      if (settings.cloakPreset === 'custom' && settings.cloakCustomFavicon) {
-        setPageFavicon(settings.cloakCustomFavicon.trim());
-      } else {
-        setPageFavicon(preset.icon);
-      }
+      restoreTabIdentity();
     }
 
     function updateTabCloakState() {
@@ -3101,9 +3095,12 @@
     }
 
     function clearHomeSearch() {
-      homeSearchInput.value = '';
-      homeSearchResults.classList.remove('active');
-      homeSearchResults.innerHTML = '';
+      const activeHomeSearchInput = document.getElementById('heroSearchInput') || homeSearchInput;
+      if (activeHomeSearchInput) activeHomeSearchInput.value = '';
+      if (homeSearchResults) {
+        homeSearchResults.classList.remove('active');
+        homeSearchResults.innerHTML = '';
+      }
     }
 
     function handleHomeSearch(query) {
@@ -3342,8 +3339,7 @@
 
       canvas.style.opacity = settings.particles ? (settings.highContrast ? '0.68' : '0.9') : '0';
 
-      while (particles.length < targetParticles) particles.push(new Particle());
-      if (particles.length > targetParticles) particles.length = targetParticles;
+      syncParticleCount(targetParticles);
 
       updateTabCloakState();
     }
@@ -4162,6 +4158,7 @@
           if (query) {
             window.__pendingHomeSearch = query;
             loadSection('browser');
+            searchInput.value = '';
           }
         }
       });
